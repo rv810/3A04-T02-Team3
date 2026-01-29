@@ -1,13 +1,5 @@
 \newcommand{\product}{\section{Overall Product Description}
 \label{sec:overall_description}
-% Begin Section
-
-\begin{itemize}
-	\item This section should describe the general factors that affect the product and its requirements. 
-	\item It does not state specific requirements.
-	\item It provides a \emph{background} for those requirements and makes them easier to understand.
-\end{itemize}
-
 
 \subsection{Product Perspective}
 \label{sub:product_perspective}
@@ -18,6 +10,18 @@
 	\item If the SRS defines a product that is a component of a larger system, then this subsection should relate the requirements of that larger system to the functionality of the software being developed. Identify interfaces between that larger system and the software to be developed.
 	\item A block diagram showing the major components of the larger system, interconnections, and external interfaces can be helpful
 \end{itemize}
+
+The Smart City Environmental Monitoring \& Alert System (SCEMAS) is a cloud-native IoT software platform. Unlike systems such as SimpliCity, which focus on supporting city services, internal business process, and citizen engagement strategies, SCEMAS specifically collects, validates, stores, and analyzes environmental teleemtry to support real-time uran environmental monitoring and decision making.
+
+
+SCEMAS is self-contained but interacts with multiple external systems. A network of IoT sensors collect environmental data and communicate them to SCEMAS. The system validates this incoming data, performs real-time aggregation, and calculates metrics to provide actionable insights into environmental conditions. Based on alert rules defined by administrators, SCEMAS triggers alerts upon detecting rule violations, logs all events, and notifies any subscribed external systems.
+
+
+The system provides tailored interfaces for city operators and the public. City operators access a secure dashboard with real-time environmental metrics, system health, and active alerts. Public users access aggregated, non-sensitive environmental data through a simplified dashboard.
+
+
+The system will interact with multiple external systems. SCEMAS will notify any subscribed external systems to notify them of any alert events and will also interface with various IoT sensors to collect environmental data. 
+
 % End SubSection
 
 \subsection{Product Functions}

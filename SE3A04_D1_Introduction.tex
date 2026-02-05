@@ -1,3 +1,4 @@
+
 \newcommand{\introduction}{
 \newpage
 \section{Introduction}
@@ -5,7 +6,7 @@
 % Begin Section
 
 \begin{itemize}
-	\item Provide an overview of the document/SRS.
+	\item This document will provide an overview of the software requirements for SCEMAS. This document covers the purpose and objectives of SCEMAS, the scope of the system, characteristics of its intended users, product requirements, and an overview of the project structure.
 \end{itemize}
 
 
@@ -13,8 +14,8 @@
 \label{sub:purpose}
 % Begin SubSection
 \begin{itemize}
-	\item Specify the purpose of the SRS.
-	\item Specify the intended audience for the SRS.
+	\item The goal of this document is to define the software requirements, key functionalities, and user interactions for SCEMAS.
+	\item It is intended for internal project stakeholders such as developers, project managers, system architects, and other concerned parties. No prior familiarity with SCEMAS is necessary to understand this specification.
 \end{itemize}
 % End SubSection
 
@@ -22,9 +23,16 @@
 \label{sub:scope}
 % Begin SubSection
 \begin{itemize}
-	\item Identify the software product(s) to be produced, and name each (e.g., Host DBMS, Report Generator, etc.)
-	\item Explain what the software product(s) will do (and, if necessary, also state what they will not do).
-	\item Describe the application of the software being specified, including relevant benefits, objectives, and goals.
+	\item The product to be developed is SCEMAS, which contains many integrated components.
+	This includes IoT data ingestion, database for time-series and geospatial data, aggregation engine, rule based alert engine, operator dashboard, and a public REST API.
+	\item The IoT data ingestion is responsible for handling telemetry ingestion and validating it for correct formatting, compliance with schemas, and ensuring its within expected value ranges.
+	The database will store the data validated by the IoT ingestion, and will be optimized for geospatial and time-series data.
+	The aggregation engine will calculate various metrics such as 5-minute average, hourly maximums, and many more.
+	The rule based alert engine will have administrator defined thresholds. It will compare incoming sensor data to the threshold to alert and log as needed.
+	The operator dashboard must implement RBAC and display real time information from sensors, visualizations, and alert tools.
+	The public REST API will provide the aggregated, non-sensitive data for public and third-party consumption
+	\item SCEMAS continuously monitors air quality, noise levels, temperature, and humidity. 
+	Using this data, the system aims to improve urban environmental oversight, improve alerts during environmental events.
 %	\item Be consistent with similar statements in higher-level specifications (e.g., the system requirements specification), if they exist
 \end{itemize}
 % End SubSection
@@ -33,29 +41,29 @@
 \label{sub:definitions_acronyms_and_abbreviations}
 % Begin SubSection
 \begin{itemize}
-	\item Provide the definitions of all terms, acronyms, and abbreviations required to properly interpret the SRS.
-	\item This should be in alphabetical order.
+	\item IoT - Internet of Things, a network of connected devices that transmit and exchange data.
+	\item RBAC - Role Based Access Control, restricts access based on user roles.
+	\item REST API - Representational State Transfer Application Programming Interface, a standard for web service communication.
+	\item SCEMAS - Smart City Environmental Monitoring \& Alert System.
 \end{itemize}
 % End SubSection
 
 \subsection{References}
 \label{sub:references}
 % Begin SubSection
-\begin{itemize}
-	\item Provide a complete list of all documents referenced elsewhere in the SRS.
-	\item Identify each document by title, report number (if applicable), date, and publishing organization.
-	\item Specify the sources from which the references can be obtained.
-	\item Order this list in some sensible manner (alphabetical by author, or something else that makes more sense).
-\end{itemize}
+\begin{enumerate}
+	\item "Deliverable \#1 Template: Software Requirements Sepecification (SRS) Template," [Online]. https://avenue.cllmcmaster.ca/d2l/le/lessons/727030/topics/5250114 [Accessed: 2026-02-05].
+\end{enumerate}
 % End SubSection
 
 \subsection{Overview}
 \label{sub:overview}
 % Begin SubSection
 \begin{itemize}
-	\item Describe what the remainder of the document/SRS contains.\\
-	(e.g. "Section 2 discusses...Section 3...")
-%	\item Explain how the SRS is organized
+	\item Section 2 discusses the overall description for SCEMAS. This includes product perspectives, functions, user characteristics, constraints, assumptions and dependencies. 
+	Section 3 provies a use case diagram for the system which demonstrates typical interactions with the system, telemetry ingestion, and more.
+	Section 4 describes the specific requirements for SCEMAS, going over the process in detail, covering events the system must handle, and how viewpoints interact with the system.
+	Section 5 describes the specific non functional requirements, covering aesthetics, usability, performance, operations, security, and more.
 \end{itemize}
 % End SubSection}
 }

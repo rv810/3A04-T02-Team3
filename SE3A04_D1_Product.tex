@@ -28,6 +28,8 @@ The system will interact with multiple external systems. SCEMAS will notify any 
 \label{sub:product_functions}
 % Begin SubSection
 
+There will be 4 main modules in this product: the Account Service, Authentication Service, Telemetry Service, and Alert Service. The major functions of the software in the Account Service include creating accounts, updating account details, and logging in and out. Within the Authentication Service, the system handles assigning roles to users and verifying permissions to control access to protected resources. The Telemetry Service is responsible for receiving sensor data, validating its format and plausibility, and storing it for further processing. Finally, the Alert Service provides functionality for creating and updating alert rules, evaluating incoming telemetry against these rules, generating alerts when violations occur, viewing alert history, and notifying external systems.
+
 \hspace*{-1cm}
 \begin{table}[H]
 \centering
@@ -80,11 +82,15 @@ Telemetry Service &
     \begin{itemize}
         \item Validate each incoming message for correct format, adherence to schema, and plausability
     \end{itemize}
+	\item \textbf{Store Telemetry Data}
+    \begin{itemize}
+        \item Store validated telemetry data for further processing
+    \end{itemize}
 \end{itemize}
 \\
 \hline
 
-Alert Rules Service &
+Alert Service &
 \begin{itemize}
     \item \textbf{Create Alert Rule}
     \begin{itemize}
@@ -140,15 +146,45 @@ Alert Rules Service &
 \subsection{Assumptions and Dependencies}
 \label{sub:assumptions_and_dependencies}
 % Begin SubSection
-\begin{itemize}
-	\item List any assumptions you made in interpreting what the software being developed is aiming to achieve
-	\item List any other assumptions you made that, if it fails to hold, could require you to change the requirements
-	%\item List each of the factors that affect the requirements stated in the SRS
-	%\item These factors are not design constraints on the software but are, rather, any changes to them that can affect the requirements in the SRS
-	\begin{itemize}
-		\item \textbf{Example}: An assumption may be that a specific operating system will be available on the hardware designated for the software product. If, in fact, the operating system is not available, the SRS would then have to change accordingly.
-	\end{itemize}
-\end{itemize}
+The SCEMAS system is designed for two main types of users: the general public and city operators. The expected skills and knowledge for each are as follows:
+
+\begin{enumerate}
+    \item \textbf{Education Level:}
+    \begin{itemize}
+        \item \textbf{General Public:} Basic reading and writing skills
+        \begin{itemize}
+            \item Users should be able to understand simple environmental information, like air quality or temperature alerts.
+        \end{itemize}
+        \item \textbf{City Operators:} College-level or equivalent technical education
+        \begin{itemize}
+            \item Operators should have a good understanding of environmental science and/or urban planning concepts to interpret the data effectively.
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Experience:}
+    \begin{itemize}
+        \item \textbf{General Public:} Any experience
+        \begin{itemize}
+            \item The public interface is easy to use, so even first-time users should be able to check environmental info without problems.
+        \end{itemize}
+        \item \textbf{City Operators:} Moderate to advanced experience
+        \begin{itemize}
+            \item Operators should have some experience with monitoring systems, dashboards, and interpreting environmental telemetry to make informed decisions.
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Technical Skills:}
+    \begin{itemize}
+        \item \textbf{General Public:} Basic digital literacy
+        \begin{itemize}
+            \item Users should be able to use a web browser or app to view information and alerts.
+        \end{itemize}
+        \item \textbf{City Operators:} Comfortable using computer systems and dashboards
+        \begin{itemize}
+            \item Operators should be able to look at data, set up alerts, and understand what the numbers mean for the city.
+        \end{itemize}
+    \end{itemize}
+\end{enumerate}
 % End SubSection
 
 \subsection{Apportioning of Requirements}

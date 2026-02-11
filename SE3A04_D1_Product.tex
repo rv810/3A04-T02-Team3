@@ -39,95 +39,123 @@ There will be 4 main modules in this product: the Account Service, Authenticatio
 \begin{table}[H]
 \centering
 \renewcommand{\arraystretch}{1.0}
-\setlength{\tabcolsep}{3pt}
+
+\setlength{\tabcolsep}{1pt}
+\setlength{\itemsep}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\parsep}{0pt}
+\setlength{\topsep}{0pt}
+\setlength{\partopsep}{0pt}
+
+\newenvironment{compactitem}{
+  \begin{itemize}
+    \setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{0pt}
+    \setlength{\topsep}{0pt}
+    \setlength{\partopsep}{0pt}
+}{
+  \end{itemize}
+}
+
 \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4cm}|X|}
 \hline
 \textbf{Module} & \textbf{Functions} \\
 \hline
 
 Account Service &
-\begin{itemize}
+\begin{compactitem}
     \item \textbf{Create Account}
-    \begin{itemize}
+    \begin{compactitem}
         \item Allows a user to create an account
-    \end{itemize}
+    \end{compactitem}
     \item \textbf{Update Account}
-    \begin{itemize}
+    \begin{compactitem}
         \item Allows users to update account details
-    \end{itemize}
+    \end{compactitem}
     \item \textbf{Login / Logout}
-    \begin{itemize}
+    \begin{compactitem}
         \item Authenticates users and manages sessions
-    \end{itemize}
-\end{itemize}
+    \end{compactitem}
+\end{compactitem}
 \\
 \hline
 
 Authentication Service &
-\begin{itemize}
+\begin{compactitem}
 	\item \textbf{Assign Roles}
-	\begin{itemize}
+	\begin{compactitem}
 		\item Assigns roles to users based on their account type
-	\end{itemize}
+	\end{compactitem}
 	\item \textbf{Verify Permissions}
-	\begin{itemize}
+	\begin{compactitem}
 		\item Verifies user permissions for allowing access to protected resources
-	\end{itemize}
-\end{itemize}
+	\end{compactitem}
+\end{compactitem}
 \\
 \hline
 
 Telemetry Service &
-\begin{itemize}
+\begin{compactitem}
     \item \textbf{Receive Telemetry Data}
-    \begin{itemize}
+    \begin{compactitem}
         \item Accepts sensor data via MQTT
-    \end{itemize}
+    \end{compactitem}
 	\item \textbf{Validate Telemetry Data}
-    \begin{itemize}
+    \begin{compactitem}
         \item Validate each incoming message for correct format, adherence to schema, and plausability
-    \end{itemize}
+    \end{compactitem}
 	\item \textbf{Store Telemetry Data}
-    \begin{itemize}
+    \begin{compactitem}
         \item Store validated telemetry data for further processing
-    \end{itemize}
-\end{itemize}
+    \end{compactitem}
+\end{compactitem}
 \\
 \hline
 
 Alert Service &
-\begin{itemize}
+\begin{compactitem}
     \item \textbf{Create Alert Rule}
-    \begin{itemize}
+    \begin{compactitem}
         \item Allows operators to define new alert rules
-    \end{itemize}
+    \end{compactitem}
     \item \textbf{Update Alert Rule}
-    \begin{itemize}
+    \begin{compactitem}
         \item Allows operators to update existing alert rules
-    \end{itemize}
+    \end{compactitem}
 	\item \textbf{Evaluate Telemetry Against Rules}
-	\begin{itemize}
+	\begin{compactitem}
         \item Continuously checks incoming data for violations
-    \end{itemize}
+    \end{compactitem}
 	\item \textbf{Create Alert}
-    \begin{itemize}
+    \begin{compactitem}
         \item Generate an alert when a rule is violated
-    \end{itemize}
+    \end{compactitem}
+    \item \textbf{Resolve Alert}
+    \begin{compactitem}
+        \item Allows operators to mark an alert as resolved
+    \end{compactitem}
 	\item \textbf{View Alert History}
-	\begin{itemize}
+	\begin{compactitem}
         \item Displays past and currently active alerts
-    \end{itemize}
+    \end{compactitem}
 	\item \textbf{Notify external systems}
-	\begin{itemize}
+	\begin{compactitem}
         \item Send alerts to subscribed systems
-    \end{itemize}
-\end{itemize}
+    \end{compactitem}
+\end{compactitem}
 \\
 \hline
 
 \end{tabularx}
 \end{table}
 \hspace*{-1cm}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=1.1\linewidth]{StateDiagram.drawio.png}
+    \caption{State Diagram}
+\end{figure}
 % End SubSection
 
 \subsection{User Characteristics}

@@ -222,7 +222,8 @@
 \label{ssub:maintenance_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{MS-M}1. ]
-	\item The system must receive a minimum of bi-monthly software updates to fix bugs and improve performance.
+	\item The system must receive a minimum of bi-monthly software updates to fix bugs and improve performance. \\
+	{\bf Rationale:} Regular software updates are important to ensure that any bugs are addressed and performance is improved over time. This also helps to maintain user trust and satisfaction with the system.
 \end{enumerate}
 % End SubSubSection
 
@@ -230,11 +231,13 @@
 \label{ssub:supportability_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{MS-S}1. ]
-	\item The system must provide users with access to help or support information within the application.
+	\item The system must provide users with access to help or support information within the application. \\
+	{\bf Rationale:} Providing users with access to help or support information within the application can improve user experience and reduce frustration. It allows users to quickly find answers to their questions or troubleshoot issues without having to leave the application or contact support directly. This can also help to reduce the workload on support staff by giving users the ability to resolve issues on their own.
 \end{enumerate}
 
 \begin{enumerate}[{MS-S}2. ]
-	\item The system must provide a way for users to contact support staff.
+	\item The system must provide a way for users to contact support staff. \\
+	{\bf Rationale:} If users cannot find a solution to their problem through the support information it is important that they have an easy way to contact support staff. This can help to ensure that users receive the assistance they need in a timely manner, which can improve user satisfaction.
 \end{enumerate}
 % End SubSubSection
 
@@ -242,7 +245,8 @@
 \label{ssub:adaptability_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{MS-A}1. ]
-	\item The system must be able to operate on iOS 15 and above on all iOS devices.
+	\item The system must be able to operate on iOS 15 and above on all iOS devices. \\
+	{\bf Rationale:} This system is being developed for iOS and it should be able to run on the more recent versions of iOS to ensure that it can be used by a wide range of users. By supporting iOS 15 and above, the system can take advantage of the latest features and improvements in the operating system, which can enhance user experience and performance.
 \end{enumerate}
 % End SubSubSection
 
@@ -256,15 +260,18 @@
 \label{ssub:access_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-AC}1. ]
-	\item The system must require users to to authenticate themselves before they can access the system.
+	\item The system must require users to to authenticate themselves before they can access the system. \\
+	{\bf Rationale:} This is important to ensure that only authorized users can access the system and its data. Authentication can help to prevent unauthorized access and protect sensitive information from being accessed.
 \end{enumerate}
 
 \begin{enumerate}[{SR-AC}2. ]
-	\item The system shall enforce role-based access control for all users.
+	\item The system shall enforce role-based access control for all users. \\
+	{\bf Rationale:} Role-based access control is important to ensure that city operators can access more detailed information about alerts whereas general users can only access basic information. This helps to protect sensitive information and ensure that users only have access to the information that is relevant to their role.
 \end{enumerate}
 
 \begin{enumerate}[{SR-AC}3. ]
-	\item The system shall restrict administrative functions to users assigned an operator role.
+	\item The system shall restrict administrative functions to users assigned an operator role. \\
+	{\bf Rationale:} Only city operators should have access to certain adminsitrative functiosn such as creating/updating alert rules, resolving alerts, etc. This helps to ensure that only authorized users can perform these actions and helps to protect the integrity of the system.
 \end{enumerate}
 % End SubSubSection
 
@@ -272,15 +279,13 @@
 \label{ssub:integrity_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-INT}1. ]
-	\item The system shall validate all incoming telemetry data to ensure it conforms to the expected format and schema.
+	\item The system shall validate all incoming telemetry data. \\
+	{\bf Rationale:} Validating the data is important to ensure it conforms to the expected format and schema.
 \end{enumerate}
 
 \begin{enumerate}[{SR-INT}2. ]
-	\item The system shall reject telemetry data that fails plausibility or validation checks.
-\end{enumerate}
-
-\begin{enumerate}[{SR-INT}3. ]
-	\item The system shall ensure that stored telemetry data cannot be modified without proper authorization.
+	\item The system shall reject telemetry data that fails plausibility or validation checks. \\
+	{\bf Rationale:} Rejecting invalid data is important to maintain the integrity of the system and prevent it from being compromised by corrupted data.
 \end{enumerate}
 % End SubSubSection
 
@@ -288,15 +293,18 @@
 \label{ssub:privacy_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-P}1. ]
-	\item The system shall encrypt any sensitive personal information collected from users.
+	\item The system shall encrypt any sensitive personal information collected from users. \\
+	{\bf Rationale:} Encrypting sensitive personal information is important to protect user privacy and prevent unauthorized access to this information. This can help to build trust with users and ensure that their data is handled securely.
 \end{enumerate}
 
 \begin{enumerate}[{SR-P}2. ]
-	\item The system shall provide users with the ability to delete their personal information and account upon request.
+	\item The system shall provide users with the ability to delete their personal information and account upon request. \\
+	{\bf Rationale:} Providing users with the ability to delete their personal information and account is important to give users control over their data and respect their privacy. This ensures that users feel comfortable using the system.
 \end{enumerate}
 
 \begin{enumerate}[{SR-P}3. ]
-	\item The system shall provide users with a privacy notice that informs them how their information is being used and stored.
+	\item The system shall provide users with a privacy notice that informs them how their information is being used and stored. \\
+	{\bf Rationale:} Providing users with a privacy notice is important to ensure transparency and build trust with users. It allows users to understand how their information is being used and stored, which can help to alleviate concerns about privacy and encourage them to use the system.
 \end{enumerate}
 % End SubSubSection
 
@@ -304,11 +312,13 @@
 \label{ssub:audit_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-AU}1. ]
-	\item The system must store a history of alerts including any changes made, the user who made the changes, and the timestamp. 
+	\item The system must store a history of alerts including any changes made, the user who made the changes, and the timestamp. \\
+	{\bf Rationale:} Storing a history of alerts and changes is important for maintaining a record of actions taken within the system.
 \end{enumerate}
 
 \begin{enumerate}[{SR-AU}2. ]
-	\item The system shall log all authentication attempts, including successful and failed logins.
+	\item The system shall log all authentication attempts, including successful and failed logins. \\
+	{\bf Rationale:} Logging authentication attempts is important for security monitoring. It allows administrators to detect and investigate potential security breaches or unauthorized access attempts.
 \end{enumerate}
 % End SubSubSection
 
@@ -316,11 +326,13 @@
 \label{ssub:immunity_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-IM}1. ]
-	\item The system shall limit repeated failed authentication attemps.
+	\item The system shall limit repeated failed authentication attemps. \\
+	{\bf Rationale:} After a certain number of failed login attempts, the system should temporarily lock the account or require additional verification to prevent attacks and protect user accounts from unauthorized access.
 \end{enumerate}
 
-\begin{enumerate}[{SR-IM}1. ]
-	\item The system shall protect against unauthorized access through authentication mechanisms.
+\begin{enumerate}[{SR-IM}2. ]
+	\item The system shall protect against unauthorized access through multi-factor authentication. \\
+	{\bf Rationale:} Implementing authentication mechanisms, such as multi-factor authentication, can help to protect against unauthorized access and enhance the overall security of the system.
 \end{enumerate}
 % End SubSubSection
 % End SubSection

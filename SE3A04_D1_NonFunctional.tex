@@ -198,7 +198,7 @@
 \label{ssub:maintenance_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{MS-M}1. ]
-	\item 
+	\item The system must receive a minimum of bi-monthly software updates to fix bugs and improve performance.
 \end{enumerate}
 % End SubSubSection
 
@@ -206,7 +206,11 @@
 \label{ssub:supportability_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{MS-S}1. ]
-	\item 
+	\item The system must provide users with access to help or support information within the application.
+\end{enumerate}
+
+\begin{enumerate}[{MS-S}2. ]
+	\item The system must provide a way for users to contact support staff.
 \end{enumerate}
 % End SubSubSection
 
@@ -214,7 +218,7 @@
 \label{ssub:adaptability_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{MS-A}1. ]
-	\item 
+	\item The system must be able to operate on iOS 15 and above on all iOS devices.
 \end{enumerate}
 % End SubSubSection
 
@@ -228,7 +232,15 @@
 \label{ssub:access_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-AC}1. ]
-	\item 
+	\item The system must require users to to authenticate themselves before they can access the system.
+\end{enumerate}
+
+\begin{enumerate}[{SR-AC}2. ]
+	\item The system shall enforce role-based access control for all users.
+\end{enumerate}
+
+\begin{enumerate}[{SR-AC}3. ]
+	\item The system shall restrict administrative functions to users assigned an operator role.
 \end{enumerate}
 % End SubSubSection
 
@@ -236,7 +248,15 @@
 \label{ssub:integrity_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-INT}1. ]
-	\item 
+	\item The system shall validate all incoming telemetry data to ensure it conforms to the expected format and schema.
+\end{enumerate}
+
+\begin{enumerate}[{SR-INT}2. ]
+	\item The system shall reject telemetry data that fails plausibility or validation checks.
+\end{enumerate}
+
+\begin{enumerate}[{SR-INT}3. ]
+	\item The system shall ensure that stored telemetry data cannot be modified without proper authorization.
 \end{enumerate}
 % End SubSubSection
 
@@ -244,7 +264,15 @@
 \label{ssub:privacy_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-P}1. ]
-	\item 
+	\item The system shall encrypt any sensitive personal information collected from users.
+\end{enumerate}
+
+\begin{enumerate}[{SR-P}2. ]
+	\item The system shall provide users with the ability to delete their personal information and account upon request.
+\end{enumerate}
+
+\begin{enumerate}[{SR-P}3. ]
+	\item The system shall provide users with a privacy notice that informs them how their information is being used and stored.
 \end{enumerate}
 % End SubSubSection
 
@@ -252,7 +280,11 @@
 \label{ssub:audit_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-AU}1. ]
-	\item 
+	\item The system must store a history of alerts including any changes made, the user who made the changes, and the timestamp. 
+\end{enumerate}
+
+\begin{enumerate}[{SR-AU}2. ]
+	\item The system shall log all authentication attempts, including successful and failed logins.
 \end{enumerate}
 % End SubSubSection
 
@@ -260,10 +292,13 @@
 \label{ssub:immunity_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-IM}1. ]
-	\item 
+	\item The system shall limit repeated failed authentication attemps.
+\end{enumerate}
+
+\begin{enumerate}[{SR-IM}1. ]
+	\item The system shall protect against unauthorized access through authentication mechanisms.
 \end{enumerate}
 % End SubSubSection
-
 % End SubSection
 
 \subsection{Cultural and Political Requirements}

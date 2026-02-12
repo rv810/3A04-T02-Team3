@@ -22,7 +22,12 @@
 \label{ssub:appearance_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{LF-A}1. ]
-	\item 
+	\item The operator dashboard shall display environmental data using visually distinct components (charts, maps, indicators) that clearly separate critical alerts from informational data. \\
+	{\bf Rationale:} This ensures that operators can quickly identify and respond to critical alerts without confusion, improving response times during environmental events.
+	\item Alert states shall be visually emphasized using multiple cues (color, iconography, labels).\\
+	{\bf Rationale:} This enhances the visibility of critical information, ensuring that operators can easily distinguish between different alert levels and take appropriate action.
+	\item The system shall provide visual cues for historical trends, such as shaded areas for previous hour/day metrics on graphs.\\
+	{\bf Rationale:} This allows operators to contextualize current readings against recent trends, aiding in situational awareness and decision-making [6].
 \end{enumerate}
 % End SubSubSection
 
@@ -30,7 +35,12 @@
 \label{ssub:style_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{LF-S}1. ]
-	\item 
+	\item The dashboard interface shall prioritize clarity and information density over decorative visual elements.\\
+	{\bf Rationale:} Environmental monitoring systems are operational tools. Minimalist interfaces improve scanning speed and reduce distraction [3].
+	\item Icons used in the interface shall follow widely recognized conventions.\\
+	{\bf Rationale:} Standardized symbols reduce training requirements and minimize interpretation\\ errors [4].
+	\item The dashboard shall employ consistent font families and sizes across all modules to maintain readability and visual cohesion.\\
+	{\bf Rationale:} Consistent typography supports faster scanning, reduces cognitive load, and improves professional appearance.
 \end{enumerate}
 % End SubSubSection
 
@@ -44,7 +54,12 @@
 \label{ssub:ease_of_use_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{UH-EOU}1. ]
-	\item 
+	\item A trained operator shall be able to acknowledge an active alert within 30 seconds of dashboard interaction.\\
+	{\bf Rationale:} Rapid acknowledgement is essential for incident management workflows and aligns with project usability goals.
+	\item Core dashboard tasks (view alerts, inspect zone metrics, filter data) shall require no more than three interactions.\\
+	{\bf Rationale:} Reducing interaction complexity improves efficiency and lowers error probability during time-sensitive events.
+	\item System response time for standard dashboard actions shall not exceed 2 seconds under normal conditions.\\
+	{\bf Rationale:} Perceived latency negatively affects usability and decision-making confidence [5].
 \end{enumerate}
 % End SubSubSection
 
@@ -52,7 +67,10 @@
 \label{ssub:personalization_and_internationalization_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{UH-PI}1. ]
-	\item 
+	\item The system shall support configurable measurement units without requiring code changes.\\
+	{\bf Rationale:}Different municipalities and regulatory bodies use varying measurement standards.
+	\item Textual content shall be externalized to enable future localization for multilingual support.\\
+	{\bf Rationale:} The system may later require multilingual support. Designing for this extensibility avoids refactoring.
 \end{enumerate}
 % End SubSubSection
 
@@ -60,7 +78,9 @@
 \label{ssub:learning_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{UH-L}1. ]
-	\item 
+	\item A new operator shall be able to understand basic dashboard functionality within one hour using provided documentation.\\
+	{\bf Rationale:} Municipal environments frequently involve staff turnover and cross-training. The onboarding process shouldn't take too long, but since this is a specialized system, some training is expected.
+	It also requires consideration for safety-critical operations, so operators must have a solid understanding of the system before using it in a live environment.
 \end{enumerate}
 % End SubSubSection
 
@@ -68,7 +88,8 @@
 \label{ssub:understandability_and_politeness_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{UH-UP}1. ]
-	\item 
+	\item System notifications and alerts shall use concise, non-technical language.\\
+	{\bf Rationale:} Operators are domain users, not necessarily software specialists.
 \end{enumerate}
 % End SubSubSection
 
@@ -76,7 +97,10 @@
 \label{ssub:accessibility_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{UH-A}1. ]
-	\item 
+	\item Anything that is not text must also have a text alternative where applicable (ex. Alt text for images).\\
+	{\bf Rationale:} This ensures that users with visual impairments can still access the content using screen readers [2].
+	\item All user interface components must have a contrast ratio of at least 3:1. \\
+	{\bf Rationale:} This improves readability for users with visual impairments and ensures compliance with WCAG 2.1 guidelines [2].
 \end{enumerate}
 % End SubSubSection
 

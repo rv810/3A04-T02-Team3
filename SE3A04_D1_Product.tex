@@ -161,24 +161,6 @@ Alert Service &
 \subsection{User Characteristics}
 \label{sub:user_characteristics}
 % Begin SubSection
-\begin{itemize}
-	\item Describe those general characteristics of the intended users of the product including educational level, experience, and technical expertise 
-	\item Since there will be many users, you may wish to divide into different user types or personas
-%	\item Do not state specific requirements, but rather provide the reasons why certain specific requirements are later specified
-\end{itemize}
-% End SubSection
-
-\subsection{Constraints}
-\label{sub:constraints}
-% Begin SubSection
-\begin{itemize}
-	\item Provide a general description of any constraints that will limit the developer's options
-\end{itemize}
-% End SubSection
-
-\subsection{Assumptions and Dependencies}
-\label{sub:assumptions_and_dependencies}
-% Begin SubSection
 The SCEMAS system is designed for two main types of users: the general public and city operators. The expected skills and knowledge for each are as follows:
 
 \begin{enumerate}
@@ -220,11 +202,40 @@ The SCEMAS system is designed for two main types of users: the general public an
 \end{enumerate}
 % End SubSection
 
+\subsection{Constraints}
+\label{sub:constraints}
+% Begin SubSection
+\begin{enumerate}
+	\item \textbf{Project Time:} The time allotted for the project affects achievable scope, implementation depth and complexity.
+    \item \textbf{Team Resources:} The team size and available effort limits implementation. The system must be buildable and testable by the assigned team size and skill set within the term.
+    \item \textbf{Budget:} There is no budget for the project, so only free/open-source tools and free-tier services may be used.
+\end{enumerate}
+% End SubSection
+
+\subsection{Assumptions and Dependencies}
+\label{sub:assumptions_and_dependencies}
+% Begin SubSection
+\begin{enumerate}
+    \item Sensors can send data continuously without requiring manual operator input.
+    \item An alert is created only when at least one rule is violated.
+    \item Operators/admins are responsible for creating/updating alert rules.
+    \item The system depends on an Authentication/Identity service to validate credentials and assign roles.
+    \item The system depends on a database to store telemetry, account info, and alert history.
+    \item The system depends on network connectivity between sensors and the Telemetry Service for near real-time monitoring.
+    \item Public dashboard content is derived from alerts/metrics and does not expose sensitive information.
+    \item Sending alerts to subscribed systems depends on external APIs being reachable and stable.
+
+\end{enumerate}
+% End SubSection
+
 \subsection{Apportioning of Requirements}
 \label{sub:apportioning_of_requirements}
 % Begin SubSection
-\begin{itemize}
-	\item Identify requirements that may be delayed until future versions of the system
-\end{itemize}
+\begin{enumerate}
+    \item \textbf{Public dashboard enhancements:} Future versions may add zone/region filtering, richer visualizations, and user subscription preferences.
+	\item \textbf{Advanced analytics and prediction:} Future versions may add trend analysis, anomaly detection, and early warning predictions.
+    \item \textbf{Further notification capabilities:} Future versions may add SMS/push notifications.
+    \item \textbf{Further language capabilities:} Future versions may add additional languages.
+\end{enumerate}
 % End SubSection
 }

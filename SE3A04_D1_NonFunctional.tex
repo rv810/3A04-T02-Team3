@@ -345,16 +345,25 @@
 \label{ssub:cultural_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{CP-C}1. ]
-	\item 
+	\item All dashboard text and alerts shall be written in plain language and avoid technical terminology or unexplained abbreviations. \\
+    {\bf Rationale:} Users may not understand technical terminology. Simple wording reduces confusion and misinterpretation.
+\end{enumerate}
+
+\begin{enumerate}[{CP-C}2. ]
+	\item All dashboard content and alerts shall be available in all official language(s) where the system is available. \\
+    {\bf Rationale:} Users may have different language backgrounds depending on where the system is used. Supporting official languages improves inclusivity and reduces misunderstanding.
+\end{enumerate}
+
+\begin{enumerate}[{CP-C}3. ]
+	\item Alerts shall avoid culturally-specific idioms or metaphors, and shall use neutral, literal wording. \\
+    {\bf Rationale:} Idioms and metaphors don’t translate consistently across cultures. Neutral wording improves clarity and reduces misinterpretation.
 \end{enumerate}
 % End SubSubSection
 
 \subsubsection{Political Requirements}
 \label{ssub:political_requirements}
 % Begin SubSubSection
-\begin{enumerate}[{CP-P}1. ]
-	\item 
-\end{enumerate}
+N/A
 % End SubSubSection
 
 % End SubSection
@@ -367,7 +376,18 @@
 \label{ssub:compliance_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{LR-COMP}1. ]
-	\item 
+	\item Personal information handled by the system must be protected against loss, theft, and unauthorized access, disclosure, copying, use, or modification. \\
+    {\bf Rationale:} This aligns with PIPEDA Principle 7 (Safeguards), which requires appropriate protection of personal information.
+\end{enumerate}
+
+\begin{enumerate}[{LR-COMP}2. ]
+	\item The system must obtain the user’s knowledge and consent before collecting, using, or disclosing their personal information. \\
+    {\bf Rationale:} This aligns with PIPEDA Principle 3 (Consent).
+\end{enumerate}
+
+\begin{enumerate}[{LR-COMP}3. ]
+	\item The system must limit collection of personal information to only what is necessary for the stated purpose(s). \\
+    {\bf Rationale:} This aligns with PIPEDA Principle 4 (Limiting Collection).
 \end{enumerate}
 % End SubSubSection
 
@@ -375,7 +395,18 @@
 \label{ssub:standards_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{LR-STD}1. ]
-	\item 
+	\item The system shall not use notifications for promotional or advertisement purposes; notifications shall only communicate system or environmental monitoring events. \\
+    {\bf Rationale:} Notifications should be relevant and not used for unsolicited ads.
+\end{enumerate}
+
+\begin{enumerate}[{LR-STD}2. ]
+	\item Authenticated sessions should automatically expire after a period of inactivity, requiring the user to log in again to access operator functions. \\
+    {\bf Rationale:} This is a standard for app quality in terms of security and access control.
+\end{enumerate}
+
+\begin{enumerate}[{LR-STD}3. ]
+	\item Any personal or sensitive data shall not be written to system logs or application-specific logs. \\
+    {\bf Rationale:} This reduces the risk of sensitive data leakage through logs.
 \end{enumerate}
 % End SubSubSection
 

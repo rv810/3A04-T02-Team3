@@ -18,26 +18,26 @@
 
 \noindent {\bf Interpretation:} Specify any liberties you took in interpreting business events, if necessary.\\
 
-\begin{enumerate}[{\bf BE1.}]
-	\item Business Event Name \#1
-		\begin{enumerate}[{\bf VP1.}]
-			\item Viewpoint Name \#1 \\
-				\textcolor{red}{Insert Scenario Here}
-			\item Viewpoint Name \#2 \\
-				\textcolor{red}{Insert Scenario Here}
-		\end{enumerate}
-		{\bf Global Scenario:}\\
-		\textcolor{red}{Insert Scenario Here}
-	\item Business Event Name \#2
-	\begin{enumerate}[{\bf VP1.}]
-		\item Viewpoint Name \#1 \\
-		\textcolor{red}{Insert Scenario Here}
-		\item Viewpoint Name \#2 \\
-		\textcolor{red}{Insert Scenario Here}
-	\end{enumerate}
-	{\bf Global Scenario:}\\
-	\textcolor{red}{Insert Scenario Here}
-\end{enumerate}
+%	\begin{enumerate}[{\bf BE1.}]
+%		\item Business Event Name \#1
+%			\begin{enumerate}[{\bf VP1.}]
+%				\item Viewpoint Name \#1 \\
+%					\textcolor{red}{Insert Scenario Here}
+%				\item Viewpoint Name \#2 \\
+%					\textcolor{red}{Insert Scenario Here}
+%			\end{enumerate}
+%			{\bf Global Scenario:}\\
+%			\textcolor{red}{Insert Scenario Here}
+%		\item Business Event Name \#2
+%		\begin{enumerate}[{\bf VP1.}]
+%			\item Viewpoint Name \#1 \\
+%			\textcolor{red}{Insert Scenario Here}
+%			\item Viewpoint Name \#2 \\
+%			\textcolor{red}{Insert Scenario Here}
+%		\end{enumerate}
+%		{\bf Global Scenario:}\\
+%		\textcolor{red}{Insert Scenario Here}
+%	\end{enumerate}
 
 %	Below, we organize by Business Event.
 %	\begin{enumerate}[{BE}1.]
@@ -147,4 +147,222 @@
 %			}%
 %		}		
 %	\end{enumerate}
+
+\begin{enumerate}[{\bf BE1.}]
+	\item Ingest Sensor Telemetry \\
+	{\it Pre-condition: Sensor device is registered and authenticated.}
+		\begin{enumerate}[{\bf VP1.}]
+			\item IoT Sensor Device \\
+				\noindent\fbox{%
+				\parbox{0.5\textwidth}{%
+					\begin{itemize}
+						\item {\bf Main Success Scenario:}
+						\item {\bf $E_{1}$:} Sensor sends telemetry message containing environmental measurements.
+						\item {\bf $S_{1}$:} System receives the telemetry message.
+						\item {\bf Secondary Scenario (2i):} Telemetry message format is invalid.
+						\item {\bf $S_{2}$:} System rejects the message.
+						\item {\bf $S_{3}$:} Telemetry ingestion failed.
+					\end{itemize}
+				}%
+			}
+			\item City Operator \\ N/A
+			\item System Administrator \\ N/A
+			\item External System (Subscriber / API Consumer) \\ N/A
+			\item General Public User \\ N/A
+		\end{enumerate}
+		{\bf Global Scenario:}\\
+		\noindent\fbox{%
+			\parbox{0.5\textwidth}{%
+				\begin{itemize}
+					\item {\bf 1:} System receives telemetry data from a registered sensor.
+					\item {\bf 2:} System validates message format and value ranges.
+					\item {\bf 3:} Valid telemetry is accepted for processing.
+				\end{itemize}
+			}%
+		}
+
+	\item Process \& Aggregate Environmental Data \\
+	{\it Pre-condition: Valid telemetry has been ingested.}
+	\begin{enumerate}[{\bf VP1.}]
+		\item IoT Sensor Device \\ N/A
+		\item City Operator \\ N/A
+		\item System Administrator \\ N/A
+		\item External System (Subscriber / API Consumer) \\ N/A
+		\item General Public User \\ N/A
+	\end{enumerate}
+	{\bf Global Scenario:}\\
+	\noindent\fbox{%
+		\parbox{0.5\textwidth}{%
+			\begin{itemize}
+				\item {\bf 1:} System stores incoming telemetry in time-series storage.
+				\item {\bf 2:} System aggregates data over predefined time windows.
+				\item {\bf 3:} System associates aggregated data with geographical zones.
+				\item {\bf Secondary Scenario (2i):} System fails to store telemetry data.
+				\item {\bf 2i.1:} Aggregation cannot proceed.
+			\end{itemize}
+		}%
+	}
+
+	\item Detect Threshold Violation \& Generate Alert \\
+	{\it Pre-condition: Aggregated data is available and alert rules exist.}
+	\begin{enumerate}[{\bf VP1.}]
+		\item IoT Sensor Device \\ N/A
+		\item City Operator \\ N/A
+		\item System Administrator \\
+		\noindent\fbox{%
+			\parbox{0.5\textwidth}{%
+				\begin{itemize}
+					\item {\bf $E_{1}$:} Administrator defines alert thresholds.
+				\end{itemize}
+			}%
+		}
+		\item External System (Subscriber / API Consumer) \\ N/A
+		\item General Public User \\ N/A
+	\end{enumerate}
+	{\bf Global Scenario:}\\
+	\noindent\fbox{%
+		\parbox{0.5\textwidth}{%
+			\begin{itemize}
+				\item {\bf 1:} System evaluates aggregated data against alert rules.
+				\item {\bf 2:} System detects a rule violation.
+				\item {\bf 3:} System creates an alert and logs the event.
+				\item {\bf 4:} System notifies subscribed external systems.
+				\item {\bf Secondary Scenario (2i):} Alert evaluation fails due to system error.
+				\item {\bf 2i.1:} Alert generation failed.
+			\end{itemize}
+		}%
+	}
+
+	\item Acknowledge / Resolve Alert \\
+	{\it Pre-condition: An active alert exists.}
+	\begin{enumerate}[{\bf VP1.}]
+		\item IoT Sensor Device \\ N/A
+		\item City Operator \\
+		\noindent\fbox{%
+			\parbox{0.5\textwidth}{%
+				\begin{itemize}
+					\item {\bf Main Success Scenario:}
+					\item {\bf $E_{1}$:} Operator views active alerts on the dashboard.
+					\item {\bf $E_{2}$:} Operator acknowledges an alert.
+					\item {\bf $S_{1}$:} System updates alert status.
+				\end{itemize}
+			}%
+		}
+		\item System Administrator \\ N/A
+		\item External System (Subscriber / API Consumer) \\ N/A
+		\item General Public User \\ N/A
+	\end{enumerate}
+	{\bf Global Scenario:}\\
+	\noindent\fbox{%
+		\parbox{0.5\textwidth}{%
+			\begin{itemize}
+				\item {\bf 1:} System displays active alerts.
+				\item {\bf 2:} Operator acknowledges or resolves an alert.
+				\item {\bf 3:} System records the status change in the audit log.
+			\end{itemize}
+		}%
+	}
+
+	\item View Operational Dashboard \\
+	{\it Pre-condition: User is authenticated as operator or administrator.}
+	\begin{enumerate}[{\bf VP1.}]
+		\item IoT Sensor Device \\ N/A
+		\item City Operator \\
+		\noindent\fbox{%
+			\parbox{0.5\textwidth}{%
+				\begin{itemize}
+					\item {\bf Main Success Scenario:}
+					\item {\bf $E_{1}$:} Operator logs into the dashboard.
+					\item {\bf $S_{1}$:} System displays real-time environmental data and alerts.
+				\end{itemize}
+			}%
+		}
+		\item System Administrator \\
+		\noindent\fbox{%
+			\parbox{0.5\textwidth}{%
+				\begin{itemize}
+					\item Same as VP2 (City Operator).
+				\end{itemize}
+			}%
+		}
+		\item External System (Subscriber / API Consumer) \\ N/A
+		\item General Public User \\ N/A
+	\end{enumerate}
+	{\bf Global Scenario:}\\
+	\noindent\fbox{%
+		\parbox{0.5\textwidth}{%
+			\begin{itemize}
+				\item {\bf 1:} User authenticates successfully.
+				\item {\bf 2:} System presents visualizations of current and historical data.
+			\end{itemize}
+		}%
+	}
+
+	\item Access Public Environmental Data (API) \\
+	{\it Pre-condition: Aggregated, non-sensitive data exists.}
+	\begin{enumerate}[{\bf VP1.}]
+		\item IoT Sensor Device \\ N/A
+		\item City Operator \\ N/A
+		\item System Administrator \\ N/A
+		\item External System (Subscriber / API Consumer) \\
+		\noindent\fbox{%
+			\parbox{0.5\textwidth}{%
+				\begin{itemize}
+					\item {\bf Main Success Scenario:}
+					\item {\bf $E_{1}$:} External system requests environmental data via API.
+					\item {\bf $S_{1}$:} System authenticates the request.
+					\item {\bf $S_{2}$:} System returns aggregated data.
+				\end{itemize}
+			}%
+		}
+		\item General Public User \\
+		\noindent\fbox{%
+			\parbox{0.5\textwidth}{%
+				\begin{itemize}
+					\item Same as VP4 (External System).
+				\end{itemize}
+			}%
+		}
+	\end{enumerate}
+	{\bf Global Scenario:}\\
+	\noindent\fbox{%
+		\parbox{0.5\textwidth}{%
+			\begin{itemize}
+				\item {\bf 1:} System receives API request.
+				\item {\bf 2:} System enforces access controls and rate limits.
+				\item {\bf 3:} System responds with requested environmental data.
+			\end{itemize}
+		}%
+	}
+
+	\item Manage Users \& Roles \\
+	{\it Pre-condition: Administrator account exists.}
+	\begin{enumerate}[{\bf VP1.}]
+		\item IoT Sensor Device \\ N/A
+		\item City Operator \\ N/A
+		\item System Administrator \\
+		\noindent\fbox{%
+			\parbox{0.5\textwidth}{%
+				\begin{itemize}
+					\item {\bf Main Success Scenario:}
+					\item {\bf $E_{1}$:} Administrator creates or updates a user account.
+					\item {\bf $S_{1}$:} System assigns roles and permissions.
+				\end{itemize}
+			}%
+		}
+		\item External System (Subscriber / API Consumer) \\ N/A
+		\item General Public User \\ N/A
+	\end{enumerate}
+	{\bf Global Scenario:}\\
+	\noindent\fbox{%
+		\parbox{0.5\textwidth}{%
+			\begin{itemize}
+				\item {\bf 1:} System receives user management request.
+				\item {\bf 2:} System validates permissions.
+				\item {\bf 3:} System updates user records and logs the action.
+			\end{itemize}
+		}%
+	}
+
+\end{enumerate}
 }

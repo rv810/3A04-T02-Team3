@@ -103,7 +103,12 @@
 \label{ssub:speed_and_latency_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-SL}1. ]
-	\item 
+	\item The system shall process and store incoming MQTT telemetry data within 5 seconds of receipt.\\
+	{\bf Rationale:} Real-time urban monitoring requires low latency to ensure city officials can respond to pollution or heat events as they happen.
+\end{enumerate}
+\begin{enumerate}[{PR-SL}2. ]
+	\item The public REST API must return aggregated data for a specific zone in less than 1 second under normal load.\\
+	{\bf Rationale:} High-performance APIs are expected to respond within this timeframe to prevent delays for third-party developers and digital signage displays.
 \end{enumerate}
 % End SubSubSection
 
@@ -111,7 +116,8 @@
 \label{ssub:safety_critical_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-SC}1. ]
-	\item 
+	\item The rule-based alerting engine must evaluate data and trigger a critical alert notification within 10 seconds of detecting a threshold violation.\\
+	{\bf Rationale:} Delayed alerts during severe environmental events, such as high pollution spikes, can negatively impact public health.
 \end{enumerate}
 % End SubSubSection
 
@@ -119,7 +125,8 @@
 \label{ssub:precision_or_accuracy_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-PA}1. ]
-	\item 
+	\item All environmental sensor readings (temperature, air quality) must be stored and displayed with a precision of at least two decimal places.\\
+	{\bf Rationale:} High precision is necessary for accurate historical trend analysis and for the rule-based engine to correctly identify subtle threshold violations.
 \end{enumerate}
 % End SubSubSection
 
@@ -127,15 +134,17 @@
 \label{ssub:reliability_and_availability_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-RA}1. ]
-	\item 
-\end{enumerate}
+	\item The SCEMAS backend services and operator dashboard must maintain 99.9\% availability during city operational hours.\\
+	{\bf Rationale:} As a centralized monitoring platform, downtime prevents city management from receiving critical environmental intelligence.
 % End SubSubSection
+\end{enumerate}
 
 \subsubsection{Robustness or Fault-Tolerance Requirements}
 \label{ssub:robustness_or_fault_tolerance_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-RFT}1. ]
-	\item 
+	\item The system must gracefully handle and log invalid telemetry data (e.g., malformed JSON or out-of-range values) without crashing the ingestion service.\\
+	{\bf Rationale:} Simulated or real sensor networks may emit corrupt data; the system must remain stable to process legitimate data from other sensors.
 \end{enumerate}
 % End SubSubSection
 
@@ -143,7 +152,8 @@
 \label{ssub:capacity_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-C}1. ]
-	\item 
+	\item The telemetry ingestion service must be capable of handling simultaneous data streams from at least 100 simulated IoT sensors.\\
+	{\bf Rationale:} The system is designed to be a scalable platform for a distributed sensor network across a city.
 \end{enumerate}
 % End SubSubSection
 
@@ -151,7 +161,8 @@
 \label{ssub:scalability_or_extensibility_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-SE}1. ]
-	\item 
+	\item The database must be capable of storing up to 1 year of historical time-series telemetry without significant performance degradation.\\
+	{\bf Rationale:} City officials need long-term historical data to perform urban planning and environmental management.
 \end{enumerate}
 % End SubSubSection
 
@@ -159,7 +170,8 @@
 \label{ssub:longevity_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-L}1. ]
-	\item 
+	\item The system architecture shall be designed to allow for the addition of new sensor types (e.g., water quality) without modifying the core telemetry ingestion logic.\\
+	{\bf Rationale:} Smart city needs evolve, and the platform must be extensible to include new environmental indicators in the future.
 \end{enumerate}
 % End SubSubSection
 
@@ -173,7 +185,8 @@
 \label{ssub:expected_physical_environment}
 % Begin SubSubSection
 \begin{enumerate}[{OE-EPE}1. ]
-	\item 
+	\item The SCEMAS backend shall be deployed in a cloud environment (e.g., AWS, Azure, or Google Cloud) to ensure global accessibility for city operators.\\
+	{\bf Rationale:} Cloud-native deployment provides the necessary scalability and accessibility for a distributed urban monitoring system.
 \end{enumerate}
 % End SubSubSection
 
@@ -181,7 +194,12 @@
 \label{ssub:requirements_for_interfacing_with_adjacent_systems}
 % Begin SubSubSection
 \begin{enumerate}[{OE-IA}1. ]
-	\item 
+	\item The system must provide a secure MQTT broker endpoint for incoming sensor telemetry.\\
+	{\bf Rationale:} MQTT is the industry standard for IoT device communication, ensuring compatibility with a wide range of sensor hardware.
+\end{enumerate}
+\begin{enumerate}[{OE-IA}2. ]
+	\item The system must notify subscribed external systems via a dedicated API endpoint whenever a rule violation is detected.\\
+	{\bf Rationale:} Integration with existing city emergency or notification systems is a core objective of the SCEMAS platform.
 \end{enumerate}
 % End SubSubSection
 
@@ -189,7 +207,8 @@
 \label{ssub:productization_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{OE-P}1. ]
-	\item 
+	\item The system shall include a functional client that simulates a public digital signage display using the public REST API.\\
+	{\bf Rationale:} This demonstrates the system's ability to disseminate information to the public as required by the project objectives.
 \end{enumerate}
 % End SubSubSection
 
@@ -197,7 +216,8 @@
 \label{ssub:release_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{OE-R}1. ]
-	\item 
+	\item The public API and operator dashboard must be accompanied by documentation that allows a competent third-party developer to interpret data within two hours.\\
+	{\bf Rationale:} Clear documentation is essential for professional engineering practice and for enabling third-party use of city data.
 \end{enumerate}
 % End SubSubSection
 

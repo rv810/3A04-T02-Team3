@@ -21,7 +21,6 @@
 %		{\bf Global Scenario:}\\
 %		\textcolor{red}{Insert Scenario Here}
 %	\end{enumerate}
-
 %	Below, we organize by Business Event.
 %	\begin{enumerate}[{BE}1.]
 %		\item Business Event name
@@ -130,6 +129,32 @@
 %			}%
 %		}		
 %	\end{enumerate}
+%
+\noindent {\bf Main Business Events:}
+\begin{quote}
+	\begin{enumerate}[\bf BE1.]
+		\item Ingest Sensor Telemetry
+		\item Process \& Aggregate Environmental Data
+		\item Detect Threshold Violation \& Generate Alert
+		\item Acknowledge / Resolve Alert
+		\item View Operational Dashboard
+		\item Access Public Environmental Data (API)
+		\item Manage Users \& Roles
+	\end{enumerate}
+\end{quote}
+
+\noindent {\bf Viewpoints:}
+\begin{quote}
+	\begin{enumerate}[\bf VP1.]
+		\item IoT Sensor Device
+		\item City Operator
+		\item System Administrator
+		\item External System (Subscriber)
+		\item General Public User
+	\end{enumerate}
+\end{quote}
+
+\noindent {\bf Interpretation:} Sensor hardware is simulated. Business events are framed around logical system triggers rather than physical device behavior. Privacy constraints are assumed throughout. No personally identifiable information is involved.\\
 
 \begin{enumerate}[{\bf BE1.}]
 	\item Ingest Sensor Telemetry \\
@@ -150,11 +175,11 @@
 			}
 			\item City Operator \\ N/A
 			\item System Administrator \\ N/A
-			\item External System (Subscriber / API Consumer) \\ N/A
+			\item External System (Subscriber) \\ N/A
 			\item General Public User \\ N/A
 		\end{enumerate}
 		{\bf Global Scenario:}\\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf 1:} System receives telemetry data from a registered sensor.
@@ -170,11 +195,11 @@
 		\item {\bf IoT} Sensor Device \\ N/A
 		\item City Operator \\ N/A
 		\item System Administrator \\ N/A
-		\item External System (Subscriber / API Consumer) \\ N/A
+		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} System stores incoming telemetry in time-series storage.
@@ -192,18 +217,18 @@
 		\item {\bf IoT} Sensor Device \\ N/A
 		\item City Operator \\ N/A
 		\item System Administrator \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf $E_{1}$:} Administrator defines alert thresholds.
 				\end{itemize}
 			}%
 		}
-		\item External System (Subscriber / API Consumer) \\ N/A
+		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} System evaluates aggregated data against alert rules.
@@ -221,7 +246,7 @@
 	\begin{enumerate}[{\bf VP1.}]
 		\item {\bf IoT} Sensor Device \\ N/A
 		\item City Operator \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf Main Success Scenario:}
@@ -232,11 +257,11 @@
 			}%
 		}
 		\item System Administrator \\ N/A
-		\item External System (Subscriber / API Consumer) \\ N/A
+		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} System displays active alerts.
@@ -251,7 +276,7 @@
 	\begin{enumerate}[{\bf VP1.}]
 		\item {\bf IoT} Sensor Device \\ N/A
 		\item City Operator \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf Main Success Scenario:}
@@ -261,18 +286,18 @@
 			}%
 		}
 		\item System Administrator \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item Same as VP2 (City Operator).
 				\end{itemize}
 			}%
 		}
-		\item External System (Subscriber / API Consumer) \\ N/A
+		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} User authenticates successfully.
@@ -287,8 +312,8 @@
 		\item {\bf IoT} Sensor Device \\ N/A
 		\item City Operator \\ N/A
 		\item System Administrator \\ N/A
-		\item External System (Subscriber / API Consumer) \\
-		\noindent\fbox{%
+		\item External System (Subscriber) \\
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf Main Success Scenario:}
@@ -299,7 +324,7 @@
 			}%
 		}
 		\item General Public User \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item Same as VP4 (External System).
@@ -308,7 +333,7 @@
 		}
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} System receives API request.
@@ -324,7 +349,7 @@
 		\item {\bf IoT} Sensor Device \\ N/A
 		\item City Operator \\ N/A
 		\item System Administrator \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf Main Success Scenario:}
@@ -333,11 +358,11 @@
 				\end{itemize}
 			}%
 		}
-		\item External System (Subscriber / API Consumer) \\ N/A
+		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} System receives user management request.

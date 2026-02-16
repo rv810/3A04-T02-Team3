@@ -2,17 +2,6 @@
 \section{Non-Functional Requirements}
 \label{sec:non-functional_requirements}
 
-
-\begin{itemize}
-	\item For each non-functional requirement, provide a justification/rationale for it.\\
-	{\bf Example:} \\
-	SC1. \emph{The device should not explode in a customer’s pocket.}\\
-	{\bf Rationale:} Other companies have had issues with the batteries they used in their phones randomly exploding [insert citation]. This causes a safety issue, as the phone is often carried in a person's hand or pocket.	
-	\item If you need to make a guess because you couldn't really talk to stakeholders, you can say "We imagined stakeholders would want...because..."
-	\item Each requirement should have a unique label/number for it.
-	\item In the list below, if a particular section doesn't apply, just write N/A so we know you considered it.
-\end{itemize}
-
 % Begin Section
 \subsection{Look and Feel Requirements}
 \label{sub:look_and_feel_requirements}
@@ -114,7 +103,12 @@
 \label{ssub:speed_and_latency_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-SL}1. ]
-	\item 
+	\item The system shall process and store incoming MQTT telemetry data within 5 seconds of receipt.\\
+	{\bf Rationale:} Real-time urban monitoring requires low latency to ensure city officials can respond to pollution or heat events as they happen.
+\end{enumerate}
+\begin{enumerate}[{PR-SL}2. ]
+	\item The public REST API must return aggregated data for a specific zone in less than 1 second under normal load.\\
+	{\bf Rationale:} High-performance APIs are expected to respond within this timeframe to prevent delays for third-party developers and digital signage displays.
 \end{enumerate}
 % End SubSubSection
 
@@ -122,7 +116,8 @@
 \label{ssub:safety_critical_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-SC}1. ]
-	\item 
+	\item The rule-based alerting engine must evaluate data and trigger a critical alert notification within 10 seconds of detecting a threshold violation.\\
+	{\bf Rationale:} Delayed alerts during severe environmental events, such as high pollution spikes, can negatively impact public health.
 \end{enumerate}
 % End SubSubSection
 
@@ -130,7 +125,8 @@
 \label{ssub:precision_or_accuracy_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-PA}1. ]
-	\item 
+	\item All environmental sensor readings (temperature, air quality) must be stored and displayed with a precision of at least two decimal places.\\
+	{\bf Rationale:} High precision is necessary for accurate historical trend analysis and for the rule-based engine to correctly identify subtle threshold violations.
 \end{enumerate}
 % End SubSubSection
 
@@ -138,15 +134,17 @@
 \label{ssub:reliability_and_availability_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-RA}1. ]
-	\item 
-\end{enumerate}
+	\item The SCEMAS backend services and operator dashboard must maintain 99.9\% availability during city operational hours.\\
+	{\bf Rationale:} As a centralized monitoring platform, downtime prevents city management from receiving critical environmental intelligence.
 % End SubSubSection
+\end{enumerate}
 
 \subsubsection{Robustness or Fault-Tolerance Requirements}
 \label{ssub:robustness_or_fault_tolerance_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-RFT}1. ]
-	\item 
+	\item The system must gracefully handle and log invalid telemetry data (e.g., malformed JSON or out-of-range values) without crashing the ingestion service.\\
+	{\bf Rationale:} Simulated or real sensor networks may emit corrupt data; the system must remain stable to process legitimate data from other sensors.
 \end{enumerate}
 % End SubSubSection
 
@@ -154,7 +152,8 @@
 \label{ssub:capacity_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-C}1. ]
-	\item 
+	\item The telemetry ingestion service must be capable of handling simultaneous data streams from at least 100 simulated IoT sensors.\\
+	{\bf Rationale:} The system is designed to be a scalable platform for a distributed sensor network across a city.
 \end{enumerate}
 % End SubSubSection
 
@@ -162,7 +161,8 @@
 \label{ssub:scalability_or_extensibility_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-SE}1. ]
-	\item 
+	\item The database must be capable of storing up to 1 year of historical time-series telemetry without significant performance degradation.\\
+	{\bf Rationale:} City officials need long-term historical data to perform urban planning and environmental management.
 \end{enumerate}
 % End SubSubSection
 
@@ -170,7 +170,8 @@
 \label{ssub:longevity_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{PR-L}1. ]
-	\item 
+	\item The system architecture shall be designed to allow for the addition of new sensor types (e.g., water quality) without modifying the core telemetry ingestion logic.\\
+	{\bf Rationale:} Smart city needs evolve, and the platform must be extensible to include new environmental indicators in the future.
 \end{enumerate}
 % End SubSubSection
 
@@ -184,7 +185,8 @@
 \label{ssub:expected_physical_environment}
 % Begin SubSubSection
 \begin{enumerate}[{OE-EPE}1. ]
-	\item 
+	\item The SCEMAS backend shall be deployed in a cloud environment (e.g., AWS, Azure, or Google Cloud) to ensure global accessibility for city operators.\\
+	{\bf Rationale:} Cloud-native deployment provides the necessary scalability and accessibility for a distributed urban monitoring system.
 \end{enumerate}
 % End SubSubSection
 
@@ -192,7 +194,12 @@
 \label{ssub:requirements_for_interfacing_with_adjacent_systems}
 % Begin SubSubSection
 \begin{enumerate}[{OE-IA}1. ]
-	\item 
+	\item The system must provide a secure MQTT broker endpoint for incoming sensor telemetry.\\
+	{\bf Rationale:} MQTT is the industry standard for IoT device communication, ensuring compatibility with a wide range of sensor hardware.
+\end{enumerate}
+\begin{enumerate}[{OE-IA}2. ]
+	\item The system must notify subscribed external systems via a dedicated API endpoint whenever a rule violation is detected.\\
+	{\bf Rationale:} Integration with existing city emergency or notification systems is a core objective of the SCEMAS platform.
 \end{enumerate}
 % End SubSubSection
 
@@ -200,7 +207,8 @@
 \label{ssub:productization_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{OE-P}1. ]
-	\item 
+	\item The system shall include a functional client that simulates a public digital signage display using the public REST API.\\
+	{\bf Rationale:} This demonstrates the system's ability to disseminate information to the public as required by the project objectives.
 \end{enumerate}
 % End SubSubSection
 
@@ -208,7 +216,8 @@
 \label{ssub:release_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{OE-R}1. ]
-	\item 
+	\item The public API and operator dashboard must be accompanied by documentation that allows a competent third-party developer to interpret data within two hours.\\
+	{\bf Rationale:} Clear documentation is essential for professional engineering practice and for enabling third-party use of city data.
 \end{enumerate}
 % End SubSubSection
 
@@ -222,7 +231,8 @@
 \label{ssub:maintenance_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{MS-M}1. ]
-	\item The system must receive a minimum of bi-monthly software updates to fix bugs and improve performance.
+	\item The system must receive a minimum of bi-monthly software updates to fix bugs and improve performance. \\
+	{\bf Rationale:} Regular software updates are important to ensure that any bugs are addressed and performance is improved over time. This also helps to maintain user trust and satisfaction with the system.
 \end{enumerate}
 % End SubSubSection
 
@@ -230,11 +240,13 @@
 \label{ssub:supportability_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{MS-S}1. ]
-	\item The system must provide users with access to help or support information within the application.
+	\item The system must provide users with access to help or support information within the application. \\
+	{\bf Rationale:} Providing users with access to help or support information within the application can improve user experience and reduce frustration. It allows users to quickly find answers to their questions or troubleshoot issues without having to leave the application or contact support directly. This can also help to reduce the workload on support staff by giving users the ability to resolve issues on their own.
 \end{enumerate}
 
 \begin{enumerate}[{MS-S}2. ]
-	\item The system must provide a way for users to contact support staff.
+	\item The system must provide a way for users to contact support staff. \\
+	{\bf Rationale:} If users cannot find a solution to their problem through the support information it is important that they have an easy way to contact support staff. This can help to ensure that users receive the assistance they need in a timely manner, which can improve user satisfaction.
 \end{enumerate}
 % End SubSubSection
 
@@ -242,7 +254,8 @@
 \label{ssub:adaptability_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{MS-A}1. ]
-	\item The system must be able to operate on iOS 15 and above on all iOS devices.
+	\item The system must be able to operate on iOS 15 and above on all iOS devices. \\
+	{\bf Rationale:} This system is being developed for iOS and it should be able to run on the more recent versions of iOS to ensure that it can be used by a wide range of users. By supporting iOS 15 and above, the system can take advantage of the latest features and improvements in the operating system, which can enhance user experience and performance.
 \end{enumerate}
 % End SubSubSection
 
@@ -256,15 +269,18 @@
 \label{ssub:access_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-AC}1. ]
-	\item The system must require users to to authenticate themselves before they can access the system.
+	\item The system must require users to to authenticate themselves before they can access the system. \\
+	{\bf Rationale:} This is important to ensure that only authorized users can access the system and its data. Authentication can help to prevent unauthorized access and protect sensitive information from being accessed.
 \end{enumerate}
 
 \begin{enumerate}[{SR-AC}2. ]
-	\item The system shall enforce role-based access control for all users.
+	\item The system shall enforce role-based access control for all users. \\
+	{\bf Rationale:} Role-based access control is important to ensure that city operators can access more detailed information about alerts whereas general users can only access basic information. This helps to protect sensitive information and ensure that users only have access to the information that is relevant to their role.
 \end{enumerate}
 
 \begin{enumerate}[{SR-AC}3. ]
-	\item The system shall restrict administrative functions to users assigned an operator role.
+	\item The system shall restrict administrative functions to users assigned an operator role. \\
+	{\bf Rationale:} Only city operators should have access to certain adminsitrative functiosn such as creating/updating alert rules, resolving alerts, etc. This helps to ensure that only authorized users can perform these actions and helps to protect the integrity of the system.
 \end{enumerate}
 % End SubSubSection
 
@@ -272,15 +288,13 @@
 \label{ssub:integrity_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-INT}1. ]
-	\item The system shall validate all incoming telemetry data to ensure it conforms to the expected format and schema.
+	\item The system shall validate all incoming telemetry data. \\
+	{\bf Rationale:} Validating the data is important to ensure it conforms to the expected format and schema.
 \end{enumerate}
 
 \begin{enumerate}[{SR-INT}2. ]
-	\item The system shall reject telemetry data that fails plausibility or validation checks.
-\end{enumerate}
-
-\begin{enumerate}[{SR-INT}3. ]
-	\item The system shall ensure that stored telemetry data cannot be modified without proper authorization.
+	\item The system shall reject telemetry data that fails plausibility or validation checks. \\
+	{\bf Rationale:} Rejecting invalid data is important to maintain the integrity of the system and prevent it from being compromised by corrupted data.
 \end{enumerate}
 % End SubSubSection
 
@@ -288,15 +302,18 @@
 \label{ssub:privacy_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-P}1. ]
-	\item The system shall encrypt any sensitive personal information collected from users.
+	\item The system shall encrypt any sensitive personal information collected from users. \\
+	{\bf Rationale:} Encrypting sensitive personal information is important to protect user privacy and prevent unauthorized access to this information. This can help to build trust with users and ensure that their data is handled securely.
 \end{enumerate}
 
 \begin{enumerate}[{SR-P}2. ]
-	\item The system shall provide users with the ability to delete their personal information and account upon request.
+	\item The system shall provide users with the ability to delete their personal information and account upon request. \\
+	{\bf Rationale:} Providing users with the ability to delete their personal information and account is important to give users control over their data and respect their privacy. This ensures that users feel comfortable using the system.
 \end{enumerate}
 
 \begin{enumerate}[{SR-P}3. ]
-	\item The system shall provide users with a privacy notice that informs them how their information is being used and stored.
+	\item The system shall provide users with a privacy notice that informs them how their information is being used and stored. \\
+	{\bf Rationale:} Providing users with a privacy notice is important to ensure transparency and build trust with users. It allows users to understand how their information is being used and stored, which can help to alleviate concerns about privacy and encourage them to use the system.
 \end{enumerate}
 % End SubSubSection
 
@@ -304,11 +321,13 @@
 \label{ssub:audit_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-AU}1. ]
-	\item The system must store a history of alerts including any changes made, the user who made the changes, and the timestamp. 
+	\item The system must store a history of alerts including any changes made, the user who made the changes, and the timestamp. \\
+	{\bf Rationale:} Storing a history of alerts and changes is important for maintaining a record of actions taken within the system.
 \end{enumerate}
 
 \begin{enumerate}[{SR-AU}2. ]
-	\item The system shall log all authentication attempts, including successful and failed logins.
+	\item The system shall log all authentication attempts, including successful and failed logins. \\
+	{\bf Rationale:} Logging authentication attempts is important for security monitoring. It allows administrators to detect and investigate potential security breaches or unauthorized access attempts.
 \end{enumerate}
 % End SubSubSection
 
@@ -316,11 +335,13 @@
 \label{ssub:immunity_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{SR-IM}1. ]
-	\item The system shall limit repeated failed authentication attemps.
+	\item The system shall limit repeated failed authentication attemps. \\
+	{\bf Rationale:} After a certain number of failed login attempts, the system should temporarily lock the account or require additional verification to prevent attacks and protect user accounts from unauthorized access.
 \end{enumerate}
 
-\begin{enumerate}[{SR-IM}1. ]
-	\item The system shall protect against unauthorized access through authentication mechanisms.
+\begin{enumerate}[{SR-IM}2. ]
+	\item The system shall protect against unauthorized access through multi-factor authentication. \\
+	{\bf Rationale:} Implementing authentication mechanisms, such as multi-factor authentication, can help to protect against unauthorized access and enhance the overall security of the system.
 \end{enumerate}
 % End SubSubSection
 % End SubSection
@@ -333,16 +354,25 @@
 \label{ssub:cultural_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{CP-C}1. ]
-	\item 
+	\item All dashboard text and alerts shall be written in plain language and avoid technical terminology or unexplained abbreviations. \\
+    {\bf Rationale:} Users may not understand technical terminology. Simple wording reduces confusion and misinterpretation.
+\end{enumerate}
+
+\begin{enumerate}[{CP-C}2. ]
+	\item All dashboard content and alerts shall be provided in English for the first version of the system. \\
+    {\bf Rationale:} Limiting to one language in the initial release reduces implementation complexity while ensuring consistent communication.
+\end{enumerate}
+
+\begin{enumerate}[{CP-C}3. ]
+	\item Alerts shall avoid culturally-specific idioms or metaphors, and shall use neutral, literal wording. \\
+    {\bf Rationale:} Idioms and metaphors don’t translate consistently across cultures. Neutral wording improves clarity and reduces misinterpretation.
 \end{enumerate}
 % End SubSubSection
 
 \subsubsection{Political Requirements}
 \label{ssub:political_requirements}
 % Begin SubSubSection
-\begin{enumerate}[{CP-P}1. ]
-	\item 
-\end{enumerate}
+N/A
 % End SubSubSection
 
 % End SubSection
@@ -355,7 +385,18 @@
 \label{ssub:compliance_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{LR-COMP}1. ]
-	\item 
+	\item Personal information handled by the system must be protected against loss, theft, and unauthorized access, disclosure, copying, use, or modification [7]. \\
+    {\bf Rationale:} This aligns with PIPEDA Principle 7 (Safeguards), which requires appropriate protection of personal information.
+\end{enumerate}
+
+\begin{enumerate}[{LR-COMP}2. ]
+	\item The system must obtain the user’s knowledge and consent before collecting, using, or disclosing their personal information [8]. \\
+    {\bf Rationale:} This aligns with PIPEDA Principle 3 (Consent).
+\end{enumerate}
+
+\begin{enumerate}[{LR-COMP}3. ]
+	\item The system must limit collection of personal information to only what is necessary for the stated purpose(s) [9]. \\
+    {\bf Rationale:} This aligns with PIPEDA Principle 4 (Limiting Collection).
 \end{enumerate}
 % End SubSubSection
 
@@ -363,7 +404,18 @@
 \label{ssub:standards_requirements}
 % Begin SubSubSection
 \begin{enumerate}[{LR-STD}1. ]
-	\item 
+	\item The system shall not use notifications for promotional or advertisement purposes; notifications shall only communicate system or environmental monitoring events. \\
+    {\bf Rationale:} Notifications should be relevant and not used for unsolicited ads.
+\end{enumerate}
+
+\begin{enumerate}[{LR-STD}2. ]
+	\item Authenticated sessions should automatically expire after a period of inactivity, requiring the user to log in again to access operator functions. \\
+    {\bf Rationale:} This is a standard for app quality in terms of security and access control.
+\end{enumerate}
+
+\begin{enumerate}[{LR-STD}3. ]
+	\item Any personal or sensitive data shall not be written to system logs or application-specific logs. \\
+    {\bf Rationale:} This reduces the risk of sensitive data leakage through logs.
 \end{enumerate}
 % End SubSubSection
 

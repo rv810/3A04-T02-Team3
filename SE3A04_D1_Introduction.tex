@@ -5,46 +5,42 @@
 \label{sec:introduction}
 % Begin Section
 
-\begin{itemize}
-	\item This document will provide an overview of the software requirements for SCEMAS. This document covers the purpose and objectives of SCEMAS, the scope of the system, characteristics of its intended users, product requirements, and an overview of the project structure.
-\end{itemize}
-
+	This document will provide an overview of the software requirements for {\bf {\bf SCEMAS}}. This document covers the purpose and objectives of {\bf SCEMAS}, the scope of the system, characteristics of its intended users, product requirements, and an overview of the project structure.
 
 \subsection{Purpose}
 \label{sub:purpose}
 % Begin SubSection
-\begin{itemize}
-	\item The goal of this document is to define the software requirements, key functionalities, and user interactions for SCEMAS.
-	\item It is intended for internal project stakeholders such as developers, project managers, system architects, and other concerned parties. No prior familiarity with SCEMAS is necessary to understand this specification.
-\end{itemize}
+	The goal of this document is to define the software requirements, key functionalities, and user interactions for {\bf SCEMAS}. \\
+
+	It is intended for internal project stakeholders such as developers, project managers, system architects, and other concerned parties. No prior familiarity with {\bf SCEMAS} is necessary to understand this specification.
 % End SubSection
 
 \subsection{Scope}
 \label{sub:scope}
 % Begin SubSection
-\begin{itemize}
-	\item The product to be developed is SCEMAS, which contains many integrated components.
-	This includes IoT data ingestion, database for time-series and geospatial data, aggregation engine, rule based alert engine, operator dashboard, and a public REST API.
-	\item The IoT data ingestion is responsible for handling telemetry ingestion and validating it for correct formatting, compliance with schemas, and ensuring its within expected value ranges.
-	The database will store the data validated by the IoT ingestion, and will be optimized for geospatial and time-series data.
+	The product to be developed is {\bf SCEMAS}, which contains many integrated components.
+	This includes {\bf IoT} data ingestion, database for time-series and geospatial data, aggregation engine, rule based alert engine, operator dashboard, and a public {\bf REST API}. \\
+
+	The {\bf IoT} data ingestion is responsible for handling telemetry ingestion and validating it for correct formatting, compliance with schemas, and ensuring its within expected value ranges.
+	The database will store the data validated by the {\bf IoT} ingestion, and will be optimized for geospatial and time-series data.
 	The aggregation engine will calculate various metrics such as 5-minute average, hourly maximums, and many more.
 	The rule based alert engine will have administrator defined thresholds. It will compare incoming sensor data to the threshold to alert and log as needed.
-	The operator dashboard must implement RBAC and display real time information from sensors, visualizations, and alert tools.
-	The public REST API will provide the aggregated, non-sensitive data for public and third-party consumption
-	\item SCEMAS continuously monitors air quality, noise levels, temperature, and humidity. 
+	The operator dashboard must implement {\bf RBAC} and display real time information from sensors, visualizations, and alert tools.
+	The public {\bf REST API} will provide the aggregated, non-sensitive data for public and third-party consumption \\
+
+	{\bf SCEMAS} continuously monitors air quality, noise levels, temperature, and humidity. 
 	Using this data, the system aims to improve urban environmental oversight, improve alerts during environmental events.
 %	\item Be consistent with similar statements in higher-level specifications (e.g., the system requirements specification), if they exist
-\end{itemize}
 % End SubSection
 
 \subsection{Definitions, Acronyms, and Abbreviations}
 \label{sub:definitions_acronyms_and_abbreviations}
 % Begin SubSection
 \begin{itemize}
-	\item IoT - Internet of Things, a network of connected devices that transmit and exchange data.
-	\item RBAC - Role Based Access Control, restricts access based on user roles.
-	\item REST API - Representational State Transfer Application Programming Interface, a standard for web service communication.
-	\item SCEMAS - Smart City Environmental Monitoring \& Alert System.
+	\item {IoT} - Internet of Things, a network of connected devices that transmit and exchange data.
+	\item {RBAC} - Role Based Access Control, restricts access based on user roles.
+	\item {REST API} - Representational State Transfer Application Programming Interface, a standard for web service communication.
+	\item {SCEMAS} - Smart City Environmental Monitoring \& Alert System.
 \end{itemize}
 % End SubSection
 
@@ -58,6 +54,10 @@
 	\item A. Harley, “Icon Usability,” Nielsen Norman Group, Jul. 27, 2014. https://www.nngroup.com/articles/icon-usability/
 	\item J. Nielsen, “Response Time Limits: Article by Jakob Nielsen,” Nielsen Norman Group, Jan. 01, 1993. https://www.nngroup.com/articles/response-times-3-important-limits/‌
 	\item S. Few, Information Dashboard Design. Oreilly \& Associates Incorporated, 2006.
+	\item “PIPEDA Fair Information Principle 7 – Safeguards,” Office of the Privacy Commissioner of Canada, Aug. 11, 2025. [Online]. \\ https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/p\_principle/principles/p\_safeguards/ [Accessed: 2026-02-12].
+    \item “PIPEDA Fair Information Principle 3 – Consent,” Office of the Privacy Commissioner of Canada, Aug. 13, 2020. [Online]. \\  https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/p\_principle/principles/p\_consent/ [Accessed: 2026-02-12].
+    \item “PIPEDA Fair Information Principle 4 – Limiting Collection,” Office of the Privacy Commissioner of Canada, Aug. 13, 2020. [Online]. \\ https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/p\_principle/principles/p\_collection/ [Accessed: 2026-02-12].
+	
 
 ‌
 
@@ -67,11 +67,9 @@
 \subsection{Overview}
 \label{sub:overview}
 % Begin SubSection
-\begin{itemize}
-	\item Section 2 discusses the overall description for SCEMAS. This includes product perspectives, functions, user characteristics, constraints, assumptions and dependencies. 
+	Section 2 discusses the overall description for {\bf SCEMAS}. This includes product perspectives, functions, user characteristics, constraints, assumptions and dependencies. 
 	Section 3 provies a use case diagram for the system which demonstrates typical interactions with the system, telemetry ingestion, and more.
-	Section 4 describes the specific requirements for SCEMAS, going over the process in detail, covering events the system must handle, and how viewpoints interact with the system.
+	Section 4 describes the specific requirements for {\bf SCEMAS}, going over the process in detail, covering events the system must handle, and how viewpoints interact with the system.
 	Section 5 describes the specific non functional requirements, covering aesthetics, usability, performance, operations, security, and more.
-\end{itemize}
 % End SubSection}
 }

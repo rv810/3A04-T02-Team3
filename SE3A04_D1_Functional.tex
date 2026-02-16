@@ -1,23 +1,23 @@
 \newcommand{\functional}{\section{Highlights of Functional Requirements}
 \label{sec:functional_requirements}
 % Begin Section
-\begin{itemize}
-	\item Specify all use cases (or other scenarios triggered by other events), organized by Business Event. 
-	\item For each Business Event, show the scenario from every Viewpoint. You should have the same set of Viewpoints across all Business Events. If a Viewpoint doesn't participate, write N/A so we know you considered it still. You can choose how to present this - keep in mind it should be easy to follow. 
-	\item At the end, combine them all into a Global Scenario.
-	%\item Specify the "use cases" (or other triggering events) organized by Business Event. (The Global Scenario is what you might think of as a use case). Be sure to consider Business Events that aren't just triggered by users with goals (e.g. something happens in the environment that your system needs to respond to)
-	\item Your focus should be on what the system needs to do, not how to do it. Specify it in enough detail that it clearly specifies what needs to be accomplished, but not so detailed that you start programming or making design decisions.
-	\item Keep the length of each use case (Global Scenario) manageable. If it's getting too long, split into sub-cases.
-	\item You are \emph{not} specifying a complete and consistent set of functional requirements here. (i.e. you are providing them in the form of use cases/global scenarios, not a refined list). For the purpose of this project, you do not need to reduce them to a list; the global scenarios format is all you need.
-	\item Red text below is just to highlight where you need to insert a scenario - don't actually write it all in red.
-\end{itemize}
-
-\noindent {\bf Main Business Events:} List out all the main business events you are presenting. If you sub-divided into smaller ones, you don't need to include the smaller ones in this list.\\
-
-\noindent {\bf Viewpoints:} List out all the viewpoints you will be considering.\\
-
-\noindent {\bf Interpretation:} Specify any liberties you took in interpreting business events, if necessary.\\
-
+%\begin{itemize}
+%	\item Specify all use cases (or other scenarios triggered by other events), organized by Business Event. 
+%	\item For each Business Event, show the scenario from every Viewpoint. You should have the same set of Viewpoints across all Business Events. If a Viewpoint doesn't participate, write N/A so we know you considered it still. You can choose how to present this - keep in mind it should be easy to follow. 
+%	\item At the end, combine them all into a Global Scenario.
+%	\item Specify the "use cases" (or other triggering events) organized by Business Event. (The Global Scenario is what you might think of as a use case). Be sure to consider Business Events that aren't just triggered by users with goals (e.g. something happens in the environment that your system needs to respond to)
+%	\item Your focus should be on what the system needs to do, not how to do it. Specify it in enough detail that it clearly specifies what needs to be accomplished, but not so detailed that you start programming or making design decisions.
+%	\item Keep the length of each use case (Global Scenario) manageable. If it's getting too long, split into sub-cases.
+%	\item You are \emph{not} specifying a complete and consistent set of functional requirements here. (i.e. you are providing them in the form of use cases/global scenarios, not a refined list). For the purpose of this project, you do not need to reduce them to a list; the global scenarios format is all you need.
+%	\item Red text below is just to highlight where you need to insert a scenario - don't actually write it all in red.
+%\end{itemize}
+%
+%\noindent {\bf Main Business Events:} List out all the main business events you are presenting. If you sub-divided into smaller ones, you don't need to include the smaller ones in this list.\\
+%
+%\noindent {\bf Viewpoints:} List out all the viewpoints you will be considering.\\
+%
+%\noindent {\bf Interpretation:} Specify any liberties you took in interpreting business events, if necessary.\\
+%
 %	\begin{enumerate}[{\bf BE1.}]
 %		\item Business Event Name \#1
 %			\begin{enumerate}[{\bf VP1.}]
@@ -38,7 +38,6 @@
 %		{\bf Global Scenario:}\\
 %		\textcolor{red}{Insert Scenario Here}
 %	\end{enumerate}
-
 %	Below, we organize by Business Event.
 %	\begin{enumerate}[{BE}1.]
 %		\item Business Event name
@@ -147,13 +146,39 @@
 %			}%
 %		}		
 %	\end{enumerate}
+%
+\noindent {\bf Main Business Events:}
+\begin{quote}
+	\begin{enumerate}[\bf BE1.]
+		\item Ingest Sensor Telemetry
+		\item Process \& Aggregate Environmental Data
+		\item Detect Threshold Violation \& Generate Alert
+		\item Acknowledge / Resolve Alert
+		\item View Operational Dashboard
+		\item Access Public Environmental Data (API)
+		\item Manage Users \& Roles
+	\end{enumerate}
+\end{quote}
+
+\noindent {\bf Viewpoints:}
+\begin{quote}
+	\begin{enumerate}[\bf VP1.]
+		\item IoT Sensor Device
+		\item City Operator
+		\item System Administrator
+		\item External System (Subscriber)
+		\item General Public User
+	\end{enumerate}
+\end{quote}
+
+\noindent {\bf Interpretation:} Sensor hardware is simulated. Business events are framed around logical system triggers rather than physical device behavior. Privacy constraints are assumed throughout. No personally identifiable information is involved.\\
 
 \begin{enumerate}[{\bf BE1.}]
 	\item Ingest Sensor Telemetry \\
 	{\it Pre-condition: Sensor device is registered and authenticated.}
 		\begin{enumerate}[{\bf VP1.}]
 			\item IoT Sensor Device \\
-				\noindent\fbox{%
+				\noindent{%
 				\parbox{0.5\textwidth}{%
 					\begin{itemize}
 						\item {\bf Main Success Scenario:}
@@ -167,11 +192,11 @@
 			}
 			\item City Operator \\ N/A
 			\item System Administrator \\ N/A
-			\item External System (Subscriber / API Consumer) \\ N/A
+			\item External System (Subscriber) \\ N/A
 			\item General Public User \\ N/A
 		\end{enumerate}
 		{\bf Global Scenario:}\\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf 1:} System receives telemetry data from a registered sensor.
@@ -187,11 +212,11 @@
 		\item IoT Sensor Device \\ N/A
 		\item City Operator \\ N/A
 		\item System Administrator \\ N/A
-		\item External System (Subscriber / API Consumer) \\ N/A
+		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} System stores incoming telemetry in time-series storage.
@@ -209,18 +234,18 @@
 		\item IoT Sensor Device \\ N/A
 		\item City Operator \\ N/A
 		\item System Administrator \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf $E_{1}$:} Administrator defines alert thresholds.
 				\end{itemize}
 			}%
 		}
-		\item External System (Subscriber / API Consumer) \\ N/A
+		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} System evaluates aggregated data against alert rules.
@@ -238,7 +263,7 @@
 	\begin{enumerate}[{\bf VP1.}]
 		\item IoT Sensor Device \\ N/A
 		\item City Operator \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf Main Success Scenario:}
@@ -249,11 +274,11 @@
 			}%
 		}
 		\item System Administrator \\ N/A
-		\item External System (Subscriber / API Consumer) \\ N/A
+		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} System displays active alerts.
@@ -268,7 +293,7 @@
 	\begin{enumerate}[{\bf VP1.}]
 		\item IoT Sensor Device \\ N/A
 		\item City Operator \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf Main Success Scenario:}
@@ -278,18 +303,18 @@
 			}%
 		}
 		\item System Administrator \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item Same as VP2 (City Operator).
 				\end{itemize}
 			}%
 		}
-		\item External System (Subscriber / API Consumer) \\ N/A
+		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} User authenticates successfully.
@@ -304,8 +329,8 @@
 		\item IoT Sensor Device \\ N/A
 		\item City Operator \\ N/A
 		\item System Administrator \\ N/A
-		\item External System (Subscriber / API Consumer) \\
-		\noindent\fbox{%
+		\item External System (Subscriber) \\
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf Main Success Scenario:}
@@ -316,7 +341,7 @@
 			}%
 		}
 		\item General Public User \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item Same as VP4 (External System).
@@ -325,7 +350,7 @@
 		}
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} System receives API request.
@@ -341,7 +366,7 @@
 		\item IoT Sensor Device \\ N/A
 		\item City Operator \\ N/A
 		\item System Administrator \\
-		\noindent\fbox{%
+		\noindent{%
 			\parbox{0.5\textwidth}{%
 				\begin{itemize}
 					\item {\bf Main Success Scenario:}
@@ -350,11 +375,11 @@
 				\end{itemize}
 			}%
 		}
-		\item External System (Subscriber / API Consumer) \\ N/A
+		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
-	\noindent\fbox{%
+	\noindent{%
 		\parbox{0.5\textwidth}{%
 			\begin{itemize}
 				\item {\bf 1:} System receives user management request.

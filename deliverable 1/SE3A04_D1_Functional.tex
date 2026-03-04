@@ -146,10 +146,9 @@
 \noindent {\bf Viewpoints:}
 \begin{quote}
 	\begin{enumerate}[\bf VP1.]
-		\item IoT Sensor Device
-		\item City Operator
 		\item System Administrator
-		\item External System (Subscriber)
+		\item City Operator
+		\item \textcolor{red}{Third Party Developer}
 		\item General Public User
 	\end{enumerate}
 \end{quote}
@@ -160,22 +159,9 @@
 	\item Ingest Sensor Telemetry \\
 	{\it Pre-condition: Sensor device is registered and authenticated.}
 		\begin{enumerate}[{\bf VP1.}]
-			\item {\bf IoT} Sensor Device \\
-				\noindent\fbox{%
-				\parbox{0.5\textwidth}{%
-					\begin{itemize}
-						\item {\bf Main Success Scenario:}
-						\item {\bf $E_{1}$:} Sensor sends telemetry message containing environmental measurements.
-						\item {\bf $S_{1}$:} System receives the telemetry message.
-						\item {\bf Secondary Scenario (2i):} Telemetry message format is invalid.
-						\item {\bf $S_{2}$:} System rejects the message.
-						\item {\bf $S_{3}$:} Telemetry ingestion failed.
-					\end{itemize}
-				}%
-			}
 			\item City Operator \\ N/A
 			\item System Administrator \\ N/A
-			\item External System (Subscriber) \\ N/A
+			\item \textcolor{red}{Third Party Developer} \\ N/A
 			\item General Public User \\ N/A
 		\end{enumerate}
 		{\bf Global Scenario:}\\
@@ -192,10 +178,9 @@
 	\item Process \& Aggregate Environmental Data \\
 	{\it Pre-condition: Valid telemetry has been ingested.}
 	\begin{enumerate}[{\bf VP1.}]
-		\item {\bf IoT} Sensor Device \\ N/A
 		\item City Operator \\ N/A
 		\item System Administrator \\ N/A
-		\item External System (Subscriber) \\ N/A
+		\item \textcolor{red}{Third Party Developer} \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
@@ -211,40 +196,83 @@
 		}%
 	}
 
-	\item Detect Threshold Violation \& Generate Alert \\
-	{\it Pre-condition: Aggregated data is available and alert rules exist.}
+	\item Create Alert Rule \\
+	{\bf Pre-condition:} The administrator is logged into the system and no identical alert rules exist.
 	\begin{enumerate}[{\bf VP1.}]
-		\item {\bf IoT} Sensor Device \\ N/A
-		\item City Operator \\ N/A
 		\item System Administrator \\
-		\noindent{%
-			\parbox{0.5\textwidth}{%
+			{\bf Main Success Scenario:}
+				\begin{enumerate}[1. ]
+					\item Administrator navigates to the alert rule management page on the dashboard.
+					\item System displays the alert rule creation form.
+					\item Administrator enters the relevant rule information (sensor type, threshold value, zone, etc.) and submits the form.
+					\item System validates the input and creates the new alert rule.
+					\item System creates and stores the alert rule.
+					\item System confirms to the administrator that the alert rule was successfully created.
+				\end{enumerate}
+
+			{\bf Secondary Scenario:}
+			\begin{itemize}
+				\item[] {4i.} System fails to validate the entered rule information.
 				\begin{itemize}
-					\item {\bf $E_{1}$:} Administrator defines alert thresholds.
+					\item[] {4i.1.} System fails to validate the entered rule information.
+					\item[] {4i.2.} System displays an error message indicating the validation failure and prompts the administrator to correct the input.
 				\end{itemize}
-			}%
-		}
+				\item[] {5i.} System fails to create the alert rule.
+				\begin{itemize}
+					\item[] {5i.1.} System fails to create the alert rule.
+					\item[] {5i.2.} Create Alert Rule failed.
+					\item[] {5i.3.} System displays an error message indicating the failure to create the alert rule and prompts the administrator to try again.
+				\end{itemize}
+				\item[] {6i.} System detects an identical alert rule already exists.
+				\begin{itemize}
+					\item[] {6i.1.} System detects an identical alert rule already exists.
+					\item[] {6i.2.} System rejects the creation request and notifies the administrator of the duplicate rule.
+				\end{itemize}
+			\end{itemize}
+
+		\item City Operator
+		     \begin{itemize}
+				\item[] {4i.} The system should notify the city operator that a new alert rule has been created that may affect their dashboard.
+			 \end{itemize}
 		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
-	{\bf Global Scenario:}\\
-	\noindent{%
-		\parbox{0.5\textwidth}{%
+	{\bf Global Scenario:} \\
+	{\bf Pre-condition:} The administrator is logged into the system and no identical alert rules exist.
+		\begin{enumerate}[1. ]
+			\item System displays the alert rule creation form.
+            \item Administrator enters the relevant rule information (sensor type, threshold value, zone, etc.) and submits the form.
+            \item System validates the input and creates the new alert rule.
+            \item Administrator confirms the rule submission.
+            \item System creates and stores the alert rule.
+            \item System confirms to the administrator that the alert rule was successfully created.
+            \item System notifies any active city operators that a new alert rule has been created that may affect their dashboard.
+		\end{enumerate}
+
+	{\bf Secondary Scenario:}
+		\begin{itemize}
+			\item[] {4i.} System fails to validate the entered rule information.
 			\begin{itemize}
-				\item {\bf 1:} System evaluates aggregated data against alert rules.
-				\item {\bf 2:} System detects a rule violation.
-				\item {\bf 3:} System creates an alert and logs the event.
-				\item {\bf 4:} System notifies subscribed external systems.
-				\item {\bf Secondary Scenario (2i):} Alert evaluation fails due to system error.
-				\item {\bf 2i.1:} Alert generation failed.
+				\item[] {4i.1.} System fails to validate the entered rule information.
+				\item[] {4i.2.} System displays an error message indicating the validation failure and prompts the administrator to correct the input.
 			\end{itemize}
-		}%
-	}
+			\item[] {5i.} System fails to create the alert rule.
+			\begin{itemize}
+				\item[] {5i.1.} System fails to create the alert rule.
+				\item[] {5i.2.} Create Alert Rule failed.
+				\item[] {5i.3.} System displays an error message indicating the failure to create the alert rule and prompts the administrator to try again.
+			\end{itemize}
+			\item[] {6i.} System detects an identical alert rule already exists.
+			\begin{itemize}
+				\item[] {6i.1.} System detects an identical alert rule already exists.
+				\item[] {6i.2.} System rejects the creation request and notifies the administrator of the duplicate rule.
+			\end{itemize}
+		\end{itemize}
 
 	\item Acknowledge / Resolve Alert \\
 	{\it Pre-condition: An active alert exists.}
 	\begin{enumerate}[{\bf VP1.}]
-		\item {\bf IoT} Sensor Device \\ N/A
+		\item System Administrator \\ N/A
 		\item City Operator \\
 		\noindent{%
 			\parbox{0.5\textwidth}{%
@@ -256,7 +284,6 @@
 				\end{itemize}
 			}%
 		}
-		\item System Administrator \\ N/A
 		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
@@ -275,6 +302,14 @@
 	{\it Pre-condition: User is authenticated as operator or administrator.}
 	\begin{enumerate}[{\bf VP1.}]
 		\item {\bf IoT} Sensor Device \\ N/A
+		\item System Administrator \\
+		\noindent{%
+			\parbox{0.5\textwidth}{%
+				\begin{itemize}
+					\item Same as VP2 (City Operator).
+				\end{itemize}
+			}%
+		}
 		\item City Operator \\
 		\noindent{%
 			\parbox{0.5\textwidth}{%
@@ -285,15 +320,7 @@
 				\end{itemize}
 			}%
 		}
-		\item System Administrator \\
-		\noindent{%
-			\parbox{0.5\textwidth}{%
-				\begin{itemize}
-					\item Same as VP2 (City Operator).
-				\end{itemize}
-			}%
-		}
-		\item External System (Subscriber) \\ N/A
+		\item Third Party Developer \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}
 	{\bf Global Scenario:}\\
@@ -309,9 +336,8 @@
 	\item Access Public Environmental Data (API) \\
 	{\it Pre-condition: Aggregated, non-sensitive data exists.}
 	\begin{enumerate}[{\bf VP1.}]
-		\item {\bf IoT} Sensor Device \\ N/A
-		\item City Operator \\ N/A
 		\item System Administrator \\ N/A
+		\item City Operator \\ N/A
 		\item External System (Subscriber) \\
 		\noindent{%
 			\parbox{0.5\textwidth}{%
@@ -346,8 +372,6 @@
 	\item Manage Users \& Roles \\
 	{\it Pre-condition: Administrator account exists.}
 	\begin{enumerate}[{\bf VP1.}]
-		\item {\bf IoT} Sensor Device \\ N/A
-		\item City Operator \\ N/A
 		\item System Administrator \\
 		\noindent{%
 			\parbox{0.5\textwidth}{%
@@ -358,6 +382,7 @@
 				\end{itemize}
 			}%
 		}
+		\item City Operator \\ N/A
 		\item External System (Subscriber) \\ N/A
 		\item General Public User \\ N/A
 	\end{enumerate}

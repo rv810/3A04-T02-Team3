@@ -133,9 +133,8 @@
 \noindent {\bf Main Business Events:}
 \begin{quote}
 	\begin{enumerate}[\bf BE1.]
-		\item Add New Sensor Telemetry Device
-		\item Decommission Sensor Telemetry Device
-		\item Detect Threshold Violation \& Generate Alert
+		\item View Alert History
+		\item Create Alert Rule
 		\item Acknowledge / Resolve Alert
 		\item View Operational Dashboard
 		\item Access Public Environmental Data (API)
@@ -156,98 +155,53 @@
 \noindent {\bf Interpretation:} Sensor hardware is simulated. Business events are framed around logical system triggers rather than physical device behavior. Privacy constraints are assumed throughout. No personally identifiable information is involved.\\
 
 \begin{enumerate}[{\bf BE1.}]
-	\item Add New Sensor Telemetry Device \\
-    {\bf Pre-condition:} The Administrator is logged into the system and the new physical sensor device is ready for deployment.
+
+	\item View Alert History \\
+    {\bf Pre-condition:} The City Operator or System Administrator is logged into the dashboard and historical alert data exists.
     \begin{enumerate}[{\bf VP1.}]
         \item System Administrator \\
             {\bf Main Success Scenario:}
+                \begin{itemize}
+                    \item Same as VP2 (City Operator).
+                \end{itemize}
+        \item City Operator \\
+            {\bf Main Success Scenario:}
                 \begin{enumerate}[1. ]
-                    \item Administrator navigates to the device management page on the dashboard.
-                    \item System displays the "Add New Device" registration form.
-                    \item Administrator enters the device hardware details (e.g., MAC address, sensor type, installation zone) and submits the form.
-                    \item System validates the input data and verifies the MAC address is not already registered.
-                    \item System generates unique authentication credentials (e.g., API keys/tokens) for the new device.
-                    \item System registers the device in the database with an "Active" status.
-                    \item System confirms successful registration and displays the generated credentials to the Administrator.
+                    \item Operator navigates to the Alert History module on the dashboard.
+                    \item System displays the default historical view.
+                    \item Operator applies specific search filters and submits the query.
+                    \item System queries the audit log database for alerts matching the specific criteria.
+                    \item System retrieves the complete history of the matching alerts, including timestamps and status transition records.
+                    \item System displays the formatted, paginated historical log to the Operator.
                 \end{enumerate}
 
             {\bf Secondary Scenario:}
             \begin{itemize}
-                \item[] {4i.} System detects the device is already registered.
+                \item[] {4i.} System finds no historical alerts matching the applied filters.
                 \begin{itemize}
-                    \item[] {4i.1.} System queries the database and finds a duplicate MAC address or device ID.
-                    \item[] {4i.2.} System rejects the registration request, displays an error indicating the device already exists, and prompts the Administrator to check the hardware details.
+                    \item[] {4i.1.} System queries the database but returns an empty result set.
+                    \item[] {4i.2.} System displays a "No historical alerts found for the selected criteria" message and prompts the Operator to clear or adjust the filters.
                 \end{itemize}
             \end{itemize}
-        \item City Operator \\ N/A
         \item \textcolor{red}{Third Party Developer} \\ N/A
         \item General Public User \\ N/A
     \end{enumerate}
     {\bf Global Scenario:} \\
-    {\bf Pre-condition:} The Administrator is logged into the system and the new physical sensor device is ready for deployment.
+    {\bf Pre-condition:} The user is logged into the dashboard and historical alert data exists.
         \begin{enumerate}[1. ]
-            \item System displays the device registration form.
-            \item Administrator enters the device details and submits the form.
-            \item System validates the input and checks for duplicate device IDs.
-            \item System generates authentication credentials for the device.
-            \item System registers the device in the database.
-            \item System confirms registration and provides the credentials to the Administrator.
+            \item System displays the default Alert History view.
+            \item Operator applies specific search filters (date, status, zone) and submits the query.
+            \item System queries the audit log database for matching records.
+            \item System retrieves the alert history and status transitions.
+            \item System displays the formatted historical log to the Operator.
         \end{enumerate}
 
     {\bf Secondary Scenario:}
         \begin{itemize}
-            \item[] {3i.} System detects the device is already registered.
+            \item[] {3i.} System finds no historical alerts matching the applied filters.
             \begin{itemize}
-                \item[] {3i.1.} System finds a duplicate device ID in the database.
-                \item[] {3i.2.} System rejects the request and displays a duplicate device error.
-            \end{itemize}
-        \end{itemize}
-
-	\item Decommission Sensor Telemetry Device \\
-    {\bf Pre-condition:} The Administrator is logged into the system and the target device is currently registered and active.
-    \begin{enumerate}[{\bf VP1.}]
-        \item System Administrator \\
-            {\bf Main Success Scenario:}
-                \begin{enumerate}[1. ]
-                    \item Administrator navigates to the active device list on the dashboard.
-                    \item System displays the list of currently registered sensor devices.
-                    \item Administrator selects a specific device and initiates the "Decommission" action.
-                    \item System prompts the Administrator to confirm the decommissioning, warning that the device will no longer be able to transmit data.
-                    \item Administrator confirms the action.
-                    \item System revokes the device's authentication credentials and active tokens.
-                    \item System updates the device status to "Decommissioned" in the database while retaining its historical telemetry data.
-                    \item System confirms to the Administrator that the device was successfully decommissioned.
-                \end{enumerate}
-
-            {\bf Secondary Scenario:}
-            \begin{itemize}
-                \item[] {6i.} System fails to revoke credentials due to a database lock or timeout.
-                \begin{itemize}
-                    \item[] {6i.1.} System encounters an error while updating the device's authentication status.
-                    \item[] {6i.2.} System aborts the decommissioning process, leaves the device status unchanged, and displays an error message prompting the Administrator to try again.
-                \end{itemize}
-            \end{itemize}
-        \item City Operator \\ N/A
-        \item \textcolor{red}{Third Party Developer} \\ N/A
-        \item General Public User \\ N/A
-    \end{enumerate}
-    {\bf Global Scenario:} \\
-    {\bf Pre-condition:} The Administrator is logged into the system and the target device is currently registered and active.
-        \begin{enumerate}[1. ]
-            \item System displays the list of registered devices.
-            \item Administrator selects a device and initiates the "Decommission" action.
-            \item System requests confirmation from the Administrator.
-            \item Administrator confirms the decommissioning.
-            \item System revokes the device's credentials and updates its status to "Decommissioned".
-            \item System confirms the successful decommissioning to the Administrator.
-        \end{enumerate}
-
-    {\bf Secondary Scenario:}
-        \begin{itemize}
-            \item[] {5i.} System fails to revoke credentials due to a database error.
-            \begin{itemize}
-                \item[] {5i.1.} System encounters a database error while updating the status.
-                \item[] {5i.2.} System aborts the process and displays an error message to the Administrator.
+                \item[] {3i.1.} System queries the database but returns an empty result set.
+                \item[] {3i.2.} System displays a "No records found" message and prompts the user to adjust the search criteria.
             \end{itemize}
         \end{itemize}
 
@@ -446,7 +400,25 @@
                     \item[] {2i.2.} System rejects the request and returns an error code notifying the Developer to try again later.
                 \end{itemize}
             \end{itemize}
-        \item General Public User \\ N/A
+        \item General Public User \\
+        {\bf Main Success Scenario:}
+            \begin{enumerate}[1. ]
+                \item Public user opens a public environmental information display or mobile application.
+                \item The public application sends a request to the system’s public API.
+                \item System retrieves aggregated environmental information for the requested zone.
+                \item System returns the environmental data to the application.
+                \item The application displays the environmental information to the public user.
+            \end{enumerate}
+
+        {\bf Secondary Scenario:}
+        \begin{itemize}
+            \item[] {3i.} System fails to retrieve environmental data.
+            \begin{itemize}
+                \item[] {3i.1.} System fails to retrieve the requested data.
+                \item[] {3i.2.} System returns an error response to the application.
+                \item[] {3i.3.} Public application displays a message indicating the data is temporarily unavailable.
+            \end{itemize}
+        \end{itemize}
     \end{enumerate}
     {\bf Global Scenario:} \\
     {\bf Pre-condition:} The Developer has a registered API key and aggregated, non-sensitive data exists.

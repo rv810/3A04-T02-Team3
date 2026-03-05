@@ -9,16 +9,373 @@ This section should contain all of your CRC cards.
 	\item Please use the format outlined in tutorial, i.e., 
 	\begin{table}[ht]
 		\centering
-		\begin{tabular}{|p{5cm}|p{5cm}|}
+		\begin{tabular}{|p{8cm}|p{8cm}|}
 		\hline 
-		 \multicolumn{2}{|l|}{\textbf{Class Name:}} \\
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Account Management (Controller)} \\
+		\hline 
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Create Account & - Create Account \\
+		 - Knows Edit Account & - Edit Account \\
+		 - Knows Login & - Login \\
+		 - Knows Role Info & - Role Info \\
+		 - Knows Account DB & - Account DB \\
+		 - Knows Operator Dashboard & - Operator Dashboard \\
+		 - Knows Alert Rules Management & - Alert Rules Management \\
+		 - Knows Audit Log & - Audit Log \\
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		 - Knows Admin Dashboard & - Admin Dashboard \\
+		 - Knows Public Dashboard & - Public Dashboard \\
+		 - Knows View Account & - View Account \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Alert Rules Management (Controller)} \\
 		\hline
 		\textbf{Responsibility:} & \textbf{Collaborators:} \\
 		\hline
+		 - Knows Create Rule & - Create Rule \\
+		 - Knows Update Rule & - Update Rule \\
+		 - Knows Alert Notifs & - Alert Notifs \\
+		 - Knows Alert History & - Alert History \\
+		 - Knows Alert & - Alert \\
+		 - Knows Alert Rule & - Alert Rule \\
+		 - Knows Audit Log & - Audit Log \\
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		 - Knows Admin Dashboard & - Admin Dashboard \\
+		 - Knows Account Management & - Account Management \\
+		 - Knows Operator Dashboard & - Operator Dashboard \\
 		\vspace{1in} & \\
 		\hline
 		\end{tabular}
 	\end{table}
-	
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Telemetry Data Management (Controller)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Alert Rules Management & - Alert Rules Management \\
+		 - Knows Audit Log & - Audit Log \\
+		 - Knows Sensor Device & - Sensor Device \\
+		 - Knows Sensor Data & - Sensor Data \\
+		 - Knows Aggregated Metrics & - Aggregated Metrics \\
+		 - Knows Public REST API & - Public REST API \\
+		 - Knows Admin Dashboard & - Admin Dashboard \\
+		 - Knows Account Management & - Account Management \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Create Account (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Account Management & - Account Management \\
+		 - Handles click-event of "Create" button \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Edit Account (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Account Management & - Account Management \\
+		 - Handles click-event of "Edit" button \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Login (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Account Management & - Account Management \\
+		 - Handles click-event of "Login" button \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} View Account (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Account Management & - Account Management \\
+		 - Handles click-event of "View Account" button \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Public Dashboard (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Account Management & - Account Management \\
+		 - Handles click-event of "View Public Dashboard" button \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Admin Dashboard (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Account Management & - Account Management \\
+		 - Handles click-event of "View Admin Dashboard" button \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Operator Dashboard (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Account Management & - Account Management \\
+		 - Handles click-event of "View Operator Dashboard" button \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Public REST API (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		 - Handles API calls for telemetry data \\ 
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Alert History (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		 - Handles click-event of "View Alert History" button\\ 
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Alert Notifs (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		 - Handles click-event of "View Alert Notifs" button\\ 
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Update Rule (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		 - Handles click-event of "Update Rule" button\\ 
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Create Rule (Boundary)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		 - Handles click-event of "Create Rule" button\\ 
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Role Info (Entity)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Account  Management & - Account Management \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Account DB (Entity)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Account  Management & - Account Management \\
+		 - Knows Role Info & - Role Info \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Aggregated Metrics (Entity)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Sensor Data (Entity)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		 - Knows Aggregated Metrics & - Aggregated Metrics \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Sensor Device (Entity)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Audit Log (Entity)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Alert Rules Management & - Alert Rules Management \\
+		 - Knows Account Management & - Account Management \\
+		 - Knows Telemetry Data Management & - Telemetry Data Management \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Alert Rule (Entity)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Alert Rules Management & - Alert Rules Management \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|p{8cm}|p{8cm}|}
+		\hline 
+		 \multicolumn{2}{|l|}{\textbf{Class Name:} Alert (Entity)} \\
+		\hline
+		\textbf{Responsibility:} & \textbf{Collaborators:} \\
+		\hline
+		 - Knows Alert Rules Management & - Alert Rules Management \\
+		 - Knows Audit Log & - Audit Log \\
+		 - Knows Alert Rule & - Alert Rule \\
+		\vspace{1in} & \\
+		\hline
+		\end{tabular}
+	\end{table}
+
+
 \end{itemize}
 }

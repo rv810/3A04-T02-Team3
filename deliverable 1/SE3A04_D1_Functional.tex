@@ -133,8 +133,8 @@
 \noindent {\bf Main Business Events:}
 \begin{quote}
 	\begin{enumerate}[\bf BE1.]
-		\item Ingest Sensor Telemetry
-		\item Process \& Aggregate Environmental Data
+		\item Add New Sensor Telemetry Device
+		\item Decommission Sensor Telemetry Device
 		\item Detect Threshold Violation \& Generate Alert
 		\item Acknowledge / Resolve Alert
 		\item View Operational Dashboard
@@ -156,45 +156,100 @@
 \noindent {\bf Interpretation:} Sensor hardware is simulated. Business events are framed around logical system triggers rather than physical device behavior. Privacy constraints are assumed throughout. No personally identifiable information is involved.\\
 
 \begin{enumerate}[{\bf BE1.}]
-	\item Ingest Sensor Telemetry \\
-	{\it Pre-condition: Sensor device is registered and authenticated.}
-		\begin{enumerate}[{\bf VP1.}]
-			\item City Operator \\ N/A
-			\item System Administrator \\ N/A
-			\item \textcolor{red}{Third Party Developer} \\ N/A
-			\item General Public User \\ N/A
-		\end{enumerate}
-		{\bf Global Scenario:}\\
-		\noindent{%
-			\parbox{0.5\textwidth}{%
-				\begin{itemize}
-					\item {\bf 1:} System receives telemetry data from a registered sensor.
-					\item {\bf 2:} System validates message format and value ranges.
-					\item {\bf 3:} Valid telemetry is accepted for processing.
-				\end{itemize}
-			}%
-		}
+	\item Add New Sensor Telemetry Device \\
+    {\bf Pre-condition:} The Administrator is logged into the system and the new physical sensor device is ready for deployment.
+    \begin{enumerate}[{\bf VP1.}]
+        \item System Administrator \\
+            {\bf Main Success Scenario:}
+                \begin{enumerate}[1. ]
+                    \item Administrator navigates to the device management page on the dashboard.
+                    \item System displays the "Add New Device" registration form.
+                    \item Administrator enters the device hardware details (e.g., MAC address, sensor type, installation zone) and submits the form.
+                    \item System validates the input data and verifies the MAC address is not already registered.
+                    \item System generates unique authentication credentials (e.g., API keys/tokens) for the new device.
+                    \item System registers the device in the database with an "Active" status.
+                    \item System confirms successful registration and displays the generated credentials to the Administrator.
+                \end{enumerate}
 
-	\item Process \& Aggregate Environmental Data \\
-	{\it Pre-condition: Valid telemetry has been ingested.}
-	\begin{enumerate}[{\bf VP1.}]
-		\item City Operator \\ N/A
-		\item System Administrator \\ N/A
-		\item \textcolor{red}{Third Party Developer} \\ N/A
-		\item General Public User \\ N/A
-	\end{enumerate}
-	{\bf Global Scenario:}\\
-	\noindent{%
-		\parbox{0.5\textwidth}{%
-			\begin{itemize}
-				\item {\bf 1:} System stores incoming telemetry in time-series storage.
-				\item {\bf 2:} System aggregates data over predefined time windows.
-				\item {\bf 3:} System associates aggregated data with geographical zones.
-				\item {\bf Secondary Scenario (2i):} System fails to store telemetry data.
-				\item {\bf 2i.1:} Aggregation cannot proceed.
-			\end{itemize}
-		}%
-	}
+            {\bf Secondary Scenario:}
+            \begin{itemize}
+                \item[] {4i.} System detects the device is already registered.
+                \begin{itemize}
+                    \item[] {4i.1.} System queries the database and finds a duplicate MAC address or device ID.
+                    \item[] {4i.2.} System rejects the registration request, displays an error indicating the device already exists, and prompts the Administrator to check the hardware details.
+                \end{itemize}
+            \end{itemize}
+        \item City Operator \\ N/A
+        \item \textcolor{red}{Third Party Developer} \\ N/A
+        \item General Public User \\ N/A
+    \end{enumerate}
+    {\bf Global Scenario:} \\
+    {\bf Pre-condition:} The Administrator is logged into the system and the new physical sensor device is ready for deployment.
+        \begin{enumerate}[1. ]
+            \item System displays the device registration form.
+            \item Administrator enters the device details and submits the form.
+            \item System validates the input and checks for duplicate device IDs.
+            \item System generates authentication credentials for the device.
+            \item System registers the device in the database.
+            \item System confirms registration and provides the credentials to the Administrator.
+        \end{enumerate}
+
+    {\bf Secondary Scenario:}
+        \begin{itemize}
+            \item[] {3i.} System detects the device is already registered.
+            \begin{itemize}
+                \item[] {3i.1.} System finds a duplicate device ID in the database.
+                \item[] {3i.2.} System rejects the request and displays a duplicate device error.
+            \end{itemize}
+        \end{itemize}
+
+	\item Decommission Sensor Telemetry Device \\
+    {\bf Pre-condition:} The Administrator is logged into the system and the target device is currently registered and active.
+    \begin{enumerate}[{\bf VP1.}]
+        \item System Administrator \\
+            {\bf Main Success Scenario:}
+                \begin{enumerate}[1. ]
+                    \item Administrator navigates to the active device list on the dashboard.
+                    \item System displays the list of currently registered sensor devices.
+                    \item Administrator selects a specific device and initiates the "Decommission" action.
+                    \item System prompts the Administrator to confirm the decommissioning, warning that the device will no longer be able to transmit data.
+                    \item Administrator confirms the action.
+                    \item System revokes the device's authentication credentials and active tokens.
+                    \item System updates the device status to "Decommissioned" in the database while retaining its historical telemetry data.
+                    \item System confirms to the Administrator that the device was successfully decommissioned.
+                \end{enumerate}
+
+            {\bf Secondary Scenario:}
+            \begin{itemize}
+                \item[] {6i.} System fails to revoke credentials due to a database lock or timeout.
+                \begin{itemize}
+                    \item[] {6i.1.} System encounters an error while updating the device's authentication status.
+                    \item[] {6i.2.} System aborts the decommissioning process, leaves the device status unchanged, and displays an error message prompting the Administrator to try again.
+                \end{itemize}
+            \end{itemize}
+        \item City Operator \\ N/A
+        \item \textcolor{red}{Third Party Developer} \\ N/A
+        \item General Public User \\ N/A
+    \end{enumerate}
+    {\bf Global Scenario:} \\
+    {\bf Pre-condition:} The Administrator is logged into the system and the target device is currently registered and active.
+        \begin{enumerate}[1. ]
+            \item System displays the list of registered devices.
+            \item Administrator selects a device and initiates the "Decommission" action.
+            \item System requests confirmation from the Administrator.
+            \item Administrator confirms the decommissioning.
+            \item System revokes the device's credentials and updates its status to "Decommissioned".
+            \item System confirms the successful decommissioning to the Administrator.
+        \end{enumerate}
+
+    {\bf Secondary Scenario:}
+        \begin{itemize}
+            \item[] {5i.} System fails to revoke credentials due to a database error.
+            \begin{itemize}
+                \item[] {5i.1.} System encounters a database error while updating the status.
+                \item[] {5i.2.} System aborts the process and displays an error message to the Administrator.
+            \end{itemize}
+        \end{itemize}
 
 	\item Create Alert Rule \\
 	{\bf Pre-condition:} The administrator is logged into the system and no identical alert rules exist.
@@ -270,132 +325,191 @@
 		\end{itemize}
 
 	\item Acknowledge / Resolve Alert \\
-	{\it Pre-condition: An active alert exists.}
-	\begin{enumerate}[{\bf VP1.}]
-		\item System Administrator \\ N/A
-		\item City Operator \\
-		\noindent{%
-			\parbox{0.5\textwidth}{%
-				\begin{itemize}
-					\item {\bf Main Success Scenario:}
-					\item {\bf $E_{1}$:} Operator views active alerts on the dashboard.
-					\item {\bf $E_{2}$:} Operator acknowledges an alert.
-					\item {\bf $S_{1}$:} System updates alert status.
-				\end{itemize}
-			}%
-		}
-		\item External System (Subscriber) \\ N/A
-		\item General Public User \\ N/A
-	\end{enumerate}
-	{\bf Global Scenario:}\\
-	\noindent{%
-		\parbox{0.5\textwidth}{%
-			\begin{itemize}
-				\item {\bf 1:} System displays active alerts.
-				\item {\bf 2:} Operator acknowledges or resolves an alert.
-				\item {\bf 3:} System records the status change in the audit log.
-			\end{itemize}
-		}%
-	}
+    {\bf Pre-condition:} The City Operator is logged into the dashboard and there is at least one active alert.
+    \begin{enumerate}[{\bf VP1.}]
+        \item System Administrator \\
+            {\bf Main Success Scenario:}
+                \begin{itemize}
+                    \item Same as VP2 (City Operator).
+                \end{itemize}
+        \item City Operator \\
+            {\bf Main Success Scenario:}
+                \begin{enumerate}[1. ]
+                    \item Operator navigates to the active alerts panel on the dashboard.
+                    \item System displays the list of unacknowledged and active alerts.
+                    \item Operator selects a specific alert to view its details.
+                    \item System displays the alert details (e.g., sensor ID, timestamp, threshold exceeded).
+                    \item Operator adds an optional resolution note and submits the "Resolve" action.
+                    \item System updates the alert status to "Resolved" and records the action in the audit log.
+                    \item System confirms the resolution to the Operator and removes the alert from the active view.
+                \end{enumerate}
+
+            {\bf Secondary Scenario:}
+            \begin{itemize}
+                \item[] {6i.} System detects the alert has already been resolved by another user.
+                \begin{itemize}
+                    \item[] {6i.1.} System detects a status conflict in the database.
+                    \item[] {6i.2.} System prevents the state change, displays a warning that the alert was already resolved, and refreshes the active alerts list.
+                \end{itemize}
+            \end{itemize}
+        \item \textcolor{red}{Third Party Developer} \\ N/A
+        \item General Public User \\ N/A
+    \end{enumerate}
+    {\bf Global Scenario:} \\
+    {\bf Pre-condition:} The City Operator is logged into the dashboard and there is at least one active alert.
+        \begin{enumerate}[1. ]
+            \item System displays the active alerts panel.
+            \item Operator selects a specific alert to view its details.
+            \item System displays the alert details.
+            \item Operator submits a resolution action for the alert.
+            \item System updates the alert status to "Resolved" and records the action in the audit log.
+            \item System confirms the resolution to the Operator and refreshes the view.
+        \end{enumerate}
+
+    {\bf Secondary Scenario:}
+        \begin{itemize}
+            \item[] {5i.} System detects the alert has already been resolved by another user.
+            \begin{itemize}
+                \item[] {5i.1.} System detects a status conflict in the database.
+                \item[] {5i.2.} System rejects the update, displays a warning, and refreshes the alerts list.
+            \end{itemize}
+        \end{itemize}
 
 	\item View Operational Dashboard \\
-	{\it Pre-condition: User is authenticated as operator or administrator.}
-	\begin{enumerate}[{\bf VP1.}]
-		\item {\bf IoT} Sensor Device \\ N/A
-		\item System Administrator \\
-		\noindent{%
-			\parbox{0.5\textwidth}{%
-				\begin{itemize}
-					\item Same as VP2 (City Operator).
-				\end{itemize}
-			}%
-		}
-		\item City Operator \\
-		\noindent{%
-			\parbox{0.5\textwidth}{%
-				\begin{itemize}
-					\item {\bf Main Success Scenario:}
-					\item {\bf $E_{1}$:} Operator logs into the dashboard.
-					\item {\bf $S_{1}$:} System displays real-time environmental data and alerts.
-				\end{itemize}
-			}%
-		}
-		\item Third Party Developer \\ N/A
-		\item General Public User \\ N/A
-	\end{enumerate}
-	{\bf Global Scenario:}\\
-	\noindent{%
-		\parbox{0.5\textwidth}{%
-			\begin{itemize}
-				\item {\bf 1:} User authenticates successfully.
-				\item {\bf 2:} System presents visualizations of current and historical data.
-			\end{itemize}
-		}%
-	}
+    {\bf Pre-condition:} The City Operator or System Administrator is logged into the system.
+    \begin{enumerate}[{\bf VP1.}]
+        \item System Administrator \\
+            {\bf Main Success Scenario:}
+                \begin{itemize}
+                    \item Same as VP2 (City Operator).
+                \end{itemize}
+        \item City Operator \\
+            {\bf Main Success Scenario:}
+                \begin{enumerate}[1. ]
+                    \item Operator navigates to the Operational Dashboard.
+                    \item System displays the default dashboard with real-time environmental data and active alerts.
+                    \item Operator applies a filter (e.g., specific geographical zone or sensor type) and submits the request.
+                    \item System updates the dashboard visualizations based on the selected filters.
+                    \item Operator selects a specific data point or alert for a detailed view.
+                    \item System displays the detailed information panel for the selected item.
+                \end{enumerate}
+
+            {\bf Secondary Scenario:}
+            \begin{itemize}
+                \item[] {4i.} System finds no data matching the selected filters.
+                \begin{itemize}
+                    \item[] {4i.1.} System queries the database but finds no matching records.
+                    \item[] {4i.2.} System displays a "No Data Found" message in the visualization widgets and prompts the Operator to adjust the filters.
+                \end{itemize}
+            \end{itemize}
+        \item \textcolor{red}{Third Party Developer} \\ N/A
+        \item General Public User \\ N/A
+    \end{enumerate}
+    {\bf Global Scenario:} \\
+    {\bf Pre-condition:} The City Operator or System Administrator is logged into the system.
+        \begin{enumerate}[1. ]
+            \item System displays the default dashboard with real-time data and alerts.
+            \item Operator applies a filter and submits the request.
+            \item System updates the dashboard visualizations based on the selected filters.
+            \item Operator selects a specific data point or alert for a detailed view.
+            \item System displays the detailed information panel.
+        \end{enumerate}
+
+    {\bf Secondary Scenario:}
+        \begin{itemize}
+            \item[] {3i.} System finds no data matching the selected filters.
+            \begin{itemize}
+                \item[] {3i.1.} System queries the database but finds no matching records.
+                \item[] {3i.2.} System displays a "No Data Found" message in the visualization widgets and prompts the Operator to adjust the filters.
+            \end{itemize}
+        \end{itemize}
 
 	\item Access Public Environmental Data (API) \\
-	{\it Pre-condition: Aggregated, non-sensitive data exists.}
-	\begin{enumerate}[{\bf VP1.}]
-		\item System Administrator \\ N/A
-		\item City Operator \\ N/A
-		\item External System (Subscriber) \\
-		\noindent{%
-			\parbox{0.5\textwidth}{%
-				\begin{itemize}
-					\item {\bf Main Success Scenario:}
-					\item {\bf $E_{1}$:} External system requests environmental data via API.
-					\item {\bf $S_{1}$:} System authenticates the request.
-					\item {\bf $S_{2}$:} System returns aggregated data.
-				\end{itemize}
-			}%
-		}
-		\item General Public User \\
-		\noindent{%
-			\parbox{0.5\textwidth}{%
-				\begin{itemize}
-					\item Same as VP4 (External System).
-				\end{itemize}
-			}%
-		}
-	\end{enumerate}
-	{\bf Global Scenario:}\\
-	\noindent{%
-		\parbox{0.5\textwidth}{%
-			\begin{itemize}
-				\item {\bf 1:} System receives API request.
-				\item {\bf 2:} System enforces access controls and rate limits.
-				\item {\bf 3:} System responds with requested environmental data.
-			\end{itemize}
-		}%
-	}
+    {\bf Pre-condition:} The Developer has a registered API key and aggregated, non-sensitive data exists.
+    \begin{enumerate}[{\bf VP1.}]
+        \item System Administrator \\ N/A
+        \item City Operator \\ N/A
+        \item \textcolor{red}{Third Party Developer} \\
+            {\bf Main Success Scenario:}
+                \begin{enumerate}[1. ]
+                    \item Developer submits a GET request to the public environmental data API endpoint with specific query parameters.
+                    \item System authenticates the API key and enforces rate limits.
+                    \item System retrieves the requested aggregated data.
+                    \item System returns the data payload to the Developer's client.
+                \end{enumerate}
+
+            {\bf Secondary Scenario:}
+            \begin{itemize}
+                \item[] {2i.} System detects the Developer has exceeded their API rate limit.
+                \begin{itemize}
+                    \item[] {2i.1.} System detects the rate limit violation.
+                    \item[] {2i.2.} System rejects the request and returns an error code notifying the Developer to try again later.
+                \end{itemize}
+            \end{itemize}
+        \item General Public User \\ N/A
+    \end{enumerate}
+    {\bf Global Scenario:} \\
+    {\bf Pre-condition:} The Developer has a registered API key and aggregated, non-sensitive data exists.
+        \begin{enumerate}[1. ]
+            \item Developer submits a GET request to the public environmental data API endpoint.
+            \item System authenticates the API key and enforces rate limits.
+            \item System retrieves the requested aggregated data.
+            \item System returns the data payload to the Developer's client.
+        \end{enumerate}
+
+    {\bf Secondary Scenario:}
+        \begin{itemize}
+            \item[] {2i.} System detects the Developer has exceeded their API rate limit.
+            \begin{itemize}
+                \item[] {2i.1.} System detects the rate limit violation.
+                \item[] {2i.2.} System rejects the request and returns an error code notifying the Developer to try again later.
+            \end{itemize}
+        \end{itemize}
 
 	\item Manage Users \& Roles \\
-	{\it Pre-condition: Administrator account exists.}
-	\begin{enumerate}[{\bf VP1.}]
-		\item System Administrator \\
-		\noindent{%
-			\parbox{0.5\textwidth}{%
-				\begin{itemize}
-					\item {\bf Main Success Scenario:}
-					\item {\bf $E_{1}$:} Administrator creates or updates a user account.
-					\item {\bf $S_{1}$:} System assigns roles and permissions.
-				\end{itemize}
-			}%
-		}
-		\item City Operator \\ N/A
-		\item External System (Subscriber) \\ N/A
-		\item General Public User \\ N/A
-	\end{enumerate}
-	{\bf Global Scenario:}\\
-	\noindent{%
-		\parbox{0.5\textwidth}{%
-			\begin{itemize}
-				\item {\bf 1:} System receives user management request.
-				\item {\bf 2:} System validates permissions.
-				\item {\bf 3:} System updates user records and logs the action.
-			\end{itemize}
-		}%
-	}
+    {\bf Pre-condition:} The System Administrator is logged into the admin console.
+    \begin{enumerate}[{\bf VP1.}]
+        \item System Administrator \\
+            {\bf Main Success Scenario:}
+                \begin{enumerate}[1. ]
+                    \item Administrator navigates to the User Management section.
+                    \item System displays the current list of users and a "Create New User" form.
+                    \item Administrator enters the new user's details (e.g., name, email) and assigns a role (e.g., City Operator), then submits the form.
+                    \item System validates the input data and ensures the email is not already registered.
+                    \item System creates the user account and stores the role assignment.
+                    \item System confirms to the Administrator that the account was successfully created.
+                \end{enumerate}
+
+            {\bf Secondary Scenario:}
+            \begin{itemize}
+                \item[] {4i.} System detects the email address is already registered.
+                \begin{itemize}
+                    \item[] {4i.1.} System detects a duplicate email in the database.
+                    \item[] {4i.2.} System rejects the creation request, displays an error message indicating the email is in use, and prompts the Administrator to use a different email or edit the existing user.
+                \end{itemize}
+            \end{itemize}
+        \item City Operator \\ N/A
+        \item \textcolor{red}{Third Party Developer} \\ N/A
+        \item General Public User \\ N/A
+    \end{enumerate}
+    {\bf Global Scenario:} \\
+    {\bf Pre-condition:} The System Administrator is logged into the admin console.
+        \begin{enumerate}[1. ]
+            \item System displays the "Create New User" form.
+            \item Administrator enters the new user's details and assigns a role, then submits the form.
+            \item System validates the input data and checks for duplicate accounts.
+            \item System creates the user account and stores the role assignment.
+            \item System confirms to the Administrator that the account was successfully created.
+        \end{enumerate}
+
+    {\bf Secondary Scenario:}
+        \begin{itemize}
+            \item[] {3i.} System detects the email address is already registered.
+            \begin{itemize}
+                \item[] {3i.1.} System detects a duplicate email in the database.
+                \item[] {3i.2.} System rejects the creation request, displays an error message indicating the email is in use, and prompts the Administrator to use a different email.
+            \end{itemize}
+        \end{itemize}
 
 \end{enumerate}
 }

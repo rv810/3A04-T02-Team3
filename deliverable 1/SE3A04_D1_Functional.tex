@@ -301,7 +301,7 @@
 
             {\bf Secondary Scenario:}
             \begin{itemize}
-                \item[] {6i.} System detects the alert has already been resolved by another user.
+                \item[] {6i.} System detects the alert has already been resolved by another Operator.
                 \begin{itemize}
                     \item[] {6i.1.} System detects a status conflict in the database.
                     \item[] {6i.2.} System prevents the state change, displays a warning that the alert was already resolved, and refreshes the active alerts list.
@@ -331,18 +331,32 @@
         \end{itemize}
 
 	\item View Operational Dashboard \\
-    {\bf Pre-condition:} The City Operator or System Administrator is logged into the system.
+    {\bf Pre-condition:} The user is logged into the system.
     \begin{enumerate}[{\bf VP1.}]
         \item System Administrator \\
             {\bf Main Success Scenario:}
+                \begin{enumerate}[1. ]
+                    \item Administrator navigates to the Administrator Dashboard.
+                    \item System displays the default dashboard with incoming sensor data, active alerts, and a section creating new alert rules.
+                    \item Administrator applies a filter (e.g., specific geographical zone or sensor type) and submits the request.
+                    \item System updates the dashboard visualizations based on the selected filters.
+                    \item Administrator selects a specific data point or alert for a detailed view.
+                    \item System displays the detailed information panel for the selected item.
+                \end{enumerate}
+
+            {\bf Secondary Scenario:}
+            \begin{itemize}
+                \item[] {3i.} System finds no data matching the selected filters.
                 \begin{itemize}
-                    \item Same as VP2 (City Operator).
+                    \item[] {3i.1.} System queries the database but finds no matching records.
+                    \item[] {3i.2.} System displays a "No Data Found" message in the visualization widgets and prompts the Administrator to adjust the filters.
                 \end{itemize}
+            \end{itemize}
         \item City Operator \\
             {\bf Main Success Scenario:}
                 \begin{enumerate}[1. ]
                     \item Operator navigates to the Operational Dashboard.
-                    \item System displays the default dashboard with real-time environmental data and active alerts.
+                    \item System displays the default dashboard with a map of sensor locations, charts of environmental metrics, gauges dispalying current values, overview of system health, active alerts, and access to historical data trends.
                     \item Operator applies a filter (e.g., specific geographical zone or sensor type) and submits the request.
                     \item System updates the dashboard visualizations based on the selected filters.
                     \item Operator selects a specific data point or alert for a detailed view.
@@ -351,31 +365,49 @@
 
             {\bf Secondary Scenario:}
             \begin{itemize}
-                \item[] {4i.} System finds no data matching the selected filters.
+                \item[] {3i.} System finds no data matching the selected filters.
                 \begin{itemize}
-                    \item[] {4i.1.} System queries the database but finds no matching records.
-                    \item[] {4i.2.} System displays a "No Data Found" message in the visualization widgets and prompts the Operator to adjust the filters.
+                    \item[] {3i.1.} System queries the database but finds no matching records.
+                    \item[] {3i.2.} System displays a "No Data Found" message in the visualization widgets and prompts the Operator to adjust the filters.
                 \end{itemize}
             \end{itemize}
-        \item \textcolor{red}{Third Party Developer} \\ N/A
-        \item General Public User \\ N/A
+        \item {Third Party Developer} \\ N/A
+        \item General Public User \\ 
+            {\bf Main Success Scenario:}
+                \begin{enumerate}[1. ]
+                    \item General Public User navigates to the Public Dashboard.
+                    \item System displays the default dashboard with aggregated, non-sensitive environmental data for given zones.
+                    \item General Public User applies a filter (e.g., specific geographical zone or metric) and submits the request.
+                    \item System updates the dashboard visualizations based on the selected filters.
+                    \item General Public User selects specific information for a detailed view.
+                    \item System displays the detailed information panel for the selected item.
+                \end{enumerate}
+
+            {\bf Secondary Scenario:}
+            \begin{itemize}
+                \item[] {3i.} System finds no data matching the selected filters.
+                \begin{itemize}
+                    \item[] {3i.1.} System queries the database but finds no matching records.
+                    \item[] {3i.2.} System displays a "No Data Found" message in the visualization widgets and prompts the Operator to adjust the filters.
+                \end{itemize}
+            \end{itemize}
     \end{enumerate}
     {\bf Global Scenario:} \\
-    {\bf Pre-condition:} The City Operator or System Administrator is logged into the system.
+    {\bf Pre-condition:} A user is logged into the system.
         \begin{enumerate}[1. ]
             \item System displays the default dashboard with real-time data and alerts.
-            \item Operator applies a filter and submits the request.
+            \item User applies a filter and submits the request.
             \item System updates the dashboard visualizations based on the selected filters.
-            \item Operator selects a specific data point or alert for a detailed view.
+            \item User selects specific data for a detailed view.
             \item System displays the detailed information panel.
         \end{enumerate}
 
     {\bf Secondary Scenario:}
         \begin{itemize}
-            \item[] {3i.} System finds no data matching the selected filters.
+            \item[] {2i.} System finds no data matching the selected filters.
             \begin{itemize}
-                \item[] {3i.1.} System queries the database but finds no matching records.
-                \item[] {3i.2.} System displays a "No Data Found" message in the visualization widgets and prompts the Operator to adjust the filters.
+                \item[] {2i.1.} System queries the database but finds no matching records.
+                \item[] {2i.2.} System displays a "No Data Found" message in the visualization widgets and prompts the Operator to adjust the filters.
             \end{itemize}
         \end{itemize}
 

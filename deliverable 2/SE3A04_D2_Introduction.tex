@@ -9,21 +9,31 @@ This section should provide an brief overview of the entire document.
 \subsection{Purpose}
 \label{sub:purpose}
 % Begin SubSection
-State the purpose and intended audience for the document.
-% End SubSection
+The purpose of this document is to describe the high-level architecture of \textbf{SCEMAS} and explain how the system will be organized into subsystems with clear responsibilities and interactions. \\
+\\
+This document is intended for developers, system architects, project stakeholders, and instructors involved in the design and implementation of \textbf{SCEMAS}. It provides an overview of the architectural approach used in the system and serves as a reference for future development activities.
+The document builds upon the requirements defined in the Software Requirements Specification (Deliverable 1) and translates those requirements into a structured architectural design.% End SubSection
 
 \subsection{System Description}
 \label{sub:system_description}
 % Begin SubSection
-Give a brief description of the system. This could be a paragraph or two to give some context to this document.
+The system uses a \textbf{Presentation–Abstraction–Control (PAC)} architectural style. 
+This consists of presentation, control and abstraction components. Presentation handles user interfaces and interaction, abstraction has the control and data management, and control coordinates between the other two layers and other agents.\\ \\
+The various subsystems use the following architectural styles: repository, pipe-and-filter, and blackboard. 
+Repository allows the subsystem to manage account information and \textbf{RBAC}. 
+Pipe-and-filter allows the subsystem to process sensor data through various stages.
+Blackboard allows incoming telemetry to be compared against set values to create alerts.
+These architectural styles were chosen to promote modularity and maintainability, allowing the system to be organized into cohesive subsystems.
 
 % End SubSection
 
 \subsection{Overview}
 \label{sub:overview}
 % Begin SubSection
-Describe what the rest of the document contains and explain how the document is organised (e.g. "In Section 2 we discuss...in Section 3...").
-
+The rest of the document describes the architectural design of \textbf{\textbf{SCEMAS}}, including the high-level structure of the system, the main components and their interactions, and the rationale behind the architectural decisions. The document is organized as follows:
+Section 2 is the Analysis Class Diagram, which identifies important classes and their relationships.
+Section 3 is Architectural Design, which identifies the system architecture, subsystems, and provides justification for design choices.
+Section 4 contains the Class Responsibility Collaborator (CRC) cards, which provide detailed information about the responsibilities and interactions of the main classes in the system.
 % End SubSection
 
 }

@@ -8,13 +8,32 @@ This section should provide an overview of the overall architectural design of y
 \subsection{System Architecture}
 \label{sub:system_architecture}
 % Begin SubSection
+% \begin{itemize}
+% 	\item Identify and explain the overall architecture of your system
+% 	\item Be sure to clearly state the name of the architecture you used (this is the name of the architectural pattern, not the name of your system)
+% 	\item Provide the reasoning and justification of the choice of architecture
+% 	\item Provide a structural architecture diagram showing the relationship among the subsystems (if appropriate)
+% 	\item List any design alternatives you considered, but eliminated (and explain why you eliminated them)
+% \end{itemize} \\
+
+\noindent SCEMAS utilizes the \textbf{Presentation–Abstraction–Control (PAC)} architectural style. In PAC, the system is divided into a set of cooperating agents. Each agent contains three components: presentation, control, and abstraction. The presentation component handles user interaction and external interfaces, the abstraction component contains the system’s data and core logic, and the control component manages communication between presentation and abstraction while coordinating interactions between agents. \\
+
+\noindent The top-level PAC agent represents the overall system and coordinates interactions between the system interfaces and internal subsystems. The presentation component provides entry points for the operator dashboard, administrative tools, and the public REST API. The control component routes requests to the appropriate subsystem agents and manages system-wide coordination. The abstraction component represents the overall system functionality and provides access to the core services of the system. \\
+
+\noindent Within this architecture, several subsystem agents are defined. Each subsystem agent encapsulates its own presentation, control, and abstraction components while performing a specific system responsibility. 
+
 \begin{itemize}
-	\item Identify and explain the overall architecture of your system
-	\item Be sure to clearly state the name of the architecture you used (this is the name of the architectural pattern, not the name of your system)
-	\item Provide the reasoning and justification of the choice of architecture
-	\item Provide a structural architecture diagram showing the relationship among the subsystems (if appropriate)
-	\item List any design alternatives you considered, but eliminated (and explain why you eliminated them)
+
+    \item The \textbf{Account Management} subsystem follows a \textbf{Repository} architectural style. This subsystem handles user accounts, authentication, and role-based access control. Account data is stored in a centralized repository so that different parts of the system can access and update user information consistently. 
+
+    \item The \textbf{Telemetry Data Management} subsystem follows a \textbf{Pipe-and-Filter} architectural style. Telemetry data from IoT sensors is processed through a sequence of stages such as ingestion, validation, aggregation, and storage. Each stage acts as a filter that transforms the incoming data before passing it to the next stage through a pipe. This approach works well for telemetry data because it allows continuous data streams to be processed efficiently. 
+
+    \item The \textbf{Alert Rules Management} subsystem follows a \textbf{Blackboard} architectural style. In this subsystem, incoming telemetry data is evaluated against administrator-defined alert rules. The blackboard serves as a shared knowledge base containing telemetry values and alert rules. Multiple components can operate on this shared data to determine whether environmental thresholds have been exceeded and to generate alerts. 
+
 \end{itemize}
+
+\noindent Alternative architectures were considered but ultimately eliminated. The Model–View–Controller (MVC) architecture was considered because it separates the user interface from the application logic. However, MVC is typically suited for systems centered around a single interface and shared data model. Since SCEMAS contains independent processing subsystems, PAC provides a clearer way to coordinate these components. The Batch Sequential architecture was not suitable because SCEMAS requires continuous real-time processing of telemetry data rather than batch processing. The Process-Control architecture is primarily used in embedded systems that directly control hardware processes, which is not the main purpose of SCEMAS. \\
+
 % End SubSection
 
 \subsection{Subsystems}

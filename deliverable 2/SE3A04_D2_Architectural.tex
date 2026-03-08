@@ -44,14 +44,14 @@ This section should provide an overview of the overall architectural design of y
 \subsection{Subsystems}
 \label{sub:subsystems}
 % Begin SubSection
-\noindent Provide a list of your subsystems, with a brief description of each. Be sure to document its purpose and relationship to other subsystems.
+\noindent Provide a list of your subsystems, with a brief description of each. Be sure to document its purpose and relationship to other subsystems. \\
 
-\noindent Our main system has been subdivided into three distinct subsystems: Telemetry Data Management, Account Management, and Alert Rules Management. Each subsystem is designed to handle specific responsibilities while maintaining clear interfaces for communication with other subsystems.
+\noindent Our main system has been subdivided into three distinct subsystems: Telemetry Data Management, Account Management, and Alert Rules Management. Each subsystem is designed to handle specific responsibilities while maintaining clear interfaces for communication with other subsystems. \\
 
-\noindent The Telemetry Data Management subsystem is responsible for handling the ingestion, processing, and storage of telemetry data from IoT sensors. It ensures that incoming data is validated, aggregated, and stored efficiently for later retrieval and analysis. This subsystem adheres to a pipe-and-filter architectural style and interacts with the Alert Rules Management subsystem to evaluate telemetry data against defined alert rules.
+\noindent The Telemetry Data Management subsystem is responsible for handling the ingestion, processing, and storage of telemetry data from IoT sensors. It ensures that incoming data is validated, aggregated, and stored efficiently for later retrieval and analysis. This subsystem adheres to a pipe-and-filter architectural style and interacts with the Alert Rules Management subsystem to evaluate telemetry data against defined alert rules. \\
 
-\noindent The Account Management subsystem manages user accounts, authentication, and role-based access control. It provides a centralized repository for user information and ensures that only authorized users can access specific system functionalities. This subsystem interacts with both the Telemetry Data Management and Alert Rules Management subsystems to enforce access control policies.
+\noindent The Account Management subsystem manages user accounts, authentication, and role-based access control. It provides a centralized repository for user information and ensures that only authorized users can access specific system functionalities. This subsystem interacts with both the Telemetry Data Management and Alert Rules Management subsystems to enforce access control policies. The Account Management System is built on the repository architectural style, allowing for consistent data access and updates across the system. \\
 
-\noindent The Alert Rules Management subsystem allows administrators to define and manage alert rules based on telemetry data. It evaluates incoming telemetry data against these rules and generates alerts when certain conditions are met. This subsystem uses a blackboard architectural style to allow administrators to share alert conditions across the system.
+\noindent The Alert Rules Management subsystem allows administrators to define and manage alert rules based on telemetry data. It evaluates telemetry data from the Telemetry Data Management subsystem against these rules and generates alerts when certain conditions are met. This subsystem uses a blackboard architectural style to allow administrators to share alert conditions across the system. \\
 % End SubSection
 }

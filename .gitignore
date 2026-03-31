@@ -3,6 +3,8 @@
 #vscode
 .vscode
 
+.env
+
 ### LaTeX ###
 ## Core latex/pdflatex auxiliary files:
 *.aux

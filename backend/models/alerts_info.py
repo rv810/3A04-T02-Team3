@@ -4,9 +4,9 @@ from typing import Optional
 from datetime import datetime
 
 class SensorType(str, Enum):
-    temperature = "temperature"
+    temperature = "temp"
     humidity = "humidity"
-    oxygen = "oxygen"
+    oxygen = "ox"
 
 class AlertStatus(str, Enum):
     active = "active"

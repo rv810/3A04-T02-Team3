@@ -1,36 +1,26 @@
-from abstractions.alerts_abstraction import AlertsAbstraction
-from models.alerts_info import AlertsInfo, AlertRule
+from database import supabase
+from models.alerts_info import AlertsInfo, AlertRule, AuditLog
 from typing import List
 
-class AlertsController:
-    def __init__(self):
-        self.alertsDB = AlertsAbstraction()
+class AlertsAbstraction:
 
-    def checkAlertRules(self, data) -> None:
-        type_rules = [rule for rule in self.alertsDB.retrieveAlertRules() if rule.ruletype == data.type]
+    def retrieveAlertRules(self) -> List[AlertRule]:
+        response = supabase.table("alertrules").select("*").execute()
+        return [AlertRule(**row) for row in response.data]
 
-        for rule in type_rules:
-            if data.value <= rule.lowerbound or data.value >= rule.upperbound:
-                triggered_alert = AlertsInfo(
-                    alerttype=data.type,
-                    status="active",
-                    ruleviolated=rule.ruleID,
-                    humidity_sensor_id=data.sensorID if data.type == "humidity" else None,
-                    oxygen_sensor_id=data.sensorID if data.type == "oxygen" else None,
-                    temp_sensor_id=data.sensorID if data.type == "temperature" else None,
-                )
-
-                self.alertsDB.addAlert(triggered_alert)
-                self.alertsDB.auditLog(
-                    event_type="alert_triggered",
-                    description=f"{data.type} sensor out of bounds: {data.value}",
-                    sensor_id=data.sensorID,
-                    alert_type=data.type
-                )
-                self.makeAlertNotifs(triggered_alert)
-
-    def makeAlertNotifs(self, alert: AlertsInfo) -> None:
-        print(f"Alert triggered: {alert.alerttype} violated rule {alert.ruleviolated}")
+    def addAlert(self, alert: AlertsInfo) -> None:
+        supabase.table("activealerts").insert(alert.dict(exclude_none=True)).execute()
 
     def retrieveAlerts(self) -> List[AlertsInfo]:
-        return self.alertsDB.retrieveAlerts()
+        response = supabase.table("activealerts").select("*").execute()
+        return [AlertsInfo(**row) for row in response.data]
+
+    def auditLog(self, event_type: str, description: str, sensor_id: int, alert_type: str) -> None:
+        log = AuditLog(
+            eventtype=event_type,
+            description=description,
+            humidity_sensor_id=sensor_id if alert_type == "humidity" else None,
+            oxygen_sensor_id=sensor_id if alert_type == "oxygen" else None,
+            temp_sensor_id=sensor_id if alert_type == "temperature" else None,
+        )
+        supabase.table("auditlog").insert(log.dict(exclude_none=True)).execute()

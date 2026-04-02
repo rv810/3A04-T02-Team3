@@ -33,7 +33,7 @@ class AlertsController:
                 self.makeAlertNotifs(triggered_alert)
 
     def makeAlertNotifs(self, alert: AlertsInfo) -> None:
-        # your notification logic here
+        # notification logic here
         print(f"Alert triggered: {alert.alertType} violated rule {alert.ruleViolated}")
 
     def retrieveAlerts(self) -> List[AlertsInfo]:

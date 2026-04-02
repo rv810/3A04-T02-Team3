@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.security import HTTPBearer
 from routes.accounts import router as accounts_router
+from routes.alerts import router as alerts_router
 
 security = HTTPBearer()
 
@@ -10,6 +11,7 @@ app = FastAPI(
 )
 
 app.include_router(accounts_router)
+app.include_router(alerts_router)
 
 
 # when merging, add routers here:

@@ -1,5 +1,5 @@
 from database import supabase
-from models.alerts_info import AlertsInfo, AlertRule
+from models.alerts_info import AlertRule
 from typing import List
 
 class AdminAbstraction:

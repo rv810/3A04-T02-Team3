@@ -3,10 +3,10 @@ from models.alerts_info import AlertRule
 
 class AdminController:
     def __init__(self):
-        self.alerts = AdminAbstraction()
+        self.adminAbstraction = AdminAbstraction()
 
     def makeAlertRule(self, rule: AlertRule):
-        self.alerts.updateAlertRule(rule)
+        self.adminAbstraction.updateAlertRule(rule)
 
     def viewAlerts(self):
-        return self.alerts.retrieveAlertRules()
+        return self.adminAbstraction.retrieveAlertRules()

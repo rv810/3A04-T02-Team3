@@ -16,18 +16,23 @@ class AlertsController:
             if data.value <= rule.lowerBoundThreshold or data.value >= rule.upperBoundThreshold:
                 triggered_alert = AlertsInfo(
                     alertID=uuid4(),
-                    alertType=data.type,
+                    alertType=data.alertType,
                     status="active",
                     ruleViolated=rule.ruleID,
-                    humidity_sensorID=data.sensorID if data.type == "humidity" else None,
-                    temperature_sensorID=data.sensorID if data.type == "temperature" else None,
-                    oxygen_sensorID=data.sensorID if data.type == "oxygen" else None,
+                    humidity_sensorID=data.sensorID if data.alertType == "humidity" else None,
+                    temperature_sensorID=data.sensorID if data.alertType == "temp" else None,
+                    oxygen_sensorID=data.sensorID if data.alertType == "ox" else None,
                     start=datetime.now()
                 )
 
                 # save to alerts table and audit log
                 self.alertsDB.addAlert(triggered_alert)
-                self.alertsDB.auditLog(triggered_alert)
+                self.alertsDB.auditLog(
+                    event_type="alert_triggered",
+                    description=f"{data.alertType} value of {data.value} violated rule {rule.ruleID}",
+                    sensor_id=data.sensorID,
+                    alert_type=data.alertType
+                )
 
                 # send notification
                 self.makeAlertNotifs(triggered_alert)

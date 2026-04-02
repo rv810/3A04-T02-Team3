@@ -9,8 +9,3 @@ controller = AlertsController()
 @router.get("/", response_model=List[AlertsInfo])
 def get_alerts():
     return controller.retrieveAlerts()
-
-@router.post("/audit")
-def audit_log(alert: AlertsInfo):
-    controller.auditLog(alert)
-    return {"message": "Alert logged successfully"}

@@ -10,7 +10,7 @@ class HumidityController:
     async def handle_incoming_data(self, data: dict, supabase_client, websocket_manager):
         # 1. Extract specific fields from the AWS payload
         val = data.get("value")
-        s_id = data.get("sensorid")
+        s_id = data.get("sensor_id")
         z = data.get("zone")
         u = data.get("unit")
         ts = data.get("timestamp")

@@ -43,6 +43,12 @@ async def aws_iot_webhook(request: Request):
     if "confirmationToken" in data:
         print("AWS CONFIRMATION CHALLENGE RECEIVED AND ACCEPTED!")
         return {"confirmationToken": data["confirmationToken"]}
+    if "confirmationToken" in data:
+        the_token = data["confirmationToken"]
+        print("\n" + "*"*50)
+        print(f"COPY THIS TOKEN TO AWS: {the_token}")
+        print("*"*50 + "\n")
+        return {"confirmationToken": the_token}
 
     # If it's not a handshake, proceed as normal...
     sensor_type = data.get("sensor_type")

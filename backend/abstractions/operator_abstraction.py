@@ -1,4 +1,4 @@
-from models.alerts_info import AlertsInfo
+from models.alerts_info import AlertsInfo, AuditLog
 from database import supabase
 from typing import List
 
@@ -18,9 +18,28 @@ class OperatorAbstraction:
         response = supabase.table("activealerts").select("*").execute()
         return [AlertsInfo(**row) for row in response.data]
 
-    def resolveAlert(self, alertID: int) -> None:               
+    def resolveAlert(self, alertID: int, user_id: str) -> None:
         self.updateAlertStatus(alertID, "resolved")
+        supabase.table("auditlog").insert({
+            "eventtype": "alert_resolved",
+            "description": f"Alert {alertID} resolved by operator",
+            "user_id": user_id
+        }).execute()
 
-    def acknowledgeAlert(self, alertID: int) -> None:          
+    def retrieveAuditLog(self) -> list[AuditLog]:
+        response = (
+            supabase.table("auditlog")
+            .select("*")
+            .order("timestamp", desc=True)
+            .execute()
+        )
+        return [AuditLog(**row) for row in response.data]
+
+    def acknowledgeAlert(self, alertID: int, user_id: str) -> None:
         self.updateAlertStatus(alertID, "acknowledged")
+        supabase.table("auditlog").insert({
+            "eventtype": "alert_acknowledged",
+            "description": f"Alert {alertID} acknowledged by operator",
+            "user_id": user_id
+        }).execute()
         

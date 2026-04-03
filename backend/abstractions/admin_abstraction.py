@@ -1,5 +1,5 @@
 from database import supabase
-from models.alerts_info import AlertRule
+from models.alerts_info import AlertRule, AuditLog, UpdateAlertRuleRequest
 from typing import List
 
 class AdminAbstraction:
@@ -12,8 +12,8 @@ class AdminAbstraction:
         response = supabase.table("alertrules").insert(payload).execute()
         return AlertRule(**response.data[0])
 
-    def updateAlertRule(self, rule_id: int, rule: AlertRule) -> AlertRule:
-        payload = rule.model_dump(exclude={"ruleID", "createdby"}, exclude_none=True)
+    def updateAlertRule(self, rule_id: int, rule: UpdateAlertRuleRequest) -> AlertRule:
+        payload = rule.model_dump(exclude_none=True)
         response = (
             supabase.table("alertrules")
             .update(payload)
@@ -21,3 +21,23 @@ class AdminAbstraction:
             .execute()
         )
         return AlertRule(**response.data[0])
+
+    def ruleExists(self, ruletype, lowerbound, upperbound) -> bool:
+        response = (
+            supabase.table("alertrules")
+            .select("ruleID")
+            .eq("ruletype", ruletype)
+            .eq("lowerbound", lowerbound)
+            .eq("upperbound", upperbound)
+            .execute()
+        )
+        return len(response.data) > 0
+
+    def retrieveAuditLog(self) -> List[AuditLog]:
+        response = (
+            supabase.table("auditlog")
+            .select("*")
+            .order("timestamp", desc=True)
+            .execute()
+        )
+        return [AuditLog(**row) for row in response.data]

@@ -30,6 +30,16 @@ class AlertRule(BaseModel):
     upperbound: float
     ruletype: SensorType
 
+class CreateAlertRuleRequest(BaseModel):
+    lowerbound: float
+    upperbound: float
+    ruletype: SensorType
+
+class UpdateAlertRuleRequest(BaseModel):
+    lowerbound: Optional[float] = None
+    upperbound: Optional[float] = None
+    ruletype: Optional[SensorType] = None
+
 class AuditLog(BaseModel):
     id: Optional[int] = None
     timestamp: Optional[datetime] = None  

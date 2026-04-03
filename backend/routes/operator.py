@@ -1,0 +1,34 @@
+from fastapi import APIRouter, Depends
+from typing import List
+from middleware.auth import require_operator
+from controllers.operator_controller import OperatorController
+from models.alerts_info import AlertsInfo, AuditLog
+
+router = APIRouter(prefix="/operator", tags=["operator"])
+controller = OperatorController()
+
+@router.get("/alerts", response_model=List[AlertsInfo])
+def get_active_alerts(current_user: dict = Depends(require_operator)):
+    return controller.viewAlerts()
+
+@router.get("/alerts/acknowledged", response_model=List[AlertsInfo])
+def get_acknowledged_alerts(current_user: dict = Depends(require_operator)):
+    return controller.viewAcknowledgedAlerts()
+
+@router.get("/alerts/resolved", response_model=List[AlertsInfo])
+def get_resolved_alerts(current_user: dict = Depends(require_operator)):
+    return controller.viewResolvedAlerts()
+
+@router.get("/audit-log", response_model=List[AuditLog])
+def get_audit_log(current_user: dict = Depends(require_operator)):
+    return controller.viewAuditLog()
+
+@router.put("/alerts/{alert_id}/acknowledge")
+def acknowledge_alert(alert_id: int, current_user: dict = Depends(require_operator)):
+    controller.acknowledgeAlert(alert_id, current_user["id"])
+    return {"message": "Alert acknowledged"}
+
+@router.put("/alerts/{alert_id}/resolve")
+def resolve_alert(alert_id: int, current_user: dict = Depends(require_operator)):
+    controller.resolveAlert(alert_id, current_user["id"])
+    return {"message": "Alert resolved"}

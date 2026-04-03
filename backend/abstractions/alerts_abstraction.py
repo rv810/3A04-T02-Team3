@@ -19,8 +19,8 @@ class AlertsAbstraction:
         log = AuditLog(
             eventtype=event_type,
             description=description,
-            humidity_sensor_id=sensor_id if alert_type == "humidity" else None,
-            oxygen_sensor_id=sensor_id if alert_type == "ox" else None,
-            temp_sensor_id=sensor_id if alert_type == "temp" else None,
+            humidity_sensor_id=sensorid if alert_type == "humidity" else None,
+            oxygen_sensor_id=sensorid if alert_type == "ox" else None,
+            temp_sensor_id=sensorid if alert_type == "temp" else None,
         )
         supabase.table("auditlog").insert(log.dict(exclude_none=True)).execute()

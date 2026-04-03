@@ -1,7 +1,7 @@
 import uuid
 class TemperatureAbstraction:
-    def __init__(self, sensor_id: str, zone: str, value: float, unit: str, timestamp: str):
-        self.sensor_id = sensor_id
+    def __init__(self, sensorid: str, zone: str, value: float, unit: str, timestamp: str):
+        self.sensorid = sensorid
         self.zone = zone
         self.value = value
         self.unit = unit
@@ -10,7 +10,7 @@ class TemperatureAbstraction:
 
     def upload_to_supabase(self, supabase_client):
         payload = {
-            "sensor_id": self.sensor_id,
+            "sensorid": self.sensorid,
             "sensor_type": "temp",
             "zone": self.zone,
             "value": self.value,

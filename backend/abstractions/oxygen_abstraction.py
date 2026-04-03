@@ -1,8 +1,8 @@
 import uuid
 class OxygenAbstraction:
-    def __init__(self, sensor_id: str, zone: str, value: float, unit: str, timestamp: str):
+    def __init__(self, sensorid: str, zone: str, value: float, unit: str, timestamp: str):
         # Explicit attributes mapped directly from your AWS payload
-        self.sensor_id = sensor_id
+        self.sensorid = sensorid
         self.zone = zone
         self.value = value
         self.unit = unit
@@ -12,7 +12,7 @@ class OxygenAbstraction:
     def upload_to_supabase(self, supabase_client):
         # Maps the specific object properties to the database columns
         payload = {
-            "sensor_id": self.sensor_id,
+            "sensorid": self.sensorid,
             "sensor_type": "ox",
             "zone": self.zone,
             "value": self.value,

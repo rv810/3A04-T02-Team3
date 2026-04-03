@@ -74,3 +74,7 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.receive_text()
     except:
         ws_manager.active_connections.remove(websocket)
+
+@app.get("/")
+async def health_check():
+    return {"status": "SCEMAS Backend is awake and healthy!"}

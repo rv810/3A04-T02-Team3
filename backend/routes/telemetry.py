@@ -37,7 +37,20 @@ oxygen_controller = OxygenController()
 @app.post("/api/telemetry")
 async def aws_iot_webhook(request: Request):
     data = await request.json()
+    
+    # THE AWS CONFIRMATION HANDSHAKE TRAP 
+    # If AWS is just testing the connection, send the token back immediately!
+    if "confirmationToken" in data:
+        print("AWS CONFIRMATION CHALLENGE RECEIVED AND ACCEPTED!")
+        return {"confirmationToken": data["confirmationToken"]}
+
+    # If it's not a handshake, proceed as normal...
     sensor_type = data.get("sensor_type")
+    
+    # Safety check just in case the JSON is missing the sensor_type
+    if not sensor_type:
+        print(f"ERROR: Missing sensor_type in payload: {data}")
+        raise HTTPException(status_code=400, detail="Missing sensor type")
 
     print("\n" + "="*50)
     print(f"[AWS IOT TRIGGER] Webhook hit at {data.get('timestamp')}")

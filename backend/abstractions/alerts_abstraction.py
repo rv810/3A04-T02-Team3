@@ -15,12 +15,12 @@ class AlertsAbstraction:
         response = supabase.table("activealerts").select("*").execute()
         return [AlertsInfo(**row) for row in response.data]
 
-    def auditLog(self, event_type: str, description: str, sensor_id: int, alert_type: str) -> None:
+    def auditLog(self, event_type: str, description: str, sensorid: int, alert_type: str) -> None:
         log = AuditLog(
             eventtype=event_type,
             description=description,
-            humidity_sensor_id=sensor_id if alert_type == "humidity" else None,
-            oxygen_sensor_id=sensor_id if alert_type == "oxygen" else None,
-            temp_sensor_id=sensor_id if alert_type == "temperature" else None,
+            humidity_sensorid=sensorid if alert_type == "humidity" else None,
+            oxygen_sensorid=sensorid if alert_type == "oxygen" else None,
+            temp_sensorid=sensorid if alert_type == "temperature" else None,
         )
         supabase.table("auditlog").insert(log.dict(exclude_none=True)).execute()

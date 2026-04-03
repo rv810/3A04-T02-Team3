@@ -10,7 +10,7 @@ class TemperatureController:
     async def handle_incoming_data(self, data: dict, supabase_client, websocket_manager):
         # 1. Extract specific fields from the AWS payload
         val = data.get("value")
-        s_id = data.get("sensor_id")
+        s_id = data.get("sensorid")
         z = data.get("zone")
         u = data.get("unit")
         ts = data.get("timestamp")
@@ -19,7 +19,7 @@ class TemperatureController:
         if self.validateTemperatureData(val):
             # 3. Instantiate the strict specific Abstraction
             self.temperatureAbstraction = TemperatureAbstraction(
-                sensor_id=s_id, 
+                sensorid=s_id, 
                 zone=z, 
                 value=val, 
                 unit=u, 

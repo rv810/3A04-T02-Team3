@@ -18,9 +18,9 @@ class AlertsInfo(BaseModel):
     alerttype: SensorType
     status: AlertStatus
     ruleviolated: Optional[int] = None
-    humidity_sensor_id: Optional[int] = None
-    oxygen_sensor_id: Optional[int] = None
-    temp_sensor_id: Optional[int] = None
+    humidity_sensorid: Optional[int] = None
+    oxygen_sensorid: Optional[int] = None
+    temp_sensorid: Optional[int] = None
 
 class AlertRule(BaseModel):
     ruleID: Optional[int] = None     # optional because DB generates it
@@ -35,6 +35,6 @@ class AuditLog(BaseModel):
     eventtype: str
     description: str
     user_id: Optional[str] = None
-    humidity_sensor_id: Optional[int] = None
-    oxygen_sensor_id: Optional[int] = None
-    temp_sensor_id: Optional[int] = None
+    humidity_sensorid: Optional[int] = None
+    oxygen_sensorid: Optional[int] = None
+    temp_sensorid: Optional[int] = None

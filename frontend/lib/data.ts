@@ -28,6 +28,7 @@ export interface Alert {
   severity: AlertSeverity
   status: AlertStatus
   triggeredAt: string
+  resolvedNote?: string
 }
 
 export interface AlertRule {
@@ -38,6 +39,7 @@ export interface AlertRule {
   threshold: number
   severity: AlertSeverity
   enabled: boolean
+  zone?: string
 }
 
 export interface User {

@@ -13,7 +13,6 @@ class OxygenAbstraction:
         # Maps the specific object properties to the database columns
         payload = {
             "sensorid": self.sensorid,
-            "sensor_type": "ox",
             "zone": self.zone,
             "value": self.value,
             "unit": self.unit,

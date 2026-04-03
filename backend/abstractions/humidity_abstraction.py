@@ -11,7 +11,6 @@ class HumidityAbstraction:
     def upload_to_supabase(self, supabase_client):
         payload = {
             "sensorid": self.sensorid,
-            "sensor_type": "humidity",
             "zone": self.zone,
             "value": self.value,
             "unit": self.unit,

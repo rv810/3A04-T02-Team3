@@ -5,22 +5,32 @@ class TemperatureController:
         self.temperatureAbstraction = None
 
     def validateTemperatureData(self, value: float) -> bool:
-        # Ensures temp is between -25 to 100 degrees Celsius
         return -25.0 <= value <= 100.0
 
     async def handle_incoming_data(self, data: dict, supabase_client, websocket_manager):
-        value = data.get("value")
+        # 1. Extract specific fields from the AWS payload
+        val = data.get("value")
+        s_id = data.get("sensor_id")
+        z = data.get("zone")
+        u = data.get("unit")
+        ts = data.get("timestamp")
 
-        if self.validateTemperatureData(value):
-            # 1. Instantiate the Abstraction
-            self.temperatureAbstraction = TemperatureAbstraction(data)
+        # 2. Validate
+        if self.validateTemperatureData(val):
+            # 3. Instantiate the strict specific Abstraction
+            self.temperatureAbstraction = TemperatureAbstraction(
+                sensor_id=s_id, 
+                zone=z, 
+                value=val, 
+                unit=u, 
+                timestamp=ts
+            )
             
-            # 2. Tell the Abstraction to save itself to Supabase
+            # 4. Save and Broadcast
             self.temperatureAbstraction.upload_to_supabase(supabase_client)
-            
-            # 3. Tell the Presentation layer (WebSockets) to broadcast
+            print("Temperature data validated and saved to Supabase!")
             await websocket_manager.broadcast(data)
             return True
-        
-        print(f"❌ Invalid Temperature Data: {value}")
+
+        print(f"SECURITY REJECT: Invalid Temperature Data ({val}%) from {z} zone!")
         return False

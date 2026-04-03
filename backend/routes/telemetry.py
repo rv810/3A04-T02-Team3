@@ -38,10 +38,17 @@ oxygen_controller = OxygenController()
 async def aws_iot_webhook(request: Request):
     data = await request.json()
     sensor_type = data.get("sensor_type")
-    
+
+    print("\n" + "="*50)
+    print(f"[AWS IOT TRIGGER] Webhook hit at {data.get('timestamp')}")
+    print(f"Sensor Type : {sensor_type.upper()}")
+    print(f"Zone        : {data.get('zone')}")
+    print(f"Value       : {data.get('value')} {data.get('unit')}")
+    print("="*50 + "\n")
+
     success = False
     
-    # Route to the appropriate PAC Controller based on the sensor type
+    # Route to your specific PAC Controllers
     if sensor_type == "temp":
         success = await temp_controller.handle_incoming_data(data, supabase, ws_manager)
     elif sensor_type == "humidity":
@@ -49,12 +56,14 @@ async def aws_iot_webhook(request: Request):
     elif sensor_type == "ox":
         success = await oxygen_controller.handle_incoming_data(data, supabase, ws_manager)
     else:
+        print("ERROR: Unknown Sensor Type Rejected")
         raise HTTPException(status_code=400, detail="Unknown sensor type")
 
     if not success:
         raise HTTPException(status_code=422, detail="Data validation failed")
-        
+
     return {"status": "success", "message": "Validated, stored, and broadcasted"}
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

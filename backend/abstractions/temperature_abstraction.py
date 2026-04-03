@@ -1,19 +1,18 @@
 class TemperatureAbstraction:
-    def __init__(self, data: dict):
-        self.temperatureSensorID = data.get("sensor_id")
-        self.temperature = data.get("value")
-        self.zone = data.get("zone")
-        self.timestamp = data.get("timestamp")
+    def __init__(self, sensor_id: str, zone: str, value: float, unit: str, timestamp: str):
+        self.sensor_id = sensor_id
+        self.zone = zone
+        self.value = value
+        self.unit = unit
+        self.timestamp = timestamp
 
     def upload_to_supabase(self, supabase_client):
-        # The Abstraction handles its own data persistence
         payload = {
-            "sensor_id": self.temperatureSensorID,
+            "sensor_id": self.sensor_id,
             "sensor_type": "temp",
             "zone": self.zone,
-            "value": self.temperature,
-            "unit": "°C",
+            "value": self.value,
+            "unit": self.unit,
             "timestamp": self.timestamp
         }
-        # Assuming you are using the supabase-py client
         return supabase_client.table("telemetry").insert(payload).execute()

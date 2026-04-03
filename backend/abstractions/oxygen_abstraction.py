@@ -1,17 +1,20 @@
 class OxygenAbstraction:
-    def __init__(self, data: dict):
-        self.oxygenSensorID = data.get("sensor_id")
-        self.oxygenLevel = data.get("value")
-        self.zone = data.get("zone")
-        self.timestamp = data.get("timestamp")
+    def __init__(self, sensor_id: str, zone: str, value: float, unit: str, timestamp: str):
+        # Explicit attributes mapped directly from your AWS payload
+        self.sensor_id = sensor_id
+        self.zone = zone
+        self.value = value
+        self.unit = unit
+        self.timestamp = timestamp
 
     def upload_to_supabase(self, supabase_client):
+        # Maps the specific object properties to the database columns
         payload = {
-            "sensor_id": self.oxygenSensorID,
+            "sensor_id": self.sensor_id,
             "sensor_type": "ox",
             "zone": self.zone,
-            "value": self.oxygenLevel,
-            "unit": "% vol",
+            "value": self.value,
+            "unit": self.unit,
             "timestamp": self.timestamp
         }
         return supabase_client.table("telemetry").insert(payload).execute()

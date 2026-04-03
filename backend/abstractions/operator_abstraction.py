@@ -1,21 +1,45 @@
-from models.alerts_info import AlertsInfo
+from models.alerts_info import AlertsInfo, AuditLog
 from database import supabase
 from typing import List
 
 class OperatorAbstraction:
     def updateAlertStatus(self, alertID: int, newStatus: str):
-        supabase.table("alerts").update({"status": newStatus}).eq("alertID", alertID).execute()
+        supabase.table("activealerts").update({"status": newStatus}).eq("alertid", alertID).execute()
 
-    def retrieveAcknowledgedAlerts(self, ):
-        response = supabase.table("alerts").select("*").eq("status", "acknowledged").execute()
+    def retrieveAcknowledgedAlerts(self):
+        response = supabase.table("activealerts").select("*").eq("status", "acknowledged").execute()
         return [AlertsInfo(**row) for row in response.data]
-    
+
     def retrieveResolvedAlerts(self):
-        response = supabase.table("alerts").select("*").eq("status", "resolved").execute()
+        response = supabase.table("activealerts").select("*").eq("status", "resolved").execute()
         return [AlertsInfo(**row) for row in response.data]
-    
-    def retrieveAlerts(self) -> List[AlertsInfo]:
+
+    def retrieveActiveAlerts(self) -> List[AlertsInfo]:          
         response = supabase.table("activealerts").select("*").execute()
         return [AlertsInfo(**row) for row in response.data]
 
-    
+    def resolveAlert(self, alertID: int, user_id: str) -> None:
+        self.updateAlertStatus(alertID, "resolved")
+        supabase.table("auditlog").insert({
+            "eventtype": "alert_resolved",
+            "description": f"Alert {alertID} resolved by operator",
+            "user_id": user_id
+        }).execute()
+
+    def retrieveAuditLog(self) -> list[AuditLog]:
+        response = (
+            supabase.table("auditlog")
+            .select("*")
+            .order("timestamp", desc=True)
+            .execute()
+        )
+        return [AuditLog(**row) for row in response.data]
+
+    def acknowledgeAlert(self, alertID: int, user_id: str) -> None:
+        self.updateAlertStatus(alertID, "acknowledged")
+        supabase.table("auditlog").insert({
+            "eventtype": "alert_acknowledged",
+            "description": f"Alert {alertID} acknowledged by operator",
+            "user_id": user_id
+        }).execute()
+        

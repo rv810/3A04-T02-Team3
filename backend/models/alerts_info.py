@@ -2,11 +2,12 @@ from pydantic import BaseModel
 from enum import Enum
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 class SensorType(str, Enum):
-    temperature = "temperature"
+    temperature = "temp"
     humidity = "humidity"
-    oxygen = "oxygen"
+    oxygen = "ox"
 
 class AlertStatus(str, Enum):
     active = "active"
@@ -23,11 +24,21 @@ class AlertsInfo(BaseModel):
     temp_sensorid: Optional[int] = None
 
 class AlertRule(BaseModel):
-    ruleID: Optional[int] = None     # optional because DB generates it
-    createdby: str                   # references accounts.username
+    ruleID: Optional[int] = None        # optional because DB generates it
+    createdby: Optional[UUID] = None    # optional because DB generates it from JWT sub
     lowerbound: float
     upperbound: float
     ruletype: SensorType
+
+class CreateAlertRuleRequest(BaseModel):
+    lowerbound: float
+    upperbound: float
+    ruletype: SensorType
+
+class UpdateAlertRuleRequest(BaseModel):
+    lowerbound: Optional[float] = None
+    upperbound: Optional[float] = None
+    ruletype: Optional[SensorType] = None
 
 class AuditLog(BaseModel):
     id: Optional[int] = None

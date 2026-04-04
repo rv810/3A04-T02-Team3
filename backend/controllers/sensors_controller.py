@@ -14,6 +14,3 @@ class SensorsController:
     
     def getCityAverages(self):
         return self.sensorsDB.calcualteCityAverages()
-    
-    def getHourlyAverages(self, from_time: str, to_time: str, zone: Optional[str] = None) -> list:
-        return self.sensorsDB.calculateHourlyAverages(from_time, to_time, zone)

@@ -3,6 +3,9 @@ from typing import Optional
 
 class SensorsAbstraction:
     def getSensors(self, zone: Optional[str] = None) -> list:
+        '''
+        Return all sensors with their latest readings.
+        '''
         temp_query = supabase.table("tempsensor").select("sensorid, zone, value, timestamp")
         humidity_query = supabase.table("humiditysensor").select("sensorid, zone, value, timestamp")
         oxygen_query = supabase.table("oxygensensor").select("sensorid, zone, value, timestamp")
@@ -28,11 +31,16 @@ class SensorsAbstraction:
         return result
     
     def getSensor(self, sensorid: str):
+        '''
+        Return a single sensor and its information
+        '''
         sensor_types = {
             "tempsensor": "temperature",
             "humiditysensor": "humidity",
             "oxygensensor": "oxygen"
         }
+
+        #checks all 3 sensor tables for the given sensorid and returns the first match (most recent) with its type labeled
         for table in ["tempsensor", "humiditysensor", "oxygensensor"]:
             result = (
                 supabase.table(table)
@@ -47,6 +55,10 @@ class SensorsAbstraction:
         return None
     
     def calcualteCityAverages(self):
+        '''
+        Pre-aggregated city-wide averages across all sensors. 
+        Used by the Sensor tab gauges.
+        '''
         temp = supabase.rpc("get_avg_latest_temp").execute().data
         humidity = supabase.rpc("get_avg_latest_humidity").execute().data
         oxygen = supabase.rpc("get_avg_latest_oxygen").execute().data
@@ -56,33 +68,3 @@ class SensorsAbstraction:
             "temperature": temp,
             "humidity": humidity
         }
-    
-    def calculateHourlyAverages(self, from_time: str, to_time: str, zone: Optional[str] = None) -> list:
-        temp = supabase.rpc("get_hourly_avg_temp", {
-            "from_time": from_time,
-            "to_time": to_time,
-            "zone_filter": zone
-        }).execute().data
-
-        humidity = supabase.rpc("get_hourly_avg_humidity", {
-            "from_time": from_time,
-            "to_time": to_time,
-            "zone_filter": zone
-        }).execute().data
-
-        oxygen = supabase.rpc("get_hourly_avg_oxygen", {
-            "from_time": from_time,
-            "to_time": to_time,
-            "zone_filter": zone
-        }).execute().data
-
-        # merged into one list keyed by hour
-        merged = {}
-        for row in temp:
-            merged[row["hour"]] = {"time": row["hour"], "temperature": row["avg_value"]}
-        for row in humidity:
-            merged[row["hour"]]["humidity"] = row["avg_value"]
-        for row in oxygen:
-            merged[row["hour"]]["aqi"] = row["avg_value"]
-
-        return list(merged.values())

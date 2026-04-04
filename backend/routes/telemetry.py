@@ -97,22 +97,6 @@ async def websocket_endpoint(
         if websocket in ws_manager.active_connections:
             ws_manager.active_connections.remove(websocket)
 
-@router.get("/summary/{zone}/temperature")
-async def public_temperature_summary(zone: str):
-    """
-    Public read-only REST API.
-    Provides non-sensitive temperature data for digital signage.
-    """
-    return await temp_controller.get_public_summary(zone, supabase)
-
-@router.get("/summary/{zone}/humidity")
-async def public_humidity_summary(zone: str):
-    return await humidity_controller.get_public_summary(zone, supabase)
-
-@router.get("/summary/{zone}/oxygen")
-async def public_oxygen_summary(zone: str):
-    return await oxygen_controller.get_public_summary(zone, supabase)
-
 @router.get("/sensors")
 async def get_sensors(
     zone: Optional[str] = Query(None, description="Filter by zone name"),
@@ -130,17 +114,3 @@ async def get_sensor(id: str, current_user: dict = Depends(require_operator)):
 @router.get("/sensors/city-averages")
 async def get_city_averages(current_user: dict = Depends(require_operator)):
     return sensors_controller.getCityAverages()
-
-@router.get("/metrics/history")
-async def get_hourly_averages(
-    from_time: Optional[str] = Query(None, description="Start time in ISO format"),
-    to_time: Optional[str] = Query(None, description="End time in ISO format"),
-    zone: Optional[str] = Query(None, description="Filter by zone name"),
-    current_user: dict = Depends(require_operator)
-):
-    
-    now = datetime.now(timezone.utc)
-    resolved_from = from_time or (now - timedelta(hours=24)).isoformat()
-    resolved_to = to_time or now.isoformat()
-
-    return sensors_controller.getHourlyAverages(resolved_from, resolved_to, zone)

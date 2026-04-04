@@ -1,0 +1,133 @@
+SCEMAS PUBLIC API DOCUMENTATION
+================================
+
+ENDPOINTS
+---------
+
+1. HEALTH CHECK
+   GET /
+
+   Description:
+   Checks if the API is running.
+
+   Response:
+   {
+     "status": "SCEMAS Backend is awake and healthy!"
+   }
+
+
+2. TEMPERATURE SUMMARY
+   GET /summary/{zone}/temperature
+
+   Description:
+   Returns the latest read-only temperature reading for a specified zone.
+   Intended for public digital signage.
+
+   Path Parameters:
+   - zone (string): The zone identifier to retrieve temperature data for
+
+   Example Request:
+   GET /summary/zone1/temperature
+
+   Success Response (sensor online):
+   {
+     "zone": "Zone1",
+     "sensor_type": "Temperature",
+     "temperature": 22.5,
+     "unit": "C",
+     "last_updated": "2024-03-01T12:00:00Z",
+     "status": "Online"
+   }
+
+   No Data Response (sensor offline):
+   {
+     "zone": "Zone1",
+     "status": "Offline",
+     "message": "No temperature data available for this zone."
+   }
+
+   Error Response:
+   {
+     "error": "Database connection failed",
+     "details": "<error details>"
+   }
+
+
+3. HUMIDITY SUMMARY
+   GET /summary/{zone}/humidity
+
+   Description:
+   Returns the latest read-only humidity reading for a specified zone.
+   Intended for public digital signage.
+
+   Path Parameters:
+   - zone (string): The zone identifier to retrieve humidity data for
+
+   Example Request:
+   GET /summary/zone1/humidity
+
+   Success Response (sensor online):
+   {
+     "zone": "Zone1",
+     "sensor_type": "Humidity",
+     "humidity": 55.0,
+     "unit": "%",
+     "last_updated": "2024-03-01T12:00:00Z",
+     "status": "Online"
+   }
+
+   No Data Response (sensor offline):
+   {
+     "zone": "Zone1",
+     "status": "Offline",
+     "message": "No humidity data available for this zone."
+   }
+
+   Error Response:
+   {
+     "error": "Database connection failed",
+     "details": "<error details>"
+   }
+
+
+4. OXYGEN SUMMARY
+   GET /summary/{zone}/oxygen
+
+   Description:
+   Returns the latest read-only oxygen level reading for a specified zone.
+   Intended for public digital signage.
+
+   Path Parameters:
+   - zone (string): The zone identifier to retrieve oxygen data for
+
+   Example Request:
+   GET /summary/zone1/oxygen
+
+   Success Response (sensor online):
+   {
+     "zone": "Zone1",
+     "sensor_type": "Oxygen",
+     "oxygen": 20.9,
+     "unit": "%",
+     "last_updated": "2024-03-01T12:00:00Z",
+     "status": "Online"
+   }
+
+   No Data Response (sensor offline):
+   {
+     "zone": "Zone1",
+     "status": "Offline",
+     "message": "No oxygen data available for this zone."
+   }
+
+   Error Response:
+   {
+     "error": "Database connection failed",
+     "details": "<error details>"
+   }
+
+NOTES
+-----
+- All endpoints are read-only and require no authentication
+- Data is intended for public display only and does not include sensitive information
+- Each endpoint returns only the single most recent reading for the given zone

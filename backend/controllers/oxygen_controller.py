@@ -1,8 +1,10 @@
 from abstractions.oxygen_abstraction import OxygenAbstraction
+from controllers.alerts_controller import AlertsController
 
 class OxygenController:
     def __init__(self):
         self.oxygenAbstraction = None
+        self.alertsController = AlertsController()
 
     def validateOxygenData(self, value: float) -> bool:
         return 15.0 <= value <= 25.0 
@@ -10,6 +12,9 @@ class OxygenController:
     async def handle_incoming_data(self, data: dict, supabase_client, websocket_manager):
         # 1. Extract specific fields from the AWS payload
         val = data.get("value")
+        if val is None:
+            print("REJECT: Missing value in payload")
+            return False
         s_id = data.get("sensor_id")
         z = data.get("zone")
         u = data.get("unit")
@@ -28,6 +33,7 @@ class OxygenController:
             
             # 4. Save and Broadcast
             self.oxygenAbstraction.upload_to_supabase(supabase_client)
+            self.alertsController.checkAlertRules(data)
             print("Oxygen data validated and saved to Supabase!")
             await websocket_manager.broadcast(data)
             return True

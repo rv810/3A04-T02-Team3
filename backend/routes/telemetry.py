@@ -1,16 +1,20 @@
-from fastapi import APIRouter, Request, WebSocket, HTTPException, Query
 from typing import Optional
+from datetime import datetime, timezone, timedelta
+from fastapi import APIRouter, Query, Request, WebSocket, HTTPException, Depends
+from middleware.auth import require_operator
 from database import supabase
 from websocket_manager import ws_manager
 from controllers.temperature_controller import TemperatureController
 from controllers.humidity_controller import HumidityController
 from controllers.oxygen_controller import OxygenController
+from controllers.sensors_controller import SensorsController
 
 router = APIRouter()
 
 temp_controller = TemperatureController()
 humidity_controller = HumidityController()
 oxygen_controller = OxygenController()
+sensors_controller = SensorsController()
 
 @router.post("/api/telemetry")
 async def aws_iot_webhook(request: Request):
@@ -93,3 +97,50 @@ async def websocket_endpoint(
         if websocket in ws_manager.active_connections:
             ws_manager.active_connections.remove(websocket)
 
+@router.get("/summary/{zone}/temperature")
+async def public_temperature_summary(zone: str):
+    """
+    Public read-only REST API.
+    Provides non-sensitive temperature data for digital signage.
+    """
+    return await temp_controller.get_public_summary(zone, supabase)
+
+@router.get("/summary/{zone}/humidity")
+async def public_humidity_summary(zone: str):
+    return await humidity_controller.get_public_summary(zone, supabase)
+
+@router.get("/summary/{zone}/oxygen")
+async def public_oxygen_summary(zone: str):
+    return await oxygen_controller.get_public_summary(zone, supabase)
+
+@router.get("/sensors")
+async def get_sensors(
+    zone: Optional[str] = Query(None, description="Filter by zone name"),
+    current_user: dict = Depends(require_operator)
+):
+    return sensors_controller.getSensors(zone)
+
+@router.get("/sensors/{id}")
+async def get_sensor(id: str, current_user: dict = Depends(require_operator)):
+    sensor = sensors_controller.getSensor(id)
+    if not sensor:
+        raise HTTPException(status_code=404, detail="sensor not found")
+    return sensor
+
+@router.get("/sensors/city-averages")
+async def get_city_averages(current_user: dict = Depends(require_operator)):
+    return sensors_controller.getCityAverages()
+
+@router.get("/metrics/history")
+async def get_hourly_averages(
+    from_time: Optional[str] = Query(None, description="Start time in ISO format"),
+    to_time: Optional[str] = Query(None, description="End time in ISO format"),
+    zone: Optional[str] = Query(None, description="Filter by zone name"),
+    current_user: dict = Depends(require_operator)
+):
+    
+    now = datetime.now(timezone.utc)
+    resolved_from = from_time or (now - timedelta(hours=24)).isoformat()
+    resolved_to = to_time or now.isoformat()
+
+    return sensors_controller.getHourlyAverages(resolved_from, resolved_to, zone)

@@ -138,6 +138,8 @@ export const ZONES = [
   { name: 'Industrial Zone', sensors: 2, active: 2, avgAqi: 80, status: 'poor'     as const },
 ]
 
+export const ZONE_NAMES = ZONES.map(z => z.name)
+
 // Pre-computed city averages (active sensors only)
 const _active = SENSORS.filter(s => s.status !== 'offline')
 export const CITY_AVG = {

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from typing import List
 from pydantic import ValidationError
 from controllers.accounts_controller import AccountsController
 from models.account import (
@@ -70,3 +71,8 @@ def create_user(
 ):
     # BE6: admins can create operator or admin accounts
     return controller.createAccount(request, requesting_role=current_user["role"])
+
+
+@router.get("/accounts/users", response_model=List[AccountInformation])
+def list_users(current_user: dict = Depends(require_admin)):
+    return controller.listAllAccounts()

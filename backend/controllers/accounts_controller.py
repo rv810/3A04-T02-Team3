@@ -102,6 +102,12 @@ class AccountsController:
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
+    def listAllAccounts(self) -> list:
+        try:
+            return self.accountDB.retrieveAllAccounts()
+        except Exception:
+            raise HTTPException(status_code=500, detail="Failed to retrieve accounts")
+
     def deleteAccount(self, user_id: str) -> None:
         # SR-P2: users can request deletion of their own data
         try:

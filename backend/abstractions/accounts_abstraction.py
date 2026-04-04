@@ -112,6 +112,15 @@ class AccountsAbstraction:
         # Revoke the session server-side using the admin client
         supabase_admin.auth.admin.sign_out(jwt)
 
+    def retrieveAllAccounts(self) -> list[AccountInformation]:
+        response = (
+            self.db.table("accounts")
+            .select("*")
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return [AccountInformation(**row) for row in response.data]
+
     def logAuthAttempt(
         self,
         event_type: str,

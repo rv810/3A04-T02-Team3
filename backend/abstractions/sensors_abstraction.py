@@ -2,7 +2,6 @@ from database import supabase
 from typing import Optional
 
 class SensorsAbstraction:
-
     def getSensors(self, zone: Optional[str] = None) -> list:
         temp_query = supabase.table("tempsensor").select("sensorid, zone, value, timestamp")
         humidity_query = supabase.table("humiditysensor").select("sensorid, zone, value, timestamp")
@@ -57,3 +56,33 @@ class SensorsAbstraction:
             "temperature": temp,
             "humidity": humidity
         }
+    
+    def calculateHourlyAverages(self, from_time: str, to_time: str, zone: Optional[str] = None) -> list:
+        temp = supabase.rpc("get_hourly_avg_temp", {
+            "from_time": from_time,
+            "to_time": to_time,
+            "zone_filter": zone
+        }).execute().data
+
+        humidity = supabase.rpc("get_hourly_avg_humidity", {
+            "from_time": from_time,
+            "to_time": to_time,
+            "zone_filter": zone
+        }).execute().data
+
+        oxygen = supabase.rpc("get_hourly_avg_oxygen", {
+            "from_time": from_time,
+            "to_time": to_time,
+            "zone_filter": zone
+        }).execute().data
+
+        # merged into one list keyed by hour
+        merged = {}
+        for row in temp:
+            merged[row["hour"]] = {"time": row["hour"], "temperature": row["avg_value"]}
+        for row in humidity:
+            merged[row["hour"]]["humidity"] = row["avg_value"]
+        for row in oxygen:
+            merged[row["hour"]]["aqi"] = row["avg_value"]
+
+        return list(merged.values())

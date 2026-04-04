@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Query, Request, WebSocket, HTTPException, Depends
 from middleware.auth import require_operator
 from database import supabase
@@ -104,3 +105,17 @@ async def get_sensor(id: str, current_user: dict = Depends(require_operator)):
 @router.get("/sensors/city-averages")
 async def get_city_averages(current_user: dict = Depends(require_operator)):
     return sensors_controller.getCityAverages()
+
+@router.get("/metrics/history")
+async def get_hourly_averages(
+    from_time: Optional[str] = Query(None, description="Start time in ISO format"),
+    to_time: Optional[str] = Query(None, description="End time in ISO format"),
+    zone: Optional[str] = Query(None, description="Filter by zone name"),
+    current_user: dict = Depends(require_operator)
+):
+    
+    now = datetime.now(timezone.utc)
+    resolved_from = from_time or (now - timedelta(hours=24)).isoformat()
+    resolved_to = to_time or now.isoformat()
+
+    return sensors_controller.getHourlyAverages(resolved_from, resolved_to, zone)

@@ -406,3 +406,8 @@ env/
 
 # mypy
 .mypy_cache/
+
+# node
+frontend/node_modules/
+frontend/.next/
+frontend/package-lock.json

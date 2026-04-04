@@ -86,15 +86,11 @@ Return all sensors with their latest readings.
 ```json
 [
   {
-    "id":          "s1",
-    "name":        "DT-01",
-    "zone":        "Downtown Core",
-    "status":      "active",
-    "aqi":         48,
-    "noise":       62,
-    "temperature": 22,
-    "humidity":    58,
-    "last_seen":   "2026-04-03T09:41:00Z"
+    "sensorid":"b64c30d7-b063-4d1e-96cc-c995130ff48d",
+    "sensor_type": "humidity"
+    "zone":"waterfront",
+    "value":"65.202",
+    "timestamp":"2026-04-03 18:47:42.25819+00"
   }
 ]
 ```
@@ -120,11 +116,8 @@ Pre-aggregated city-wide averages across all **non-offline** sensors. Used by th
 ```json
 {
   "aqi":         56,
-  "noise":       63,
   "temperature": 22,
   "humidity":    57,
-  "active_count":    11,
-  "total_count":     12
 }
 ```
 

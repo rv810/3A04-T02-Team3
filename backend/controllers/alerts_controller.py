@@ -40,5 +40,3 @@ class AlertsController:
         # notification logic here
         print(f"Alert triggered: {alert.alerttype} violated rule {alert.ruleviolated}")
 
-    def retrieveAlerts(self) -> List[AlertsInfo]:
-        return self.alertsDB.retrieveAlerts()

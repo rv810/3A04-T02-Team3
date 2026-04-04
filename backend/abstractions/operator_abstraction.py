@@ -14,6 +14,17 @@ class OperatorAbstraction:
         response = supabase.table("activealerts").select("*").eq("status", "resolved").execute()
         return [AlertsInfo(**row) for row in response.data]
 
+    def retrieveAlertsByStatus(self, statuses: list[str] = None) -> List[AlertsInfo]:
+        if not statuses:
+            statuses = ["active"]
+        query = supabase.table("activealerts").select("*")
+        if len(statuses) == 1:
+            query = query.eq("status", statuses[0])
+        else:
+            query = query.in_("status", statuses)
+        response = query.order("triggered_at", desc=True).execute()
+        return [AlertsInfo(**row) for row in response.data]
+
     def retrieveActiveAlerts(self) -> List[AlertsInfo]:
         response = supabase.table("activealerts").select("*").eq("status", "active").execute()
         return [AlertsInfo(**row) for row in response.data]

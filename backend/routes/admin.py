@@ -19,6 +19,10 @@ def create_alert_rule(rule: CreateAlertRuleRequest, current_user: dict = Depends
 def update_alert_rule(rule_id: int, rule: UpdateAlertRuleRequest, current_user: dict = Depends(require_admin)):
     return controller.updateAlertRule(rule_id, rule)
 
+@router.delete("/rules/{rule_id}", status_code=204)
+def delete_alert_rule(rule_id: int, current_user: dict = Depends(require_admin)):
+    controller.deleteAlertRule(rule_id)
+
 @router.get("/audit-log", response_model=List[AuditLog])
 def get_audit_log(current_user: dict = Depends(require_admin)):
     return controller.viewAuditLog()

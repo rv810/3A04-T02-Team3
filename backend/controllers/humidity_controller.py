@@ -39,7 +39,10 @@ class HumidityController:
                 return False
             self.alertsController.checkAlertRules(data)
             print("Humidity data validated and saved to Supabase!")
-            await websocket_manager.broadcast(data)
+            await websocket_manager.broadcast({
+                "event": "sensor_update",
+                "data": data
+            })
             return True
 
         print(f"SECURITY REJECT: Invalid Humidity Data ({val}%) from {z} zone!")

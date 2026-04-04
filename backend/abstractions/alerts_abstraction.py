@@ -11,10 +11,6 @@ class AlertsAbstraction:
     def addAlert(self, alert: AlertsInfo) -> None:
         supabase.table("activealerts").insert(alert.model_dump(exclude_none=True)).execute()
 
-    def retrieveAlerts(self) -> List[AlertsInfo]:
-        response = supabase.table("activealerts").select("*").execute()
-        return [AlertsInfo(**row) for row in response.data]
-
     def auditLog(self, event_type: str, description: str, sensorid: int, alert_type: str) -> None:
         log = AuditLog(
             eventtype=event_type,

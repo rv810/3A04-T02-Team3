@@ -1,8 +1,10 @@
 from abstractions.humidity_abstraction import HumidityAbstraction
+from controllers.alerts_controller import AlertsController
 
 class HumidityController:
     def __init__(self):
         self.humidityAbstraction = None
+        self.alertsController = AlertsController()
 
     def validateHumidityData(self, value: float) -> bool:
         return 0.0 <= value <= 100.0
@@ -10,6 +12,9 @@ class HumidityController:
     async def handle_incoming_data(self, data: dict, supabase_client, websocket_manager):
         # 1. Extract specific fields from the AWS payload
         val = data.get("value")
+        if val is None:
+            print("REJECT: Missing value in payload")
+            return False
         s_id = data.get("sensor_id")
         z = data.get("zone")
         u = data.get("unit")
@@ -28,6 +33,7 @@ class HumidityController:
             
             # 4. Save and Broadcast
             self.humidityAbstraction.upload_to_supabase(supabase_client)
+            self.alertsController.checkAlertRules(data)
             print("Humidity data validated and saved to Supabase!")
             await websocket_manager.broadcast(data)
             return True

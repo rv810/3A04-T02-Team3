@@ -1,21 +1,28 @@
 # main.py
 from fastapi import FastAPI, Request, WebSocket, HTTPException
-from supabase import create_client, Client
+from fastapi.security import HTTPBearer
+from database import supabase
 from controllers.humidity_controller import HumidityController
 from controllers.temperature_controller import TemperatureController
 from controllers.oxygen_controller import OxygenController
 from typing import List
-import os
-from dotenv import load_dotenv
 
 from routes.alerts import router as alerts_router
+from routes.accounts import router as accounts_router
+from routes.operator import router as operator_router
+from routes.admin import router as admin_router
 
-app = FastAPI()
+security = HTTPBearer()
+
+app = FastAPI(
+    title="SCEMAS API",
+    swagger_ui_parameters={"persistAuthorization": True}
+)
 
 app.include_router(alerts_router)
-
-load_dotenv()
-supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+app.include_router(accounts_router)
+app.include_router(operator_router)
+app.include_router(admin_router)
 
 # Simple WebSocket Manager ("Presentation" Coordinator)
 class ConnectionManager:

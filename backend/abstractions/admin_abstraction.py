@@ -22,6 +22,16 @@ class AdminAbstraction:
         )
         return AlertRule(**response.data[0])
 
+    def deleteAlertRule(self, rule_id: int) -> None:
+        response = (
+            supabase.table("alertrules")
+            .delete()
+            .eq("ruleID", rule_id)
+            .execute()
+        )
+        if not response.data:
+            raise ValueError("Alert rule not found")
+
     def ruleExists(self, ruletype, lowerbound, upperbound) -> bool:
         response = (
             supabase.table("alertrules")

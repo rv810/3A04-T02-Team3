@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Request, WebSocket, HTTPException
+from fastapi import APIRouter, Request, WebSocket, HTTPException, Query
+from typing import Optional
 from database import supabase
 from websocket_manager import ws_manager
 from controllers.temperature_controller import TemperatureController
@@ -58,27 +59,37 @@ async def aws_iot_webhook(request: Request):
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(
+    websocket: WebSocket,
+    token: Optional[str] = Query(default=None)
+):
+    if not token:
+        await websocket.close(code=1008)
+        return
+
+    try:
+        user_response = supabase.auth.get_user(token)
+        user_id = str(user_response.user.id)
+        result = (
+            supabase.table("accounts")
+            .select("userrole")
+            .eq("id", user_id)
+            .single()
+            .execute()
+        )
+        role = result.data["userrole"]
+        if role not in ["operator", "admin"]:
+            await websocket.close(code=1008)
+            return
+    except Exception:
+        await websocket.close(code=1008)
+        return
+
     await ws_manager.connect(websocket)
     try:
         while True:
-            # Keep the connection open to push data to the dashboard
             await websocket.receive_text()
-    except:
-        ws_manager.active_connections.remove(websocket)
+    except Exception:
+        if websocket in ws_manager.active_connections:
+            ws_manager.active_connections.remove(websocket)
 
-@router.get("/summary/{zone}/temperature")
-async def public_temperature_summary(zone: str):
-    """
-    Public read-only REST API.
-    Provides non-sensitive temperature data for digital signage.
-    """
-    return await temp_controller.get_public_summary(zone, supabase)
-
-@router.get("/summary/{zone}/humidity")
-async def public_humidity_summary(zone: str):
-    return await humidity_controller.get_public_summary(zone, supabase)
-
-@router.get("/summary/{zone}/oxygen")
-async def public_oxygen_summary(zone: str):
-    return await oxygen_controller.get_public_summary(zone, supabase)

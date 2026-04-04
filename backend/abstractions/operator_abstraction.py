@@ -14,15 +14,32 @@ class OperatorAbstraction:
         response = supabase.table("activealerts").select("*").eq("status", "resolved").execute()
         return [AlertsInfo(**row) for row in response.data]
 
-    def retrieveActiveAlerts(self) -> List[AlertsInfo]:          
-        response = supabase.table("activealerts").select("*").execute()
+    def retrieveAlertsByStatus(self, statuses: list[str] = None) -> List[AlertsInfo]:
+        if not statuses:
+            statuses = ["active"]
+        query = supabase.table("activealerts").select("*")
+        if len(statuses) == 1:
+            query = query.eq("status", statuses[0])
+        else:
+            query = query.in_("status", statuses)
+        response = query.order("triggered_at", desc=True).execute()
         return [AlertsInfo(**row) for row in response.data]
 
-    def resolveAlert(self, alertID: int, user_id: str) -> None:
-        self.updateAlertStatus(alertID, "resolved")
+    def retrieveActiveAlerts(self) -> List[AlertsInfo]:
+        response = supabase.table("activealerts").select("*").eq("status", "active").execute()
+        return [AlertsInfo(**row) for row in response.data]
+
+    def resolveAlert(self, alertID: int, user_id: str, note: str = None) -> None:
+        update_data = {"status": "resolved"}
+        if note:
+            update_data["resolved_note"] = note
+        supabase.table("activealerts").update(update_data).eq("alertid", alertID).execute()
+        description = f"Alert {alertID} resolved by operator"
+        if note:
+            description += f" - Note: {note}"
         supabase.table("auditlog").insert({
             "eventtype": "alert_resolved",
-            "description": f"Alert {alertID} resolved by operator",
+            "description": description,
             "user_id": user_id
         }).execute()
 

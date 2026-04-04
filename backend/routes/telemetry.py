@@ -1,48 +1,21 @@
-
-# main.py
-from fastapi import FastAPI, Request, WebSocket, HTTPException
-from supabase import create_client, Client
-from controllers.humidity_controller import HumidityController
+from fastapi import APIRouter, Request, WebSocket, HTTPException
+from database import supabase
+from websocket_manager import ws_manager
 from controllers.temperature_controller import TemperatureController
+from controllers.humidity_controller import HumidityController
 from controllers.oxygen_controller import OxygenController
-from typing import List
-import os
-from dotenv import load_dotenv
 
-app = FastAPI()
+router = APIRouter()
 
-load_dotenv()
-supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-
-# Simple WebSocket Manager (Your "Presentation" Coordinator)
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    async def broadcast(self, message: dict):
-        for connection in self.active_connections:
-            await connection.send_json(message)
-
-ws_manager = ConnectionManager()
-
-# Instantiate your Controllers
 temp_controller = TemperatureController()
 humidity_controller = HumidityController()
 oxygen_controller = OxygenController()
 
-@app.post("/api/telemetry")
+@router.post("/api/telemetry")
 async def aws_iot_webhook(request: Request):
     data = await request.json()
-    
-    # THE AWS CONFIRMATION HANDSHAKE TRAP 
-    # If AWS is just testing the connection, send the token back immediately!
-    if "confirmationToken" in data:
-        print("AWS CONFIRMATION CHALLENGE RECEIVED AND ACCEPTED!")
-        return {"confirmationToken": data["confirmationToken"]}
+
+    # THE AWS CONFIRMATION HANDSHAKE TRAP
     if "confirmationToken" in data:
         the_token = data["confirmationToken"]
         print("\n" + "*"*50)
@@ -52,7 +25,7 @@ async def aws_iot_webhook(request: Request):
 
     # If it's not a handshake, proceed as normal...
     sensor_type = data.get("sensor_type")
-    
+
     # Safety check just in case the JSON is missing the sensor_type
     if not sensor_type:
         print(f"ERROR: Missing sensor_type in payload: {data}")
@@ -66,7 +39,7 @@ async def aws_iot_webhook(request: Request):
     print("="*50 + "\n")
 
     success = False
-    
+
     # Route to your specific PAC Controllers
     if sensor_type == "temp":
         success = await temp_controller.handle_incoming_data(data, supabase, ws_manager)
@@ -84,7 +57,7 @@ async def aws_iot_webhook(request: Request):
     return {"status": "success", "message": "Validated, stored, and broadcasted"}
 
 
-@app.websocket("/ws")
+@router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await ws_manager.connect(websocket)
     try:
@@ -94,6 +67,18 @@ async def websocket_endpoint(websocket: WebSocket):
     except:
         ws_manager.active_connections.remove(websocket)
 
-@app.get("/")
-async def health_check():
-    return {"status": "SCEMAS Backend is awake and healthy!"}
+@router.get("/summary/{zone}/temperature")
+async def public_temperature_summary(zone: str):
+    """
+    Public read-only REST API.
+    Provides non-sensitive temperature data for digital signage.
+    """
+    return await temp_controller.get_public_summary(zone, supabase)
+
+@router.get("/summary/{zone}/humidity")
+async def public_humidity_summary(zone: str):
+    return await humidity_controller.get_public_summary(zone, supabase)
+
+@router.get("/summary/{zone}/oxygen")
+async def public_oxygen_summary(zone: str):
+    return await oxygen_controller.get_public_summary(zone, supabase)

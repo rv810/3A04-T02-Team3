@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends
-from typing import List
+from fastapi import APIRouter, Depends, Body
+from typing import List, Optional
 from middleware.auth import require_operator
 from controllers.operator_controller import OperatorController
-from models.alerts_info import AlertsInfo, AuditLog
+from models.alerts_info import AlertsInfo, AuditLog, ResolveAlertRequest
 
 router = APIRouter(prefix="/operator", tags=["operator"])
 controller = OperatorController()
@@ -29,6 +29,7 @@ def acknowledge_alert(alert_id: int, current_user: dict = Depends(require_operat
     return {"message": "Alert acknowledged"}
 
 @router.put("/alerts/{alert_id}/resolve")
-def resolve_alert(alert_id: int, current_user: dict = Depends(require_operator)):
-    controller.resolveAlert(alert_id, current_user["id"])
-    return {"message": "Alert resolved"}
+def resolve_alert(alert_id: int, body: Optional[ResolveAlertRequest] = Body(None), current_user: dict = Depends(require_operator)):
+    note = body.note if body else None
+    controller.resolveAlert(alert_id, current_user["id"], note=note)
+    return {"message": "Alert resolved", "note": note}

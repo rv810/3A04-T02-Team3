@@ -67,18 +67,3 @@ async def websocket_endpoint(websocket: WebSocket):
     except:
         ws_manager.active_connections.remove(websocket)
 
-@router.get("/summary/{zone}/temperature")
-async def public_temperature_summary(zone: str):
-    """
-    Public read-only REST API.
-    Provides non-sensitive temperature data for digital signage.
-    """
-    return await temp_controller.get_public_summary(zone, supabase)
-
-@router.get("/summary/{zone}/humidity")
-async def public_humidity_summary(zone: str):
-    return await humidity_controller.get_public_summary(zone, supabase)
-
-@router.get("/summary/{zone}/oxygen")
-async def public_oxygen_summary(zone: str):
-    return await oxygen_controller.get_public_summary(zone, supabase)

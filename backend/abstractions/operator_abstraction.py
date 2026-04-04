@@ -14,15 +14,21 @@ class OperatorAbstraction:
         response = supabase.table("activealerts").select("*").eq("status", "resolved").execute()
         return [AlertsInfo(**row) for row in response.data]
 
-    def retrieveActiveAlerts(self) -> List[AlertsInfo]:          
-        response = supabase.table("activealerts").select("*").execute()
+    def retrieveActiveAlerts(self) -> List[AlertsInfo]:
+        response = supabase.table("activealerts").select("*").eq("status", "active").execute()
         return [AlertsInfo(**row) for row in response.data]
 
-    def resolveAlert(self, alertID: int, user_id: str) -> None:
-        self.updateAlertStatus(alertID, "resolved")
+    def resolveAlert(self, alertID: int, user_id: str, note: str = None) -> None:
+        update_data = {"status": "resolved"}
+        if note:
+            update_data["resolved_note"] = note
+        supabase.table("activealerts").update(update_data).eq("alertid", alertID).execute()
+        description = f"Alert {alertID} resolved by operator"
+        if note:
+            description += f" - Note: {note}"
         supabase.table("auditlog").insert({
             "eventtype": "alert_resolved",
-            "description": f"Alert {alertID} resolved by operator",
+            "description": description,
             "user_id": user_id
         }).execute()
 

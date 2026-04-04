@@ -11,7 +11,10 @@ class ConnectionManager:
         self.active_connections.append(websocket)
 
     async def broadcast(self, message: dict):
-        for connection in self.active_connections:
-            await connection.send_json(message)
+        for connection in self.active_connections.copy():
+            try:
+                await connection.send_json(message)
+            except Exception:
+                self.active_connections.remove(connection)
 
 ws_manager = ConnectionManager()

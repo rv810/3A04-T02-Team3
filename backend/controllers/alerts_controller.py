@@ -19,6 +19,9 @@ class AlertsController:
                     humidity_sensorid=data.get("sensor_id") if data.get("sensor_type") == "humidity" else None,
                     temp_sensorid=data.get("sensor_id") if data.get("sensor_type") == "temp" else None,
                     oxygen_sensorid=data.get("sensor_id") if data.get("sensor_type") == "ox" else None,
+                    zone=data.get("zone"),
+                    message=f"{data.get('sensor_type').upper()} value {data.get('value')} {data.get('unit', '')} violated rule {rule.ruleID} (acceptable range: {rule.lowerbound}\u2013{rule.upperbound})",
+                    severity=rule.severity if rule.severity else "high",
                 )
 
                 # save to alerts table and audit log

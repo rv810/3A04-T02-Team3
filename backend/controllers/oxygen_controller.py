@@ -32,7 +32,11 @@ class OxygenController:
             )
             
             # 4. Save and Broadcast
-            self.oxygenAbstraction.upload_to_supabase(supabase_client)
+            try:
+                self.oxygenAbstraction.upload_to_supabase(supabase_client)
+            except Exception as e:
+                print(f"ERROR: Failed to upload oxygen data to Supabase: {e}")
+                return False
             self.alertsController.checkAlertRules(data)
             print("Oxygen data validated and saved to Supabase!")
             await websocket_manager.broadcast(data)
@@ -40,27 +44,3 @@ class OxygenController:
             
         print(f"SECURITY REJECT: Invalid Oxygen Data ({val}%) from {z} zone!")
         return False
-    
-    async def get_public_summary(self, zone: str, supabase_client):
-        """Fetches the latest read-only oxygen for public signage."""
-        try:
-            # Query Supabase for the single most recent reading in this zone
-            response = supabase_client.table("oxygensensor").select("value, unit, timestamp").eq("zone", zone).order("timestamp", desc=True).limit(1).execute()
-
-            if response.data:
-                return {
-                    "zone": zone.capitalize(),
-                    "sensor_type": "Oxygen",
-                    "oxygen": response.data[0]["value"],
-                    "unit": response.data[0]["unit"],
-                    "last_updated": response.data[0]["timestamp"],
-                    "status": "Online"
-                }
-            else:
-                return {
-                    "zone": zone.capitalize(), 
-                    "status": "Offline", 
-                    "message": "No oxygen data available for this zone."
-                }
-        except Exception as e:
-            return {"error": "Database connection failed", "details": str(e)}

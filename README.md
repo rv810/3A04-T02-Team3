@@ -24,7 +24,7 @@ SCEMAS monitors three environmental metrics — temperature, humidity, and oxyge
 
 The platform provides real-time telemetry ingestion through an HTTP webhook that receives sensor data from AWS IoT Core, validates and stores readings, and evaluates them against administrator-defined alert rules. When a reading violates a rule's thresholds, the system generates an alert and broadcasts it to connected operator dashboards via WebSocket. Operators can acknowledge and resolve alerts with optional notes, while administrators have full control over alert rule configuration (create, update, delete, toggle) and user management.
 
-A public-facing dashboard displays city-wide averages, zone-level summaries, and 24-hour trend charts without requiring authentication. The public REST API exposes the same data for third-party integration, optionally secured by an API key. An AI chatbot on the public dashboard provides conversational answers to common environmental queries.
+A public-facing dashboard displays city-wide averages, zone-level summaries, and 24-hour trend charts without requiring authentication. The public REST API exposes the same data for third-party integration, optionally secured by an API key. A chatbot on the public dashboard provides conversational answers to common environmental queries.
 
 ---
 
@@ -338,9 +338,7 @@ frontend/
 
 **HTTP webhook over direct MQTT.** Rather than connecting directly to an MQTT broker, the backend receives sensor data via an HTTP POST webhook from AWS IoT Core. This simplified integration and deployment within the project timeline.
 
-**Supabase for auth and database.** The system uses Supabase (managed PostgreSQL with built-in authentication and row-level security) instead of separate AWS RDS and Cognito services. This reduced infrastructure complexity while providing auth, database, and admin tooling in one platform.
-
-**PAC with pragmatic simplifications.** The architecture follows PAC's presentation-abstraction-control separation faithfully (routes, abstractions, controllers), but makes practical concessions where the pattern's full formality would add complexity without proportional benefit.
+**PAC with simplifications.** The architecture follows PAC's presentation-abstraction-control separation accurately (routes, abstractions, controllers), but makes practical adjustments where the pattern's full formality would add complexity without benefit.
 
 ---
 

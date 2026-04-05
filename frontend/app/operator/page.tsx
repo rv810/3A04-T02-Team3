@@ -62,7 +62,7 @@ export default function OperatorDashboard() {
       timestamp: d.timestamp as string,
       sensor_type: mapped,
     }
-    setSensors(prev => [newReading, ...prev])
+    setSensors(prev => [newReading, ...prev].slice(0, 500))
     getCityAverages().then(setCityAverages).catch(() => {})
     // Debounce alert re-fetch: 5s after last sensor update
     if (alertDebounce.current) clearTimeout(alertDebounce.current)
@@ -102,20 +102,21 @@ export default function OperatorDashboard() {
     } catch {
       router.push('/login')
     }
+    return () => { if (alertDebounce.current) clearTimeout(alertDebounce.current) }
   }, [router])
 
   async function acknowledge(id: number) {
     try {
       await acknowledgeAlert(id)
       await fetchAlerts()
-    } catch { /* API error handled by client */ }
+    } catch (err) { console.error('Failed to acknowledge alert', err) }
   }
   function startResolve(id: number) { setResolvingId(id); setResolveNote('') }
   async function confirmResolve(id: number) {
     try {
       await resolveAlert(id, { note: resolveNote || undefined })
       await fetchAlerts()
-    } catch { /* API error handled by client */ }
+    } catch (err) { console.error('Failed to resolve alert', err) }
     setResolvingId(null)
     setResolveNote('')
   }
@@ -146,7 +147,7 @@ export default function OperatorDashboard() {
 
       <div className="flex-1 overflow-auto relative">
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2 text-xs">
-          <span className={`w-2 h-2 rounded-full ${wsStatus === 'connected' ? 'bg-green-500' : wsStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`} />
+          <span className={`w-2 h-2 rounded-full ${wsStatus === 'connected' ? 'bg-green-500' : wsStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`} aria-hidden="true" />
           <span className="text-gray-400">
             {wsStatus === 'connected' ? 'Live' : wsStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
           </span>

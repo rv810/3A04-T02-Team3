@@ -77,8 +77,8 @@ export function AlertHistoryTable({ alerts }: { alerts: AlertsInfo[] }) {
                 </td>
               </tr>
             )}
-            {filtered.map(a => (
-              <tr key={a.alertid} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
+            {filtered.map((a, i) => (
+              <tr key={a.alertid ?? i} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
                 <td className="px-4 py-3 font-mono font-medium">{a.temp_sensor_id ?? a.humidity_sensor_id ?? a.oxygen_sensor_id ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-400">{a.zone ?? '—'}</td>
                 <td className="px-4 py-3 uppercase text-gray-500">{a.alerttype}</td>

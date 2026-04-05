@@ -3,6 +3,7 @@ from models.account import (
     AccountInformation,
     CreateAccountRequest,
     AdminCreateAccountRequest,
+    AdminEditAccountRequest,
     EditAccountRequest,
     LoginRequest,
     LoginResponse,
@@ -103,6 +104,29 @@ class AccountsController:
                 user_id=user_id
             )
             return result
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    def adminEditAccount(self, user_id: str, data, admin_id: str) -> AccountInformation:
+        try:
+            result = self.accountDB.adminUpdateAccount(user_id, data)
+            self.accountDB.logAuthAttempt(
+                event_type="account_edited",
+                description=f"Admin {admin_id} edited account {user_id}",
+                user_id=admin_id
+            )
+            return result
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    def adminDeleteAccount(self, user_id: str, admin_id: str) -> None:
+        try:
+            self.accountDB.logAuthAttempt(
+                event_type="account_deleted",
+                description=f"Admin {admin_id} deleted account {user_id}",
+                user_id=admin_id
+            )
+            self.accountDB.deleteAccount(user_id)
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 

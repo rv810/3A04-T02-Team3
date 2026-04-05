@@ -50,6 +50,12 @@ class EditAccountRequest(BaseModel):
     password: Optional[str] = None
 
 
+class AdminEditAccountRequest(BaseModel):
+    username: Optional[str] = None
+    phone_num: Optional[str] = None
+    userrole: Optional[Role] = None
+
+
 # Returned to the client after a successful login
 class LoginResponse(BaseModel):
     access_token: str

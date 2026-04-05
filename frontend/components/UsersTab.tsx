@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { UserPlus, Loader2 } from 'lucide-react'
-import type { AccountInformation, AdminCreateAccountRequest, Role } from '@/lib/types'
+import { UserPlus, Loader2, Pencil, Trash2 } from 'lucide-react'
+import type { AccountInformation, AdminCreateAccountRequest, AdminEditAccountRequest, Role } from '@/lib/types'
 import { Badge } from './Badge'
 
 const ROLE_STYLES: Record<Role, string> = {
@@ -15,8 +15,11 @@ const inputCls = 'w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2
 interface Props {
   users: AccountInformation[]
   onCreateUser: (user: AdminCreateAccountRequest) => void
+  onUpdateUser: (userId: string, data: AdminEditAccountRequest) => void
+  onDeleteUser: (userId: string) => void
   onFireToast: (msg: string) => void
   loading: boolean
+  currentUserId: string
 }
 
 function formatDate(iso: string | null): string {
@@ -24,10 +27,12 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleString()
 }
 
-export function UsersTab({ users, onCreateUser, onFireToast, loading }: Props) {
+export function UsersTab({ users, onCreateUser, onUpdateUser, onDeleteUser, onFireToast, loading, currentUserId }: Props) {
   const [showForm,  setShowForm]  = useState(false)
   const [newUser,   setNewUser]   = useState({ username: '', email: '', password: '', phone_num: '', userrole: 'operator' as Role })
   const [userError, setUserError] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editData,  setEditData]  = useState({ username: '', phone_num: '', userrole: 'operator' as Role })
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -45,6 +50,21 @@ export function UsersTab({ users, onCreateUser, onFireToast, loading }: Props) {
     setNewUser({ username: '', email: '', password: '', phone_num: '', userrole: 'operator' })
     setUserError('')
     setShowForm(false)
+  }
+
+  function startEdit(u: AccountInformation) {
+    setEditingId(u.id)
+    setEditData({ username: u.username, phone_num: u.phone_num || '', userrole: u.userrole })
+  }
+
+  function submitEdit() {
+    if (!editingId) return
+    onUpdateUser(editingId, {
+      username: editData.username.trim() || undefined,
+      phone_num: editData.phone_num.trim() || undefined,
+      userrole: editData.userrole,
+    })
+    setEditingId(null)
   }
 
   if (loading) {
@@ -116,20 +136,61 @@ export function UsersTab({ users, onCreateUser, onFireToast, loading }: Props) {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-800 text-gray-500">
-              {['Username', 'Email', 'Role', 'Last Login', 'Created At'].map(h => (
+              {['Username', 'Email', 'Role', 'Last Login', 'Created At', 'Actions'].map(h => (
                 <th key={h} className="text-left px-4 py-3 font-medium">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {users.map(u => (
-              <tr key={u.id} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
-                <td className="px-4 py-3 font-medium">{u.username}</td>
-                <td className="px-4 py-3 text-gray-400">{u.email}</td>
-                <td className="px-4 py-3"><Badge className={ROLE_STYLES[u.userrole]}>{u.userrole}</Badge></td>
-                <td className="px-4 py-3 text-gray-500 tabular-nums">{formatDate(u.last_login)}</td>
-                <td className="px-4 py-3 text-gray-500 tabular-nums">{formatDate(u.created_at)}</td>
-              </tr>
+              editingId === u.id ? (
+                <tr key={u.id} className="border-b border-purple-500/20 bg-purple-500/5">
+                  <td className="px-3 py-2">
+                    <input value={editData.username} onChange={e => setEditData(d => ({ ...d, username: e.target.value }))}
+                      className="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-purple-500" />
+                  </td>
+                  <td className="px-4 py-3 text-gray-500">{u.email}</td>
+                  <td className="px-3 py-2">
+                    <select value={editData.userrole} onChange={e => setEditData(d => ({ ...d, userrole: e.target.value as Role }))}
+                      className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-purple-500">
+                      <option value="operator">operator</option>
+                      <option value="admin">admin</option>
+                      <option value="public">public</option>
+                    </select>
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 tabular-nums">{formatDate(u.last_login)}</td>
+                  <td className="px-4 py-3 text-gray-500 tabular-nums">{formatDate(u.created_at)}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex gap-1">
+                      <button onClick={submitEdit} className="px-2 py-1 bg-purple-600 hover:bg-purple-500 rounded text-[10px] text-white transition-colors">Save</button>
+                      <button onClick={() => setEditingId(null)} className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-[10px] text-gray-300 transition-colors">Cancel</button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                <tr key={u.id} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
+                  <td className="px-4 py-3 font-medium">{u.username}</td>
+                  <td className="px-4 py-3 text-gray-400">{u.email}</td>
+                  <td className="px-4 py-3"><Badge className={ROLE_STYLES[u.userrole]}>{u.userrole}</Badge></td>
+                  <td className="px-4 py-3 text-gray-500 tabular-nums">{formatDate(u.last_login)}</td>
+                  <td className="px-4 py-3 text-gray-500 tabular-nums">{formatDate(u.created_at)}</td>
+                  <td className="px-4 py-3">
+                    {u.id !== currentUserId ? (
+                      <div className="flex gap-1">
+                        <button onClick={() => startEdit(u)} className="p-1.5 text-gray-600 hover:text-purple-400 transition-colors rounded" aria-label="Edit user">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => { if (window.confirm(`Delete user "${u.username}"?`)) onDeleteUser(u.id!) }}
+                          className="p-1.5 text-gray-600 hover:text-red-400 transition-colors rounded" aria-label="Delete user">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-gray-600">You</span>
+                    )}
+                  </td>
+                </tr>
+              )
             ))}
           </tbody>
         </table>

@@ -80,6 +80,26 @@ class AccountsAbstraction:
         # return current account info to confirm the update completed
         return self.retrieveAccountInfo(user_id)
 
+    def adminUpdateAccount(self, user_id: str, data) -> AccountInformation:
+        update_payload = {}
+        if data.username is not None:
+            update_payload["username"] = data.username
+        if data.phone_num is not None:
+            update_payload["phone_num"] = data.phone_num
+        if data.userrole is not None:
+            update_payload["userrole"] = data.userrole.value if isinstance(data.userrole, Role) else data.userrole
+
+        if not update_payload:
+            return self.retrieveAccountInfo(user_id)
+
+        result = (
+            self.db.table("accounts")
+            .update(update_payload)
+            .eq("id", user_id)
+            .execute()
+        )
+        return AccountInformation(**result.data[0])
+
     def deleteAccount(self, user_id: str) -> None:
         # Service role key required — cascades to accounts table automatically
         supabase_admin.auth.admin.delete_user(user_id)

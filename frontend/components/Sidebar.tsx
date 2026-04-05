@@ -29,7 +29,7 @@ export function Sidebar({ nav, tab, onTabChange, userName, userRole, activeAlert
     <aside className="w-52 bg-gray-900 border-r border-gray-800 flex flex-col flex-shrink-0">
       <div className="p-4 border-b border-gray-800 flex items-center gap-2">
         <div className={`w-7 h-7 ${logoAccent} rounded-lg flex items-center justify-center`}>
-          <Wind className="w-4 h-4 text-white" />
+          <Wind className="w-4 h-4 text-white" aria-hidden="true" />
         </div>
         <div>
           <span className="font-bold text-sm">SCEMAS</span>
@@ -51,7 +51,7 @@ export function Sidebar({ nav, tab, onTabChange, userName, userRole, activeAlert
                 tab === id ? `${activeClass} text-white` : 'text-gray-400 hover:text-white hover:bg-gray-800'
               }`}
             >
-              <Icon className="w-4 h-4 flex-shrink-0" />
+              <Icon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
               <span className="flex-1 text-left">{label}</span>
               {id === 'alerts' && activeAlertCount > 0 && (
                 <span className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded-full">
@@ -72,7 +72,7 @@ export function Sidebar({ nav, tab, onTabChange, userName, userRole, activeAlert
           <div className={`text-[10px] ${roleColor} capitalize`}>{userRole}</div>
         </div>
         <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
-          <LogOut className="w-4 h-4" /> Logout
+          <LogOut className="w-4 h-4" aria-hidden="true" /> Logout
         </button>
       </div>
     </aside>

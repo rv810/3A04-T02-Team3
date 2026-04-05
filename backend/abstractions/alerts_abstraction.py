@@ -9,14 +9,14 @@ class AlertsAbstraction:
         return [AlertRule(**row) for row in response.data]
 
     def addAlert(self, alert: AlertsInfo) -> None:
-        supabase.table("activealerts").insert(alert.model_dump(exclude_none=True)).execute()
+        supabase.table("activealerts").insert(alert.model_dump(exclude_none=True, mode="json")).execute()
 
     def auditLog(self, event_type: str, description: str, sensorid: int, alert_type: str) -> None:
         log = AuditLog(
             eventtype=event_type,
             description=description,
-            humidity_sensorid=sensorid if alert_type == "humidity" else None,
-            oxygen_sensorid=sensorid if alert_type == "ox" else None,
-            temp_sensorid=sensorid if alert_type == "temp" else None,
+            humidity_sensor_id=sensorid if alert_type == "humidity" else None,
+            oxygen_sensor_id=sensorid if alert_type == "ox" else None,
+            temp_sensor_id=sensorid if alert_type == "temp" else None,
         )
-        supabase.table("auditlog").insert(log.model_dump(exclude_none=True)).execute()
+        supabase.table("auditlog").insert(log.model_dump(exclude_none=True, mode="json")).execute()

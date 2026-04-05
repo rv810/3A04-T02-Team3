@@ -15,7 +15,9 @@ class AdminController:
             lowerbound=rule.lowerbound,
             upperbound=rule.upperbound,
             ruletype=rule.ruletype,
-            createdby=UUID(created_by_id)
+            createdby=UUID(created_by_id),
+            severity=rule.severity,
+            name=rule.name,
         )
         if self.adminAbstraction.ruleExists(full_rule.ruletype, full_rule.lowerbound, full_rule.upperbound):
             raise HTTPException(status_code=409, detail="An identical alert rule already exists")
@@ -31,6 +33,12 @@ class AdminController:
             raise HTTPException(status_code=404, detail="Alert rule not found")
         except Exception:
             raise HTTPException(status_code=500, detail="Failed to delete alert rule")
+
+    def toggleAlertRule(self, rule_id: int) -> AlertRule:
+        try:
+            return self.adminAbstraction.toggleAlertRule(rule_id)
+        except Exception:
+            raise HTTPException(status_code=404, detail="Alert rule not found")
 
     def viewAuditLog(self):
         return self.adminAbstraction.retrieveAuditLog()

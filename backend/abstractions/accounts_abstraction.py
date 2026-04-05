@@ -101,6 +101,11 @@ class AccountsAbstraction:
             .execute()
         )
 
+        # Update last_login timestamp
+        self.db.table("accounts").update({
+            "last_login": datetime.now(timezone.utc).isoformat()
+        }).eq("id", str(response.user.id)).execute()
+
         return {
             "access_token": response.session.access_token,
             "user": AccountInformation(**account.data),

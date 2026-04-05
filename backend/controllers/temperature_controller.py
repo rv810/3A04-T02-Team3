@@ -3,7 +3,6 @@ from controllers.alerts_controller import AlertsController
 
 class TemperatureController:
     def __init__(self):
-        self.temperatureAbstraction = None
         self.alertsController = AlertsController()
 
     def validateTemperatureData(self, value: float) -> bool:
@@ -22,21 +21,22 @@ class TemperatureController:
 
         # 2. Validate
         if self.validateTemperatureData(val):
-            # 3. Instantiate the strict specific Abstraction
-            self.temperatureAbstraction = TemperatureAbstraction(
-                sensorid=s_id, 
-                zone=z, 
-                value=val, 
-                unit=u, 
+            # 3. Create abstraction as local variable (no shared mutable state)
+            abstraction = TemperatureAbstraction(
+                sensorid=s_id,
+                zone=z,
+                value=val,
+                unit=u,
                 timestamp=ts
             )
-            
-            # 4. Save and Broadcast
+
+            # 4. Save and capture DB-generated bigint PK
             try:
-                self.temperatureAbstraction.upload_to_supabase(supabase_client)
+                db_response = abstraction.upload_to_supabase(supabase_client)
             except Exception as e:
                 print(f"ERROR: Failed to upload temperature data to Supabase: {e}")
                 return False
+            data["db_sensor_id"] = db_response.data[0]["id"]
             self.alertsController.checkAlertRules(data)
             print("Temperature data validated and saved to Supabase!")
             await websocket_manager.broadcast({

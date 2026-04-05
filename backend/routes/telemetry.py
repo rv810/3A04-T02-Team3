@@ -104,13 +104,13 @@ async def get_sensors(
 ):
     return sensors_controller.getSensors(zone)
 
+@router.get("/sensors/city-averages")
+async def get_city_averages(current_user: dict = Depends(require_operator)):
+    return sensors_controller.getCityAverages()
+
 @router.get("/sensors/{id}")
 async def get_sensor(id: str, current_user: dict = Depends(require_operator)):
     sensor = sensors_controller.getSensor(id)
     if not sensor:
         raise HTTPException(status_code=404, detail="sensor not found")
     return sensor
-
-@router.get("/sensors/city-averages")
-async def get_city_averages(current_user: dict = Depends(require_operator)):
-    return sensors_controller.getCityAverages()

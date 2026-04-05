@@ -13,4 +13,4 @@ class SensorsController:
         return self.sensorsDB.getSensor(sensorid)
     
     def getCityAverages(self):
-        return self.sensorsDB.calcualteCityAverages()
+        return self.sensorsDB.calculateCityAverages()

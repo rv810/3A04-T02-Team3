@@ -54,7 +54,7 @@ class SensorsAbstraction:
                 return {**result[0], "sensor_type": sensor_types[table]}
         return None
     
-    def calcualteCityAverages(self):
+    def calculateCityAverages(self):
         '''
         Pre-aggregated city-wide averages across all sensors. 
         Used by the Sensor tab gauges.

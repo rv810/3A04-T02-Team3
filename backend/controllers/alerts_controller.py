@@ -8,7 +8,7 @@ class AlertsController:
 
     def checkAlertRules(self, data) -> None:
         # get all rules matching the incoming data type
-        type_rules = [rule for rule in self.alertsDB.retrieveAlertRules() if rule.ruletype == data.get("sensor_type")]
+        type_rules = [rule for rule in self.alertsDB.retrieveAlertRules() if rule.ruletype == data.get("sensor_type") and rule.enabled is not False]
 
         for rule in type_rules:
             if data.get("value") <= rule.lowerbound or data.get("value") >= rule.upperbound:
@@ -16,9 +16,9 @@ class AlertsController:
                     alerttype=data.get("sensor_type"),
                     status="active",
                     ruleviolated=rule.ruleID,
-                    humidity_sensorid=data.get("sensor_id") if data.get("sensor_type") == "humidity" else None,
-                    temp_sensorid=data.get("sensor_id") if data.get("sensor_type") == "temp" else None,
-                    oxygen_sensorid=data.get("sensor_id") if data.get("sensor_type") == "ox" else None,
+                    humidity_sensor_id=data.get("db_sensor_id") if data.get("sensor_type") == "humidity" else None,
+                    temp_sensor_id=data.get("db_sensor_id") if data.get("sensor_type") == "temp" else None,
+                    oxygen_sensor_id=data.get("db_sensor_id") if data.get("sensor_type") == "ox" else None,
                     zone=data.get("zone"),
                     message=f"{data.get('sensor_type').upper()} value {data.get('value')} {data.get('unit', '')} violated rule {rule.ruleID} (acceptable range: {rule.lowerbound}\u2013{rule.upperbound})",
                     severity=rule.severity if rule.severity else "high",
@@ -29,7 +29,7 @@ class AlertsController:
                 self.alertsDB.auditLog(
                     event_type="alert_triggered",
                     description=f"{data.get('sensor_type')} value of {data.get('value')} violated rule {rule.ruleID}",
-                    sensorid=data.get("sensor_id"),
+                    sensorid=data.get("db_sensor_id"),
                     alert_type=data.get("sensor_type")
                 )
 

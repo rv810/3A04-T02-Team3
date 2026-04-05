@@ -1,10 +1,10 @@
 'use client'
 import { useState } from 'react'
-import { UserPlus } from 'lucide-react'
-import { User, Role } from '@/lib/data'
+import { UserPlus, Loader2 } from 'lucide-react'
+import type { AccountInformation, AdminCreateAccountRequest, Role } from '@/lib/types'
 import { Badge } from './Badge'
 
-const ROLE_STYLES = {
+const ROLE_STYLES: Record<Role, string> = {
   admin:    'bg-purple-500/20 text-purple-400 border-purple-500/30',
   operator: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   public:   'bg-gray-500/20 text-gray-400 border-gray-500/30',
@@ -13,31 +13,46 @@ const ROLE_STYLES = {
 const inputCls = 'w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors'
 
 interface Props {
-  users: User[]
-  onCreateUser: (user: User) => void
+  users: AccountInformation[]
+  onCreateUser: (user: AdminCreateAccountRequest) => void
   onFireToast: (msg: string) => void
+  loading: boolean
 }
 
-export function UsersTab({ users, onCreateUser, onFireToast }: Props) {
+function formatDate(iso: string | null): string {
+  if (!iso) return 'Never'
+  return new Date(iso).toLocaleString()
+}
+
+export function UsersTab({ users, onCreateUser, onFireToast, loading }: Props) {
   const [showForm,  setShowForm]  = useState(false)
-  const [newUser,   setNewUser]   = useState({ name: '', email: '', role: 'operator' as Role })
+  const [newUser,   setNewUser]   = useState({ username: '', email: '', password: '', phone_num: '', userrole: 'operator' as Role })
   const [userError, setUserError] = useState('')
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!newUser.name.trim() || !newUser.email.trim()) {
-      setUserError('Name and email are required.')
+    if (!newUser.username.trim() || !newUser.email.trim() || !newUser.password) {
+      setUserError('Username, email, and password are required.')
       return
     }
-    if (users.some(u => u.email.toLowerCase() === newUser.email.toLowerCase())) {
-      setUserError('A user with this email already exists.')
-      return
-    }
-    onCreateUser({ id: `u${Date.now()}`, name: newUser.name.trim(), email: newUser.email.trim(), role: newUser.role, status: 'active', lastLogin: 'Never' })
-    setNewUser({ name: '', email: '', role: 'operator' })
+    onCreateUser({
+      username: newUser.username.trim(),
+      email: newUser.email.trim(),
+      password: newUser.password,
+      phone_num: newUser.phone_num.trim() || undefined,
+      userrole: newUser.userrole,
+    })
+    setNewUser({ username: '', email: '', password: '', phone_num: '', userrole: 'operator' })
     setUserError('')
     setShowForm(false)
-    onFireToast(`User ${newUser.name} created`)
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center gap-2 text-gray-500 text-sm">
+        <Loader2 className="w-4 h-4 animate-spin" /> Loading users…
+      </div>
+    )
   }
 
   return (
@@ -57,9 +72,9 @@ export function UsersTab({ users, onCreateUser, onFireToast }: Props) {
           <h2 className="font-semibold text-sm text-purple-300">Create User Account</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Full Name</label>
-              <input required value={newUser.name}
-                onChange={e => { setNewUser(u => ({ ...u, name: e.target.value })); setUserError('') }}
+              <label className="block text-xs text-gray-400 mb-1">Username</label>
+              <input required value={newUser.username}
+                onChange={e => { setNewUser(u => ({ ...u, username: e.target.value })); setUserError('') }}
                 placeholder="Jane Smith" className={inputCls} />
             </div>
             <div>
@@ -69,8 +84,20 @@ export function UsersTab({ users, onCreateUser, onFireToast }: Props) {
                 placeholder="jane@city.ca" className={inputCls} />
             </div>
             <div>
+              <label className="block text-xs text-gray-400 mb-1">Password</label>
+              <input required type="password" value={newUser.password}
+                onChange={e => { setNewUser(u => ({ ...u, password: e.target.value })); setUserError('') }}
+                placeholder="Minimum 8 characters" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Phone (optional)</label>
+              <input value={newUser.phone_num}
+                onChange={e => setNewUser(u => ({ ...u, phone_num: e.target.value }))}
+                placeholder="+1 555-0123" className={inputCls} />
+            </div>
+            <div>
               <label className="block text-xs text-gray-400 mb-1">Role</label>
-              <select value={newUser.role} onChange={e => setNewUser(u => ({ ...u, role: e.target.value as Role }))} className={inputCls}>
+              <select value={newUser.userrole} onChange={e => setNewUser(u => ({ ...u, userrole: e.target.value as Role }))} className={inputCls}>
                 <option value="operator">City Operator</option>
                 <option value="admin">Administrator</option>
               </select>
@@ -89,7 +116,7 @@ export function UsersTab({ users, onCreateUser, onFireToast }: Props) {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-800 text-gray-500">
-              {['Name', 'Email', 'Role', 'Status', 'Last Login'].map(h => (
+              {['Username', 'Email', 'Role', 'Last Login', 'Created At'].map(h => (
                 <th key={h} className="text-left px-4 py-3 font-medium">{h}</th>
               ))}
             </tr>
@@ -97,15 +124,11 @@ export function UsersTab({ users, onCreateUser, onFireToast }: Props) {
           <tbody>
             {users.map(u => (
               <tr key={u.id} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
-                <td className="px-4 py-3 font-medium">{u.name}</td>
+                <td className="px-4 py-3 font-medium">{u.username}</td>
                 <td className="px-4 py-3 text-gray-400">{u.email}</td>
-                <td className="px-4 py-3"><Badge className={ROLE_STYLES[u.role]}>{u.role}</Badge></td>
-                <td className="px-4 py-3">
-                  <span className={`font-medium ${u.status === 'active' ? 'text-green-400' : 'text-gray-600'}`}>
-                    ● {u.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-gray-500 tabular-nums">{u.lastLogin}</td>
+                <td className="px-4 py-3"><Badge className={ROLE_STYLES[u.userrole]}>{u.userrole}</Badge></td>
+                <td className="px-4 py-3 text-gray-500 tabular-nums">{formatDate(u.last_login)}</td>
+                <td className="px-4 py-3 text-gray-500 tabular-nums">{formatDate(u.created_at)}</td>
               </tr>
             ))}
           </tbody>

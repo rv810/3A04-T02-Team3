@@ -53,7 +53,7 @@ class AdminAbstraction:
         response = (
             supabase.table("alertrules")
             .select("ruleID")
-            .eq("ruletype", ruletype)
+            .eq("ruletype", ruletype.value if hasattr(ruletype, 'value') else ruletype)
             .eq("lowerbound", lowerbound)
             .eq("upperbound", upperbound)
             .execute()

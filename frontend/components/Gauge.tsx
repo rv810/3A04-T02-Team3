@@ -24,6 +24,5 @@ export function Gauge({ value, max, label, unit, color }: {
   )
 }
 
-export const aqiColor   = (v: number) => v < 50  ? '#22C55E' : v < 100 ? '#EAB308' : '#EF4444'
-export const noiseColor = (v: number) => v < 65  ? '#22C55E' : v < 80  ? '#EAB308' : '#EF4444'
-export const humidColor = (v: number) => v < 40 || v > 70   ? '#EAB308' : '#22C55E'
+export const humidColor  = (v: number) => v < 40 || v > 70   ? '#EAB308' : '#22C55E'
+export const oxygenColor = (v: number) => v >= 19 && v <= 22 ? '#22C55E' : '#EAB308'

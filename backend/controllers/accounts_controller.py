@@ -39,6 +39,10 @@ class AccountsController:
                 user_id=str(account.id)
             )
             return account
+        except ValueError as e:
+            if "already exists" in str(e).lower():
+                raise HTTPException(status_code=409, detail=str(e))
+            raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 

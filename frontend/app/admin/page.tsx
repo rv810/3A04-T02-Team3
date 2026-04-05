@@ -2,7 +2,17 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, AlertTriangle, Activity, Radio, Settings, Users } from 'lucide-react'
-import { INITIAL_ALERTS, INITIAL_RULES, USERS, Alert, AlertRule, User } from '@/lib/data'
+import {
+  logout as apiLogout,
+  getAlerts, acknowledgeAlert, resolveAlert,
+  getSensors, getCityAverages, getMetricsHistory,
+  getAlertRules, createAlertRule, updateAlertRule, deleteAlertRule, toggleAlertRule,
+  listUsers, adminCreateUser,
+} from '@/lib/api'
+import type {
+  Session, AlertsInfo, SensorReading, CityAverages, MetricsHistoryPoint,
+  AlertRule, AccountInformation, CreateAlertRuleRequest, UpdateAlertRuleRequest, AdminCreateAccountRequest,
+} from '@/lib/types'
 import { Sidebar }           from '@/components/Sidebar'
 import { OverviewTab }       from '@/components/OverviewTab'
 import { AlertsTable }       from '@/components/AlertsTable'
@@ -26,20 +36,75 @@ const NAV = [
 export default function AdminDashboard() {
   const router = useRouter()
   const [tab,      setTab]      = useState<Tab>('overview')
-  const [alerts,   setAlerts]   = useState<Alert[]>(INITIAL_ALERTS)
-  const [rules,    setRules]    = useState<AlertRule[]>(INITIAL_RULES)
-  const [users,    setUsers]    = useState<User[]>([...USERS])
+  const [alerts,   setAlerts]   = useState<AlertsInfo[]>([])
+  const [sensors,  setSensors]  = useState<SensorReading[]>([])
+  const [cityAverages, setCityAverages] = useState<CityAverages>({ oxygen: null, temperature: null, humidity: null })
+  const [chartData, setChartData] = useState<MetricsHistoryPoint[]>([])
+  const [rules,    setRules]    = useState<AlertRule[]>([])
+  const [users,    setUsers]    = useState<AccountInformation[]>([])
+  const [loading,       setLoading]       = useState(true)
+  const [chartLoading,  setChartLoading]  = useState(true)
+  const [rulesLoading,  setRulesLoading]  = useState(true)
+  const [usersLoading,  setUsersLoading]  = useState(true)
   const [userName, setUserName] = useState('')
-  const [resolvingId,  setResolvingId]  = useState<string | null>(null)
+  const [userRole, setUserRole] = useState('')
+  const [resolvingId,  setResolvingId]  = useState<number | null>(null)
   const [resolveNote,  setResolveNote]  = useState('')
   const [toast,        setToast]        = useState<string | null>(null)
 
+  async function fetchAlerts() {
+    try {
+      const data = await getAlerts('active,acknowledged,resolved')
+      setAlerts(data)
+    } catch { setAlerts([]) }
+  }
+
+  async function fetchRules() {
+    try {
+      const data = await getAlertRules()
+      setRules(data)
+    } catch { setRules([]) }
+  }
+
+  async function fetchUsers() {
+    try {
+      const data = await listUsers()
+      setUsers(data)
+    } catch { setUsers([]) }
+  }
+
   useEffect(() => {
-    const raw = localStorage.getItem('scemas_session')
-    if (!raw) { router.push('/login'); return }
-    const { role, name } = JSON.parse(raw)
-    if (role !== 'admin') { router.push('/login'); return }
-    setUserName(name)
+    try {
+      const raw = localStorage.getItem('scemas_session')
+      if (!raw) { router.push('/login'); return }
+      const session: Session = JSON.parse(raw)
+      if (!session.access_token || !session.user) { router.push('/login'); return }
+      if (session.user.userrole !== 'admin') { router.push('/login'); return }
+      setUserName(session.user.username)
+      setUserRole(session.user.userrole)
+
+      Promise.allSettled([
+        getAlerts('active,acknowledged,resolved'),
+        getSensors(),
+        getCityAverages(),
+        getMetricsHistory(),
+        getAlertRules(),
+        listUsers(),
+      ]).then(([alertsR, sensorsR, avgR, chartR, rulesR, usersR]) => {
+        if (alertsR.status === 'fulfilled')  setAlerts(alertsR.value)
+        if (sensorsR.status === 'fulfilled') setSensors(sensorsR.value)
+        if (avgR.status === 'fulfilled')     setCityAverages(avgR.value)
+        if (chartR.status === 'fulfilled')   setChartData(chartR.value)
+        if (rulesR.status === 'fulfilled')   setRules(rulesR.value)
+        if (usersR.status === 'fulfilled')   setUsers(usersR.value)
+        setLoading(false)
+        setChartLoading(false)
+        setRulesLoading(false)
+        setUsersLoading(false)
+      })
+    } catch {
+      router.push('/login')
+    }
   }, [router])
 
   function fireToast(msg: string) {
@@ -47,26 +112,95 @@ export default function AdminDashboard() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  function acknowledge(id: string) {
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: 'acknowledged' as const } : a))
+  // ── Alert operations ──────────────────────────────────────────────────────
+
+  async function acknowledge(id: number) {
+    try {
+      await acknowledgeAlert(id)
+      await fetchAlerts()
+    } catch { /* API error handled by client */ }
   }
-  function startResolve(id: string) { setResolvingId(id); setResolveNote('') }
-  function confirmResolve(id: string) {
-    setAlerts(prev => prev.map(a =>
-      a.id === id ? { ...a, status: 'resolved' as const, resolvedNote: resolveNote || undefined } : a
-    ))
+
+  function startResolve(id: number) { setResolvingId(id); setResolveNote('') }
+
+  async function confirmResolve(id: number) {
+    try {
+      await resolveAlert(id, { note: resolveNote || undefined })
+      await fetchAlerts()
+    } catch { /* API error handled by client */ }
     setResolvingId(null)
     setResolveNote('')
   }
-  function logout() { localStorage.removeItem('scemas_session'); router.push('/') }
+
+  // ── Alert rule operations ─────────────────────────────────────────────────
+
+  async function handleCreateRule(rule: CreateAlertRuleRequest) {
+    try {
+      await createAlertRule(rule)
+      await fetchRules()
+      fireToast(`Rule "${rule.name}" created`)
+    } catch (err) {
+      fireToast(`Failed to create rule: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
+  async function handleUpdateRule(ruleID: number, rule: UpdateAlertRuleRequest) {
+    try {
+      await updateAlertRule(ruleID, rule)
+      await fetchRules()
+      fireToast(`Rule "${rule.name}" updated`)
+    } catch (err) {
+      fireToast(`Failed to update rule: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
+  async function handleDeleteRule(ruleID: number) {
+    try {
+      await deleteAlertRule(ruleID)
+      await fetchRules()
+      fireToast('Rule deleted')
+    } catch (err) {
+      fireToast(`Failed to delete rule: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
+  async function handleToggleRule(ruleID: number) {
+    try {
+      await toggleAlertRule(ruleID)
+      await fetchRules()
+    } catch { /* toggle failed silently */ }
+  }
+
+  // ── User operations ───────────────────────────────────────────────────────
+
+  async function handleCreateUser(user: AdminCreateAccountRequest) {
+    try {
+      await adminCreateUser(user)
+      await fetchUsers()
+      fireToast(`User "${user.username}" created`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('409') || msg.toLowerCase().includes('already exists')) {
+        fireToast('A user with this email already exists.')
+      } else {
+        fireToast(`Failed to create user: ${msg || 'Unknown error'}`)
+      }
+    }
+  }
+
+  // ── Logout ────────────────────────────────────────────────────────────────
+
+  async function logout() {
+    try { await apiLogout() } catch { /* ignore – clearing session anyway */ }
+    localStorage.removeItem('scemas_session')
+    router.push('/')
+  }
 
   if (!userName) return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-600 text-sm">
       Checking session…
     </div>
   )
-
-  const activeAlerts = alerts.filter(a => a.status !== 'resolved')
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex">
@@ -75,7 +209,7 @@ export default function AdminDashboard() {
         tab={tab}
         onTabChange={t => setTab(t as Tab)}
         userName={userName}
-        userRole="Administrator"
+        userRole={userRole}
         activeAlertCount={alerts.filter(a => a.status === 'active').length}
         variant="admin"
         onLogout={logout}
@@ -85,6 +219,9 @@ export default function AdminDashboard() {
         {tab === 'overview' && (
           <OverviewTab
             alerts={alerts}
+            chartData={chartData}
+            chartLoading={chartLoading}
+            activeSensorCount={sensors.length}
             onAcknowledge={acknowledge}
             onStartResolve={id => { setTab('alerts'); startResolve(id) }}
             onViewAllAlerts={() => setTab('alerts')}
@@ -92,7 +229,7 @@ export default function AdminDashboard() {
         )}
         {tab === 'alerts' && (
           <AlertsTable
-            alerts={activeAlerts}
+            alerts={alerts.filter(a => a.status !== 'resolved')}
             resolvingId={resolvingId}
             resolveNote={resolveNote}
             onAcknowledge={acknowledge}
@@ -103,22 +240,24 @@ export default function AdminDashboard() {
           />
         )}
         {tab === 'history'  && <AlertHistoryTable alerts={alerts} />}
-        {tab === 'sensors'  && <SensorsTab />}
+        {tab === 'sensors'  && <SensorsTab sensors={sensors} cityAverages={cityAverages} loading={loading} />}
         {tab === 'rules'    && (
           <AlertRulesTab
             rules={rules}
-            onToggle={id => setRules(prev => prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r))}
-            onDelete={id => setRules(prev => prev.filter(r => r.id !== id))}
-            onCreate={rule => setRules(prev => [...prev, rule])}
-            onUpdate={rule => setRules(prev => prev.map(r => r.id === rule.id ? rule : r))}
+            onToggle={handleToggleRule}
+            onDelete={handleDeleteRule}
+            onCreate={handleCreateRule}
+            onUpdate={handleUpdateRule}
             onFireToast={fireToast}
+            loading={rulesLoading}
           />
         )}
         {tab === 'users' && (
           <UsersTab
             users={users}
-            onCreateUser={user => setUsers(prev => [...prev, user])}
+            onCreateUser={handleCreateUser}
             onFireToast={fireToast}
+            loading={usersLoading}
           />
         )}
       </div>

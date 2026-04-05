@@ -64,7 +64,7 @@ class SensorsAbstraction:
         oxygen = supabase.rpc("get_avg_latest_oxygen").execute().data
 
         return {
-            "aqi": oxygen,
+            "oxygen": oxygen,
             "temperature": temp,
             "humidity": humidity
         }

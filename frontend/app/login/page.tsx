@@ -1,3 +1,11 @@
+/**
+ * Authentication page with role-based redirect.
+ *
+ * Subsystem: Account Management
+ * PAC Layer: Presentation
+ * Reqs:      SR-AC1, BE6
+ */
+
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -65,6 +73,10 @@ export default function LoginPage() {
     }
   }
 
+  /**
+   * Demo buttons call the real login API — not a shortcut.  They go through
+   * the same auth flow to ensure consistent behavior.
+   */
   async function quickLogin(account: typeof DEMO_ACCOUNTS[0]) {
     setError('')
     setSubmitting(true)

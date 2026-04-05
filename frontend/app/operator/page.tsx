@@ -1,3 +1,11 @@
+/**
+ * Operator dashboard for real-time alert monitoring and triage.
+ *
+ * Subsystem: Consumes Telemetry Data Management and Alert Rules Management subsystems
+ * PAC Layer: Presentation
+ * Reqs:      BE1, BE3, BE4
+ */
+
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -11,6 +19,10 @@ import { AlertsTable }       from '@/components/AlertsTable'
 import { AlertHistoryTable } from '@/components/AlertHistoryTable'
 import { SensorsTab }        from '@/components/SensorsTab'
 
+/**
+ * Normalizes abbreviated backend sensor types ("temp", "ox") to human-readable
+ * display names used throughout the UI.
+ */
 const WS_SENSOR_TYPE_MAP: Record<string, SensorReading['sensor_type']> = {
   temp: 'temperature', humidity: 'humidity', ox: 'oxygen',
 }
@@ -62,9 +74,12 @@ export default function OperatorDashboard() {
       timestamp: d.timestamp as string,
       sensor_type: mapped,
     }
+    // Cap at 500 to prevent memory leaks — at ~17k readings/day,
+    // an unbounded array would grow indefinitely.
     setSensors(prev => [newReading, ...prev].slice(0, 500))
     getCityAverages().then(setCityAverages).catch(() => {})
-    // Debounce alert re-fetch: 5s after last sensor update
+    // Debounce alert re-fetch: avoids hammering the API on every sensor
+    // WebSocket update — waits 5s after the last update before re-fetching.
     if (alertDebounce.current) clearTimeout(alertDebounce.current)
     alertDebounce.current = setTimeout(() => { fetchAlerts() }, 5000)
   }, [])

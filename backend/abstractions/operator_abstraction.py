@@ -1,3 +1,11 @@
+"""
+Database operations for alert status management and triage.
+
+Subsystem: Alert Rules Management
+PAC Layer: Abstraction
+Pattern:   Blackboard
+Reqs:      BE1, BE3, SR-AU1
+"""
 from models.alerts_info import AlertsInfo, AuditLog
 from database import supabase
 from typing import List
@@ -30,6 +38,10 @@ class OperatorAbstraction:
         return [AlertsInfo(**row) for row in response.data]
 
     def resolveAlert(self, alertID: int, user_id: str, note: str = None) -> None:
+        """Updates alert status to resolved with conflict detection. Implements BE3, SR-AU1."""
+        # Why status check before update: prevents invalid state transitions —
+        # checks current status to detect if another operator already acted
+        # (conflict detection, BE3).
         current = supabase.table("activealerts").select("status").eq("alertid", alertID).single().execute()
         if current.data["status"] == "resolved":
             raise ValueError("Alert is already resolved")
@@ -58,6 +70,10 @@ class OperatorAbstraction:
         return [AuditLog(**row) for row in response.data]
 
     def acknowledgeAlert(self, alertID: int, user_id: str) -> None:
+        """Updates alert status to acknowledged with conflict detection. Implements BE3."""
+        # Why status check before update: prevents invalid state transitions —
+        # checks current status to detect if another operator already acted
+        # (conflict detection, BE3).
         current = supabase.table("activealerts").select("status").eq("alertid", alertID).single().execute()
         status = current.data["status"]
         if status == "acknowledged":

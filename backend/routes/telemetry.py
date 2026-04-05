@@ -1,3 +1,12 @@
+"""
+Ingestion endpoint for AWS IoT telemetry and WebSocket real-time feed.
+
+Subsystem: Telemetry Data Management
+PAC Layer: Presentation
+Pattern:   Pipe-and-Filter
+Reqs:      SR-INT1, SR-INT2, PR-SL1, PR-RFT1, BE4
+"""
+
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Query, Request, WebSocket, HTTPException, Depends
@@ -104,6 +113,9 @@ async def get_sensors(
 ):
     return sensors_controller.getSensors(zone)
 
+# Why: city-averages must be defined before the /{id} route to avoid path
+# conflict (FastAPI matches routes top-down; "city-averages" would otherwise
+# be captured as an {id} parameter).
 @router.get("/sensors/city-averages")
 async def get_city_averages(current_user: dict = Depends(require_operator)):
     return sensors_controller.getCityAverages()

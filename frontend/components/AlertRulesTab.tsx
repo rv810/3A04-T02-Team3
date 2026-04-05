@@ -1,3 +1,11 @@
+/**
+ * Alert rule CRUD interface for admin dashboard.
+ *
+ * Subsystem: Alert Rules Management
+ * PAC Layer: Presentation
+ * Reqs:      BE2 (Create Alert Rule), SR-AC3 (admin restricted)
+ */
+
 'use client'
 import { useState } from 'react'
 import { Plus, Trash2, ToggleLeft, ToggleRight, Pencil, Loader2 } from 'lucide-react'

@@ -1,3 +1,11 @@
+/**
+ * Dashboard overview with metric cards, 24-hour trends, and active alerts summary.
+ *
+ * Subsystem: Consumes Telemetry Data Management and Alert Rules Management subsystems
+ * PAC Layer: Presentation
+ * Reqs:      BE4 (Operational Dashboard)
+ */
+
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 import { CheckCircle2 } from 'lucide-react'
 import type { AlertsInfo, MetricsHistoryPoint } from '@/lib/types'

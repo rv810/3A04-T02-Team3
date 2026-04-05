@@ -1,3 +1,11 @@
+/**
+ * Alert history table with status, zone, and date filtering.
+ *
+ * Subsystem: Alert Rules Management
+ * PAC Layer: Presentation
+ * Reqs:      BE1 (View Alert History)
+ */
+
 'use client'
 import { useState } from 'react'
 import type { AlertsInfo } from '@/lib/types'

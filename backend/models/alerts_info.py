@@ -1,3 +1,12 @@
+"""
+Data models for alert rules, alerts, and audit logging.
+
+Subsystem: Alert Rules Management
+PAC Layer: Model
+Pattern:   Blackboard
+Reqs:      BE1, BE2, BE3, SR-AU1
+"""
+
 from pydantic import BaseModel
 from enum import Enum
 from typing import Optional
@@ -15,7 +24,9 @@ class AlertStatus(str, Enum):
     acknowledged = "acknowledged"
 
 class AlertsInfo(BaseModel):
-    alertid: Optional[int] = None    # optional because DB generates it
+    # alertid is Optional because the DB auto-generates it on insert,
+    # but it is always present in API responses.
+    alertid: Optional[int] = None
     alerttype: SensorType
     status: AlertStatus
     ruleviolated: Optional[int] = None

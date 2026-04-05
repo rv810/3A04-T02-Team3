@@ -1,3 +1,11 @@
+"""
+Operator endpoints for alert triage, acknowledgement, and resolution.
+
+Subsystem: Alert Rules Management
+PAC Layer: Presentation
+Pattern:   Blackboard
+Reqs:      BE1, BE3, SR-AC2
+"""
 from fastapi import APIRouter, Depends, Body, Query
 from typing import List, Optional
 from middleware.auth import require_operator

@@ -1,3 +1,11 @@
+/**
+ * SVG circular gauge for real-time sensor value visualization.
+ *
+ * Subsystem: Telemetry Data Management
+ * PAC Layer: Presentation
+ * Reqs:      BE4 (Operational Dashboard)
+ */
+
 export function Gauge({ value, max, label, unit, color }: {
   value: number; max: number; label: string; unit: string; color: string
 }) {
@@ -7,6 +15,9 @@ export function Gauge({ value, max, label, unit, color }: {
   const valLen = bgLen * Math.min(value / max, 1)
   return (
     <div className="flex flex-col items-center gap-1">
+      {/* Why aria-label includes value and unit: accessibility — screen readers
+          announce the measurement (e.g. "Temperature: 23.5 °C") so visually-impaired
+          users get the same information. */}
       <svg viewBox="0 0 100 100" className="w-24 h-24" role="img" aria-label={`${label}: ${value}${unit}`}>
         <circle cx="50" cy="50" r={r} fill="none" stroke="#1F2937" strokeWidth="9"
           strokeDasharray={`${bgLen} ${circ - bgLen}`} transform="rotate(135 50 50)" strokeLinecap="round" />

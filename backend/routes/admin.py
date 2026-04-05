@@ -1,3 +1,11 @@
+"""
+Admin-only endpoints for alert rule CRUD and audit log retrieval.
+
+Subsystem: Alert Rules Management
+PAC Layer: Presentation
+Pattern:   Blackboard
+Reqs:      BE2, SR-AC3
+"""
 from fastapi import APIRouter, Depends, Query
 from typing import List
 from middleware.auth import require_admin

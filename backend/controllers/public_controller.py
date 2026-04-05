@@ -1,3 +1,11 @@
+"""
+Public data access logic for environmental metrics (zone summaries, history).
+
+Subsystem: Consumes Telemetry Data Management subsystem
+PAC Layer: Control
+Pattern:   N/A
+Reqs:      BE5
+"""
 from abstractions.public_abstraction import PublicAbstraction
 
 

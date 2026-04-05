@@ -1,3 +1,11 @@
+/**
+ * User management table with inline editing for admin dashboard.
+ *
+ * Subsystem: Account Management
+ * PAC Layer: Presentation
+ * Reqs:      BE6 (Manage Users & Roles), SR-AC3 (admin restricted)
+ */
+
 'use client'
 import { useState } from 'react'
 import { UserPlus, Loader2, Pencil, Trash2 } from 'lucide-react'

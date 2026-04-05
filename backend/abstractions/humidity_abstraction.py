@@ -1,3 +1,13 @@
+"""
+Data carrier and persistence for humidity sensor readings.
+
+Subsystem: Telemetry Data Management
+PAC Layer: Abstraction
+Pattern:   Pipe-and-Filter (data object)
+Reqs:      PR-SL1
+"""
+
+
 class HumidityAbstraction:
     def __init__(self, sensorid: str, zone: str, value: float, unit: str, timestamp: str):
         self.sensorid = sensorid

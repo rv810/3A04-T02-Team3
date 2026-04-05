@@ -1,3 +1,12 @@
+"""
+Validates and processes temperature telemetry through the pipe-and-filter chain.
+
+Subsystem: Telemetry Data Management
+PAC Layer: Control
+Pattern:   Pipe-and-Filter
+Reqs:      SR-INT1, SR-INT2, PR-SL1, PR-SC1
+"""
+
 from abstractions.temperature_abstraction import TemperatureAbstraction
 from controllers.alerts_controller import AlertsController
 
@@ -6,9 +15,15 @@ class TemperatureController:
         self.alertsController = AlertsController()
 
     def validateTemperatureData(self, value: float) -> bool:
+        """Validates temperature readings against physically plausible range
+        (-25 to 100 deg C). Implements SR-INT1 (telemetry validated),
+        SR-INT2 (reject invalid)."""
         return -25.0 <= value <= 100.0
 
     async def handle_incoming_data(self, data: dict, supabase_client, websocket_manager):
+        """Processes validated temperature data through the pipe:
+        validate -> store -> check alerts. Implements PR-SL1 (process
+        within 5s)."""
         # 1. Extract specific fields from the AWS payload
         val = data.get("value")
         if val is None:
@@ -21,7 +36,8 @@ class TemperatureController:
 
         # 2. Validate
         if self.validateTemperatureData(val):
-            # 3. Create abstraction as local variable (no shared mutable state)
+            # 3. Why: abstraction created per-request as a local variable to
+            # avoid shared mutable state between concurrent requests.
             abstraction = TemperatureAbstraction(
                 sensorid=s_id,
                 zone=z,
@@ -36,6 +52,9 @@ class TemperatureController:
             except Exception as e:
                 print(f"ERROR: Failed to upload temperature data to Supabase: {e}")
                 return False
+            # Why: db_sensor_id (bigint FK from the sensor table) is used
+            # instead of sensor_id (string UUID from AWS) because alert FKs
+            # reference the database primary key.
             data["db_sensor_id"] = db_response.data[0]["id"]
             self.alertsController.checkAlertRules(data)
             print("Temperature data validated and saved to Supabase!")

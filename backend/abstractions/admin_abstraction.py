@@ -8,12 +8,12 @@ class AdminAbstraction:
         return [AlertRule(**row) for row in response.data]
 
     def createAlertRule(self, rule: AlertRule) -> AlertRule:
-        payload = rule.model_dump(exclude_none=True)
+        payload = rule.model_dump(exclude_none=True, mode="json")
         response = supabase.table("alertrules").insert(payload).execute()
         return AlertRule(**response.data[0])
 
     def updateAlertRule(self, rule_id: int, rule: UpdateAlertRuleRequest) -> AlertRule:
-        payload = rule.model_dump(exclude_none=True)
+        payload = rule.model_dump(exclude_none=True, mode="json")
         response = (
             supabase.table("alertrules")
             .update(payload)
@@ -31,6 +31,23 @@ class AdminAbstraction:
         )
         if not response.data:
             raise ValueError("Alert rule not found")
+
+    def toggleAlertRule(self, rule_id: int) -> AlertRule:
+        current = (
+            supabase.table("alertrules")
+            .select("*")
+            .eq("ruleID", rule_id)
+            .single()
+            .execute()
+        )
+        new_enabled = not current.data["enabled"]
+        response = (
+            supabase.table("alertrules")
+            .update({"enabled": new_enabled})
+            .eq("ruleID", rule_id)
+            .execute()
+        )
+        return AlertRule(**response.data[0])
 
     def ruleExists(self, ruletype, lowerbound, upperbound) -> bool:
         response = (

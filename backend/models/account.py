@@ -19,6 +19,7 @@ class AccountInformation(BaseModel):
     phone_num: Optional[str] = None
     userrole: Role
     created_at: Optional[datetime] = None
+    last_login: Optional[datetime] = None
 
 
 # Used by public /auth/register — no role selection

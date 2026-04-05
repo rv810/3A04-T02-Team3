@@ -1,4 +1,7 @@
-# SCEMAS — Smart City Environmental Monitoring & Alert System
+# SCEMAS 
+### Smart City Environmental Monitoring & Alert System
+
+---
 
 SCEMAS is a cloud-native IoT platform that ingests real-time environmental telemetry from distributed city sensors, evaluates configurable alert rules against incoming data, and surfaces actionable information through role-based dashboards and a public REST API. The system monitors temperature, humidity, and oxygen levels across city zones, enabling city operators to respond to environmental anomalies and giving the public access to aggregated environmental data.
 

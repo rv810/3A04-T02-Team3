@@ -17,15 +17,15 @@ def create_alert_rule(rule: CreateAlertRuleRequest, current_user: dict = Depends
 
 @router.put("/rules/{rule_id}", response_model=AlertRule)
 def update_alert_rule(rule_id: int, rule: UpdateAlertRuleRequest, current_user: dict = Depends(require_admin)):
-    return controller.updateAlertRule(rule_id, rule)
+    return controller.updateAlertRule(rule_id, rule, user_id=current_user["id"])
 
 @router.delete("/rules/{rule_id}", status_code=204)
 def delete_alert_rule(rule_id: int, current_user: dict = Depends(require_admin)):
-    controller.deleteAlertRule(rule_id)
+    controller.deleteAlertRule(rule_id, user_id=current_user["id"])
 
 @router.patch("/rules/{rule_id}/toggle", response_model=AlertRule)
 def toggle_alert_rule(rule_id: int, current_user: dict = Depends(require_admin)):
-    return controller.toggleAlertRule(rule_id)
+    return controller.toggleAlertRule(rule_id, user_id=current_user["id"])
 
 @router.get("/audit-log", response_model=List[AuditLog])
 def get_audit_log(current_user: dict = Depends(require_admin)):

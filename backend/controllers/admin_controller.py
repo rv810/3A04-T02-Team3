@@ -21,22 +21,22 @@ class AdminController:
         )
         if self.adminAbstraction.ruleExists(full_rule.ruletype, full_rule.lowerbound, full_rule.upperbound):
             raise HTTPException(status_code=409, detail="An identical alert rule already exists")
-        return self.adminAbstraction.createAlertRule(full_rule)
+        return self.adminAbstraction.createAlertRule(full_rule, user_id=created_by_id)
 
-    def updateAlertRule(self, rule_id: int, rule: UpdateAlertRuleRequest):
-        return self.adminAbstraction.updateAlertRule(rule_id, rule)
+    def updateAlertRule(self, rule_id: int, rule: UpdateAlertRuleRequest, user_id: str = None):
+        return self.adminAbstraction.updateAlertRule(rule_id, rule, user_id=user_id)
 
-    def deleteAlertRule(self, rule_id: int):
+    def deleteAlertRule(self, rule_id: int, user_id: str = None):
         try:
-            self.adminAbstraction.deleteAlertRule(rule_id)
+            self.adminAbstraction.deleteAlertRule(rule_id, user_id=user_id)
         except ValueError:
             raise HTTPException(status_code=404, detail="Alert rule not found")
         except Exception:
             raise HTTPException(status_code=500, detail="Failed to delete alert rule")
 
-    def toggleAlertRule(self, rule_id: int) -> AlertRule:
+    def toggleAlertRule(self, rule_id: int, user_id: str = None) -> AlertRule:
         try:
-            return self.adminAbstraction.toggleAlertRule(rule_id)
+            return self.adminAbstraction.toggleAlertRule(rule_id, user_id=user_id)
         except Exception:
             raise HTTPException(status_code=404, detail="Alert rule not found")
 

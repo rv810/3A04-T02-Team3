@@ -30,6 +30,9 @@ class OperatorAbstraction:
         return [AlertsInfo(**row) for row in response.data]
 
     def resolveAlert(self, alertID: int, user_id: str, note: str = None) -> None:
+        current = supabase.table("activealerts").select("status").eq("alertid", alertID).single().execute()
+        if current.data["status"] == "resolved":
+            raise ValueError("Alert is already resolved")
         update_data = {"status": "resolved"}
         if note:
             update_data["resolved_note"] = note
@@ -53,6 +56,12 @@ class OperatorAbstraction:
         return [AuditLog(**row) for row in response.data]
 
     def acknowledgeAlert(self, alertID: int, user_id: str) -> None:
+        current = supabase.table("activealerts").select("status").eq("alertid", alertID).single().execute()
+        status = current.data["status"]
+        if status == "acknowledged":
+            raise ValueError("Alert is already acknowledged")
+        if status == "resolved":
+            raise ValueError("Alert is already resolved")
         self.updateAlertStatus(alertID, "acknowledged")
         supabase.table("auditlog").insert({
             "eventtype": "alert_acknowledged",

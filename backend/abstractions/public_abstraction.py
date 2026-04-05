@@ -83,16 +83,16 @@ class PublicAbstraction:
                 # Handle Supabase ISO timestamps
                 ts_str = ts_str.replace("Z", "+00:00")
                 ts = datetime.fromisoformat(ts_str)
-                hour_key = f"{ts.hour:02d}:00"
+                hour_key = f"{ts.year}-{ts.month:02d}-{ts.day:02d} {ts.hour:02d}:00"
 
                 if hour_key not in buckets:
                     buckets[hour_key] = {"temperature": [], "humidity": [], "oxygen": []}
                 buckets[hour_key][metric].append(row["value"])
 
-        # Build sorted result
+        # Build sorted result (sorted chronologically by full datetime key)
         result = []
         for hour_key in sorted(buckets.keys()):
-            entry = {"time": hour_key}
+            entry = {"time": hour_key[-5:]}  # Display hour only, e.g. "14:00"
             for metric in ("temperature", "humidity", "oxygen"):
                 values = buckets[hour_key][metric]
                 entry[metric] = sum(values) / len(values) if values else None

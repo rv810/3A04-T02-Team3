@@ -1,18 +1,26 @@
 from database import supabase
 from models.alerts_info import AlertRule, AuditLog, UpdateAlertRuleRequest
 from typing import List
+from datetime import datetime, timezone
 
 class AdminAbstraction:
     def retrieveAlertRules(self) -> List[AlertRule]:
         response = supabase.table("alertrules").select("*").execute()
         return [AlertRule(**row) for row in response.data]
 
-    def createAlertRule(self, rule: AlertRule) -> AlertRule:
+    def createAlertRule(self, rule: AlertRule, user_id: str = None) -> AlertRule:
         payload = rule.model_dump(exclude_none=True, mode="json")
         response = supabase.table("alertrules").insert(payload).execute()
-        return AlertRule(**response.data[0])
+        created = AlertRule(**response.data[0])
+        supabase.table("auditlog").insert({
+            "eventtype": "rule_created",
+            "description": f"Alert rule '{rule.name}' created",
+            "user_id": user_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+        return created
 
-    def updateAlertRule(self, rule_id: int, rule: UpdateAlertRuleRequest) -> AlertRule:
+    def updateAlertRule(self, rule_id: int, rule: UpdateAlertRuleRequest, user_id: str = None) -> AlertRule:
         payload = rule.model_dump(exclude_none=True, mode="json")
         response = (
             supabase.table("alertrules")
@@ -20,9 +28,16 @@ class AdminAbstraction:
             .eq("ruleID", rule_id)
             .execute()
         )
-        return AlertRule(**response.data[0])
+        updated = AlertRule(**response.data[0])
+        supabase.table("auditlog").insert({
+            "eventtype": "rule_updated",
+            "description": f"Alert rule {rule_id} updated",
+            "user_id": user_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+        return updated
 
-    def deleteAlertRule(self, rule_id: int) -> None:
+    def deleteAlertRule(self, rule_id: int, user_id: str = None) -> None:
         response = (
             supabase.table("alertrules")
             .delete()
@@ -31,8 +46,14 @@ class AdminAbstraction:
         )
         if not response.data:
             raise ValueError("Alert rule not found")
+        supabase.table("auditlog").insert({
+            "eventtype": "rule_deleted",
+            "description": f"Alert rule {rule_id} deleted",
+            "user_id": user_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }).execute()
 
-    def toggleAlertRule(self, rule_id: int) -> AlertRule:
+    def toggleAlertRule(self, rule_id: int, user_id: str = None) -> AlertRule:
         current = (
             supabase.table("alertrules")
             .select("*")
@@ -47,7 +68,14 @@ class AdminAbstraction:
             .eq("ruleID", rule_id)
             .execute()
         )
-        return AlertRule(**response.data[0])
+        toggled = AlertRule(**response.data[0])
+        supabase.table("auditlog").insert({
+            "eventtype": "rule_toggled",
+            "description": f"Alert rule {rule_id} toggled to {'enabled' if new_enabled else 'disabled'}",
+            "user_id": user_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+        return toggled
 
     def ruleExists(self, ruletype, lowerbound, upperbound) -> bool:
         response = (

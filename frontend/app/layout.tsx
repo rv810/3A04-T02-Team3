@@ -1,3 +1,11 @@
+/**
+ * Root layout with metadata and global styles.
+ *
+ * Subsystem: System infrastructure — serves all three subsystems
+ * PAC Layer: Presentation
+ * Reqs:      N/A
+ */
+
 import type { Metadata } from 'next'
 import './globals.css'
 

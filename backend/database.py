@@ -1,3 +1,12 @@
+"""
+Database connectivity — initializes Supabase clients for application use.
+
+Subsystem: System infrastructure — serves all three subsystems
+PAC Layer: Abstraction
+Pattern:   N/A
+Reqs:      SR-AC1 (authenticated data access), SR-P1 (persistent storage)
+"""
+
 import os
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -9,8 +18,9 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 service_key: str = os.environ.get("SUPABASE_SERVICE_KEY")
 
-# Standard client — used for all regular operations
+# Why two clients: `supabase` uses the anon key for user-scoped operations
+# (respects RLS policies). `supabase_admin` uses the service role key for
+# admin operations like password resets and user deletion that require
+# elevated Supabase privileges (bypasses RLS).
 supabase: Client = create_client(url, key)
-
-# Admin client — used only for auth admin operations (delete user, update password)
 supabase_admin: Client = create_client(url, service_key)

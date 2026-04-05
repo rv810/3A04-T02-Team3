@@ -1,3 +1,11 @@
+/**
+ * Shared UI constants for alert severity and status styling.
+ *
+ * Subsystem: Consumes Alert Rules Management subsystem
+ * PAC Layer: Presentation
+ * Reqs:      BE1, BE4
+ */
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical'

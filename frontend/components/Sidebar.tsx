@@ -1,3 +1,11 @@
+/**
+ * Navigation sidebar with role-based tab visibility.
+ *
+ * Subsystem: Account Management subsystem (role-based navigation)
+ * PAC Layer: Presentation
+ * Reqs:      SR-AC2 (RBAC -- shows/hides tabs based on role)
+ */
+
 import Link from 'next/link'
 import { Wind, LogOut } from 'lucide-react'
 

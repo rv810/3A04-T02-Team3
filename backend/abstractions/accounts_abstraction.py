@@ -1,3 +1,12 @@
+"""
+Direct Supabase database and auth operations for account data.
+
+Subsystem: Account Management
+PAC Layer: Abstraction
+Pattern:   Repository
+Reqs:      BE6, SR-AC1, SR-AU2, SR-P2
+"""
+
 from models.account import AccountInformation, CreateAccountRequest, EditAccountRequest, Role
 from database import supabase_admin
 from typing import Optional
@@ -10,6 +19,7 @@ class AccountsAbstraction:
         self.db = supabase_client
 
     def createAccount(self, request, userrole: Role = Role.public) -> AccountInformation:
+        """Creates auth user and account record. Implements BE6."""
         # Register with Supabase Auth — handles password hashing
         try:
             auth_response = self.db.auth.sign_up({
@@ -33,7 +43,9 @@ class AccountsAbstraction:
             "userrole": userrole.value if isinstance(userrole, Role) else userrole
         }
 
-        # Clean up orphaned auth user if accounts table insert fails
+        # Why cleanup: if the accounts table insert fails after the auth user was
+        # already created, delete the orphaned auth user to prevent ghost accounts
+        # (auth entry with no matching profile row).
         try:
             result = self.db.table("accounts").insert(payload).execute()
         except Exception:
@@ -107,6 +119,7 @@ class AccountsAbstraction:
     # Failed login rate limiting and account lockout is handled natively
     # by Supabase GoTrue — satisfies SR-IM1
     def login(self, email: str, password: str) -> dict:
+        """Authenticates via Supabase GoTrue and updates last_login timestamp. Implements SR-AC1."""
         response = self.db.auth.sign_in_with_password({
             "email": email,
             "password": password
@@ -121,7 +134,7 @@ class AccountsAbstraction:
             .execute()
         )
 
-        # Update last_login timestamp
+        # Why update last_login: tracks user activity for session management (LR-STD2)
         self.db.table("accounts").update({
             "last_login": datetime.now(timezone.utc).isoformat()
         }).eq("id", str(response.user.id)).execute()
@@ -152,6 +165,8 @@ class AccountsAbstraction:
         description: str,
         user_id: Optional[str] = None
     ) -> None:
+        """Records authentication attempt for audit trail. Implements SR-AU2.
+        Takes optional user_id -- None for failed login attempts where the user doesn't exist."""
         # Logs to auditlog — user_id is None for failed attempts
         # Never log passwords or tokens here (LR-STD3)
         payload = {

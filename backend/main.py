@@ -1,3 +1,12 @@
+"""
+Application entry point — configures CORS, registers all route modules.
+
+Subsystem: System infrastructure — serves all three subsystems
+PAC Layer: N/A
+Pattern:   N/A
+Reqs:      SR-AC1 (authentication infrastructure), SR-AC2 (RBAC route grouping)
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer

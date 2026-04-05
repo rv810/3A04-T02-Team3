@@ -1,3 +1,12 @@
+"""
+Read-only sensor data retrieval across all sensor types.
+
+Subsystem: Telemetry Data Management
+PAC Layer: Control
+Pattern:   Pipe-and-Filter
+Reqs:      BE4
+"""
+
 from abstractions.sensors_abstraction import SensorsAbstraction
 from typing import Optional
 

@@ -1,3 +1,12 @@
+"""
+HTTP endpoints for user registration, authentication, and account management.
+
+Subsystem: Account Management
+PAC Layer: Presentation
+Pattern:   Repository
+Reqs:      BE6, SR-AC1, SR-AC2, SR-AC3, SR-P2
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from pydantic import ValidationError

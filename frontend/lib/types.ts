@@ -1,4 +1,11 @@
-// Backend-aligned type definitions — field names match Pydantic models exactly
+/**
+ * Backend-aligned TypeScript type definitions.
+ * Field names match Pydantic models exactly.
+ *
+ * Subsystem: Interfaces with all three subsystems: Account Management, Telemetry Data Management, Alert Rules Management
+ * PAC Layer: Presentation
+ * Reqs:      N/A (type contracts)
+ */
 
 // ── Enums (matching backend string enums) ───────────────────────────────────
 

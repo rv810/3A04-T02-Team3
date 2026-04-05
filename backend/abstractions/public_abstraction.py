@@ -1,3 +1,11 @@
+"""
+Database queries for public environmental data aggregation.
+
+Subsystem: Consumes Telemetry Data Management subsystem
+PAC Layer: Abstraction
+Pattern:   N/A
+Reqs:      BE5
+"""
 from database import supabase
 from datetime import datetime, timezone, timedelta
 
@@ -56,6 +64,9 @@ class PublicAbstraction:
 
     def getPublicMetricsHistory(self) -> list:
         """
+        Retrieves hourly-bucketed sensor history for public display.
+        Implements BE5 (Public Environmental Data API).
+
         Returns the last 24 hours of sensor readings bucketed into hourly averages.
         Used by the public dashboard 24-hour trend chart.
         """
@@ -83,6 +94,9 @@ class PublicAbstraction:
                 # Handle Supabase ISO timestamps
                 ts_str = ts_str.replace("Z", "+00:00")
                 ts = datetime.fromisoformat(ts_str)
+                # Why hour_key includes date: prevents cross-day bucket merging —
+                # without the date component, 2pm Monday and 2pm Tuesday readings
+                # would merge into one bucket.
                 hour_key = f"{ts.year}-{ts.month:02d}-{ts.day:02d} {ts.hour:02d}:00"
 
                 if hour_key not in buckets:

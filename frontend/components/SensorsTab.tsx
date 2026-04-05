@@ -1,3 +1,11 @@
+/**
+ * City-wide sensor readings grid with per-sensor detail table.
+ *
+ * Subsystem: Telemetry Data Management
+ * PAC Layer: Presentation
+ * Reqs:      BE4 (Operational Dashboard)
+ */
+
 import type { SensorReading, CityAverages } from '@/lib/types'
 import { Gauge, humidColor, oxygenColor } from './Gauge'
 

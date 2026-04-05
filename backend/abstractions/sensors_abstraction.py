@@ -1,3 +1,12 @@
+"""
+Cross-sensor query aggregation across all three sensor tables.
+
+Subsystem: Telemetry Data Management
+PAC Layer: Abstraction
+Pattern:   Pipe-and-Filter
+Reqs:      BE4
+"""
+
 from database import supabase
 from typing import Optional
 from datetime import datetime, timezone
@@ -41,7 +50,8 @@ class SensorsAbstraction:
             "oxygensensor": "oxygen"
         }
 
-        #checks all 3 sensor tables for the given sensorid and returns the first match (most recent) with its type labeled
+        # Why: no unified sensor table exists; each type has its own table by
+        # design, so we must iterate all three to find a match.
         for table in ["tempsensor", "humiditysensor", "oxygensensor"]:
             result = (
                 supabase.table(table)
@@ -57,8 +67,11 @@ class SensorsAbstraction:
     
     def calculateCityAverages(self):
         '''
-        Pre-aggregated city-wide averages across all sensors. 
+        Pre-aggregated city-wide averages across all sensors.
         Used by the Sensor tab gauges.
+
+        Why: uses Supabase RPCs instead of raw queries to push aggregation
+        to the database for performance.
         '''
         temp = supabase.rpc("get_avg_latest_temp").execute().data
         humidity = supabase.rpc("get_avg_latest_humidity").execute().data

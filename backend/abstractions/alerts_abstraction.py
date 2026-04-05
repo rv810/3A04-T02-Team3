@@ -1,3 +1,11 @@
+"""
+Database operations for alert persistence and audit logging.
+
+Subsystem: Alert Rules Management
+PAC Layer: Abstraction
+Pattern:   Blackboard
+Reqs:      PR-SC1, SR-AU1
+"""
 from database import supabase
 from models.alerts_info import AlertsInfo, AlertRule, AuditLog
 from typing import List

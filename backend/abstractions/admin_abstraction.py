@@ -1,3 +1,11 @@
+"""
+Database operations for alert rule CRUD with audit logging.
+
+Subsystem: Alert Rules Management
+PAC Layer: Abstraction
+Pattern:   Blackboard
+Reqs:      BE2, SR-AU1
+"""
 from database import supabase
 from models.alerts_info import AlertRule, AuditLog, UpdateAlertRuleRequest
 from typing import List
@@ -9,6 +17,8 @@ class AdminAbstraction:
         return [AlertRule(**row) for row in response.data]
 
     def createAlertRule(self, rule: AlertRule, user_id: str = None) -> AlertRule:
+        # Why mode="json": required for proper enum and UUID serialization —
+        # without it, PostgREST receives Python enum repr instead of the string value.
         payload = rule.model_dump(exclude_none=True, mode="json")
         response = supabase.table("alertrules").insert(payload).execute()
         created = AlertRule(**response.data[0])
@@ -54,6 +64,7 @@ class AdminAbstraction:
         }).execute()
 
     def toggleAlertRule(self, rule_id: int, user_id: str = None) -> AlertRule:
+        """Toggles rule enabled state and logs the change to audit trail. Implements SR-AU1 (alert history logged)."""
         current = (
             supabase.table("alertrules")
             .select("*")
@@ -81,6 +92,8 @@ class AdminAbstraction:
         response = (
             supabase.table("alertrules")
             .select("ruleID")
+            # Why .value: PostgREST sends enum repr (e.g. <SensorType.temp: 'temp'>)
+            # instead of the string value without .value.
             .eq("ruletype", ruletype.value if hasattr(ruletype, 'value') else ruletype)
             .eq("lowerbound", lowerbound)
             .eq("upperbound", upperbound)

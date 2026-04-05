@@ -1,3 +1,11 @@
+/**
+ * Ephemeral notification toast for operation feedback.
+ *
+ * Subsystem: System infrastructure — reusable UI primitive for all subsystems
+ * PAC Layer: Presentation
+ * Reqs:      N/A
+ */
+
 import { CheckCircle2 } from 'lucide-react'
 
 export function Toast({ message }: { message: string }) {

@@ -1,3 +1,11 @@
+/**
+ * Active/acknowledged alerts table with acknowledge and resolve actions.
+ *
+ * Subsystem: Alert Rules Management
+ * PAC Layer: Presentation
+ * Reqs:      BE3 (Acknowledge/Resolve Alert)
+ */
+
 import type { AlertsInfo } from '@/lib/types'
 import type { AlertSeverity } from '@/lib/data'
 import { SEVERITY_STYLES, STATUS_STYLES } from '@/lib/data'
@@ -31,6 +39,13 @@ export function AlertsTable({ alerts, resolvingId, resolveNote, onAcknowledge, o
             {alerts.length === 0 && (
               <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-600">All alerts resolved</td></tr>
             )}
+            {/* Edge case: null guards on alertid are defensive — alertid from the
+                API is never actually null, but the TypeScript type marks it optional
+                to match the backend model.
+
+                Why index fallback on key: alertid is typed as Optional (nullable)
+                because the DB generates it on insert, but it's always present in
+                API responses — index fallback is defensive only. */}
             {alerts.map((a, i) => (
               <tr key={a.alertid ?? i} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
                 <td className="px-4 py-3 font-mono font-medium">{a.temp_sensor_id ?? a.humidity_sensor_id ?? a.oxygen_sensor_id ?? '—'}</td>

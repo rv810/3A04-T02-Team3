@@ -1,3 +1,13 @@
+"""
+Business logic for user registration, authentication, profile management,
+and admin user operations.
+
+Subsystem: Account Management
+PAC Layer: Control
+Pattern:   Repository
+Reqs:      BE6, SR-AC1, SR-AC2, SR-AC3, SR-AU2
+"""
+
 from abstractions.accounts_abstraction import AccountsAbstraction
 from models.account import (
     AccountInformation,
@@ -22,6 +32,7 @@ class AccountsController:
         request: CreateAccountRequest | AdminCreateAccountRequest,
         requesting_role: str = Role.public
     ) -> AccountInformation:
+        """Creates a new user account. Implements BE6 (Manage Users & Roles)."""
         # Determine role — public registration always gets public
         userrole = getattr(request, "userrole", Role.public)
 
@@ -41,6 +52,8 @@ class AccountsController:
             )
             return account
         except ValueError as e:
+            # Why 409: only raised for ValueError containing "already exists" —
+            # other ValueErrors fall through to the 400 below.
             if "already exists" in str(e).lower():
                 raise HTTPException(status_code=409, detail=str(e))
             raise HTTPException(status_code=400, detail=str(e))
@@ -48,6 +61,7 @@ class AccountsController:
             raise HTTPException(status_code=400, detail=str(e))
 
     def login(self, request: LoginRequest) -> LoginResponse:
+        """Authenticates user credentials and returns session token. Implements SR-AC1 (authentication), SR-AU2 (auth logging)."""
         try:
             result = self.accountDB.login(request.email, request.password)
 
@@ -79,6 +93,7 @@ class AccountsController:
             raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
     def logout(self, jwt: str, user_id: str) -> None:
+        """Ends user session. Implements LR-STD2 (session management)."""
         try:
             self.accountDB.logout(jwt)
             self.accountDB.logAuthAttempt(
@@ -108,6 +123,7 @@ class AccountsController:
             raise HTTPException(status_code=400, detail=str(e))
 
     def adminEditAccount(self, user_id: str, data, admin_id: str) -> AccountInformation:
+        """Admin-only account modification. Implements BE6, SR-AC3 (admin restricted)."""
         try:
             result = self.accountDB.adminUpdateAccount(user_id, data)
             self.accountDB.logAuthAttempt(
@@ -120,6 +136,7 @@ class AccountsController:
             raise HTTPException(status_code=400, detail=str(e))
 
     def adminDeleteAccount(self, user_id: str, admin_id: str) -> None:
+        """Admin-only account deletion. Implements BE6, SR-AC3."""
         try:
             self.accountDB.logAuthAttempt(
                 event_type="account_deleted",
@@ -137,9 +154,10 @@ class AccountsController:
             raise HTTPException(status_code=500, detail="Failed to retrieve accounts")
 
     def deleteAccount(self, user_id: str) -> None:
-        # SR-P2: users can request deletion of their own data
+        """Deletes the authenticated user's own account. Implements SR-P2 (users can delete data)."""
         try:
-            # Log before delete — user_id FK becomes invalid after deletion
+            # Why log BEFORE delete: the user FK becomes invalid after Supabase
+            # auth deletion, so the audit log insert would fail with a dangling reference.
             self.accountDB.logAuthAttempt(
                 event_type="account_deleted",
                 description=f"Account deleted for user {user_id}",

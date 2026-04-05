@@ -1,3 +1,11 @@
+/**
+ * Public environmental dashboard.
+ *
+ * Subsystem: Consumes Telemetry Data Management and Alert Rules Management subsystems
+ * PAC Layer: Presentation
+ * Reqs:      BE4, BE5
+ */
+
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -64,6 +72,8 @@ export default function PublicDashboard() {
 
     fetchData().then(() => {
       if (!cancelled) {
+        // Public users don't have auth tokens for WebSocket — polling at 30s
+        // is sufficient because metrics data is hourly-bucketed.
         intervalId = setInterval(async () => {
           try {
             const z = await getAllZones()

@@ -1,3 +1,11 @@
+/**
+ * WebSocket hook for real-time telemetry and alert updates.
+ *
+ * Subsystem: Consumes Telemetry Data Management and Alert Rules Management subsystems
+ * PAC Layer: Presentation
+ * Reqs:      BE4, PR-SL1
+ */
+
 import { useEffect, useRef, useState } from 'react'
 
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
@@ -8,6 +16,7 @@ export function useWebSocket(
 ): { status: ConnectionStatus } {
   const [status, setStatus] = useState<ConnectionStatus>('disconnected')
   const onMessageRef = useRef(onMessage)
+  /** Prevents reconnection attempts after React component unmounts. */
   const mountedRef = useRef(true)
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -53,7 +62,8 @@ export function useWebSocket(
         if (!mountedRef.current) return
         setStatus('disconnected')
 
-        // Don't reconnect on intentional close or auth failure
+        // 1000 = intentional close (e.g. logout), 1008 = auth failure —
+        // reconnecting would be futile in both cases.
         if (e.code === 1000 || e.code === 1008) return
 
         // Schedule reconnect with exponential backoff

@@ -1,3 +1,11 @@
+"""
+Alert rule evaluation engine -- checks sensor readings against all enabled rules.
+
+Subsystem: Alert Rules Management
+PAC Layer: Control
+Pattern:   Blackboard
+Reqs:      PR-SC1, SR-AU1
+"""
 from abstractions.alerts_abstraction import AlertsAbstraction
 from models.alerts_info import AlertsInfo, AlertRule
 from typing import List
@@ -7,7 +15,10 @@ class AlertsController:
         self.alertsDB = AlertsAbstraction()
 
     def checkAlertRules(self, data) -> None:
+        """Evaluates a sensor reading against all enabled alert rules and triggers alerts for violations. Implements PR-SC1 (alert triggered within 10s)."""
         # get all rules matching the incoming data type
+        # Why "is not False": handles None — rules with no explicit enabled field
+        # are treated as enabled (backwards-compatible default).
         type_rules = [rule for rule in self.alertsDB.retrieveAlertRules() if rule.ruletype == data.get("sensor_type") and rule.enabled is not False]
 
         for rule in type_rules:
@@ -16,6 +27,9 @@ class AlertsController:
                     alerttype=data.get("sensor_type"),
                     status="active",
                     ruleviolated=rule.ruleID,
+                    # Why db_sensor_id: uses the database bigint FK (db_sensor_id) not the
+                    # AWS string UUID (sensor_id) because alert table FKs reference the
+                    # sensor table PK.
                     humidity_sensor_id=data.get("db_sensor_id") if data.get("sensor_type") == "humidity" else None,
                     temp_sensor_id=data.get("db_sensor_id") if data.get("sensor_type") == "temp" else None,
                     oxygen_sensor_id=data.get("db_sensor_id") if data.get("sensor_type") == "ox" else None,

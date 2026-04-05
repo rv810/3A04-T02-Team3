@@ -1,3 +1,11 @@
+/**
+ * Centralized API client for all backend communication.
+ *
+ * Subsystem: Interfaces with all three subsystems: Account Management, Telemetry Data Management, Alert Rules Management
+ * PAC Layer: Presentation
+ * Reqs:      SR-AC1, LR-STD2
+ */
+
 import type {
   LoginRequest,
   LoginResponse,
@@ -23,6 +31,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 const SESSION_KEY = 'scemas_session'
 
+/**
+ * Public endpoints use API key auth, not JWT — mixing them would leak
+ * user tokens to unauthenticated routes.  Keep this separate from authHeaders().
+ */
 function publicHeaders(): Record<string, string> {
   const key = process.env.NEXT_PUBLIC_API_KEY
   if (!key) return {}
@@ -80,6 +92,11 @@ async function request<T>(
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 
+/**
+ * login() bypasses the global 401 redirect (requiresAuth = false) because a
+ * wrong password is an expected 401, not a session expiry — redirecting would
+ * break the login form UX.
+ */
 export async function login(data: LoginRequest): Promise<LoginResponse> {
   return request<LoginResponse>('/auth/login', {
     method: 'POST',

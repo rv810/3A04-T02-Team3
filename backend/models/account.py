@@ -1,3 +1,12 @@
+"""
+Account data models — Pydantic schemas for user account operations.
+
+Subsystem: Account Management
+PAC Layer: Model
+Pattern:   Repository
+Reqs:      BE6 (account CRUD), SR-P2 (data integrity via validation)
+"""
+
 from pydantic import BaseModel, EmailStr
 from enum import Enum
 from typing import Optional

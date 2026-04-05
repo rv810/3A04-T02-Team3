@@ -1,3 +1,12 @@
+"""
+Real-time event broadcasting — manages WebSocket connections for live updates.
+
+Subsystem: Telemetry Data Management — real-time broadcast
+PAC Layer: Presentation
+Pattern:   N/A
+Reqs:      BE4 (real-time data streaming), PR-SL1 (service-level responsiveness)
+"""
+
 from typing import List
 from fastapi import WebSocket
 

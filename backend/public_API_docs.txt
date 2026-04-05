@@ -16,115 +16,119 @@ ENDPOINTS
    }
 
 
-2. TEMPERATURE SUMMARY
-   GET /summary/{zone}/temperature
+2. ZONE SUMMARY
+   GET /public/summary/{zone}
 
    Description:
-   Returns the latest read-only temperature reading for a specified zone.
-   Intended for public digital signage.
+   Returns the latest temperature, humidity, and oxygen readings for a
+   specified zone. Intended for public digital signage and dashboards.
 
    Path Parameters:
-   - zone (string): The zone identifier to retrieve temperature data for
+   - zone (string): The zone name to retrieve data for
 
    Example Request:
-   GET /summary/zone1/temperature
+   GET /public/summary/Downtown%20Core
 
-   Success Response (sensor online):
+   Success Response (sensors online):
    {
-     "zone": "Zone1",
-     "sensor_type": "Temperature",
-     "temperature": 22.5,
-     "unit": "C",
-     "last_updated": "2024-03-01T12:00:00Z",
-     "status": "Online"
+     "zone": "Downtown Core",
+     "temperature": {
+       "value": 22.5,
+       "unit": "C",
+       "last_updated": "2026-04-05T12:00:00Z"
+     },
+     "humidity": {
+       "value": 55.0,
+       "unit": "%",
+       "last_updated": "2026-04-05T11:58:00Z"
+     },
+     "oxygen": {
+       "value": 20.9,
+       "unit": "%",
+       "last_updated": "2026-04-05T11:55:00Z"
+     },
+     "status": "online"
    }
 
-   No Data Response (sensor offline):
+   No Data Response (sensors offline):
    {
-     "zone": "Zone1",
-     "status": "Offline",
-     "message": "No temperature data available for this zone."
+     "zone": "Downtown Core",
+     "temperature": null,
+     "humidity": null,
+     "oxygen": null,
+     "status": "offline"
    }
 
-   Error Response:
-   {
-     "error": "Database connection failed",
-     "details": "<error details>"
-   }
+   Notes:
+   - Each metric is null when no readings exist for that sensor type
+   - "status" is "online" if at least one metric has data, "offline" otherwise
 
 
-3. HUMIDITY SUMMARY
-   GET /summary/{zone}/humidity
+3. ALL ZONES SUMMARY
+   GET /public/zones
 
    Description:
-   Returns the latest read-only humidity reading for a specified zone.
-   Intended for public digital signage.
-
-   Path Parameters:
-   - zone (string): The zone identifier to retrieve humidity data for
+   Returns summaries for every zone that has sensor data. Each entry has
+   the same shape as the single-zone summary above.
 
    Example Request:
-   GET /summary/zone1/humidity
+   GET /public/zones
 
-   Success Response (sensor online):
-   {
-     "zone": "Zone1",
-     "sensor_type": "Humidity",
-     "humidity": 55.0,
-     "unit": "%",
-     "last_updated": "2024-03-01T12:00:00Z",
-     "status": "Online"
-   }
+   Success Response:
+   [
+     {
+       "zone": "Downtown Core",
+       "temperature": { "value": 22.5, "unit": "C", "last_updated": "2026-04-05T12:00:00Z" },
+       "humidity": { "value": 55.0, "unit": "%", "last_updated": "2026-04-05T11:58:00Z" },
+       "oxygen": { "value": 20.9, "unit": "%", "last_updated": "2026-04-05T11:55:00Z" },
+       "status": "online"
+     },
+     {
+       "zone": "Waterfront",
+       "temperature": { "value": 19.8, "unit": "C", "last_updated": "2026-04-05T11:50:00Z" },
+       "humidity": null,
+       "oxygen": null,
+       "status": "online"
+     }
+   ]
 
-   No Data Response (sensor offline):
-   {
-     "zone": "Zone1",
-     "status": "Offline",
-     "message": "No humidity data available for this zone."
-   }
-
-   Error Response:
-   {
-     "error": "Database connection failed",
-     "details": "<error details>"
-   }
+   Notes:
+   - Zones are collected from all three sensor tables (temperature, humidity, oxygen)
+   - Returns an empty array if no sensor data exists
 
 
-4. OXYGEN SUMMARY
-   GET /summary/{zone}/oxygen
+4. METRICS HISTORY (24 HOURS)
+   GET /public/metrics/history
 
    Description:
-   Returns the latest read-only oxygen level reading for a specified zone.
-   Intended for public digital signage.
-
-   Path Parameters:
-   - zone (string): The zone identifier to retrieve oxygen data for
+   Returns hourly averaged readings for the last 24 hours across all zones.
+   Useful for trend charts on public dashboards.
 
    Example Request:
-   GET /summary/zone1/oxygen
+   GET /public/metrics/history
 
-   Success Response (sensor online):
-   {
-     "zone": "Zone1",
-     "sensor_type": "Oxygen",
-     "oxygen": 20.9,
-     "unit": "%",
-     "last_updated": "2024-03-01T12:00:00Z",
-     "status": "Online"
-   }
+   Success Response:
+   [
+     {
+       "time": "09:00",
+       "temperature": 21.3,
+       "humidity": 58.2,
+       "oxygen": 20.9
+     },
+     {
+       "time": "10:00",
+       "temperature": 22.1,
+       "humidity": 56.8,
+       "oxygen": null
+     }
+   ]
 
-   No Data Response (sensor offline):
-   {
-     "zone": "Zone1",
-     "status": "Offline",
-     "message": "No oxygen data available for this zone."
-   }
+   Notes:
+   - Each entry represents one hour, with the average of all readings in that hour
+   - Metrics are null if no readings exist for that sensor type in that hour
+   - Time format is "HH:MM" in UTC
+   - Returns an empty array if no readings exist in the last 24 hours
 
-   Error Response:
-   {
-     "error": "Database connection failed",
-     "details": "<error details>"
-   }
 
 AUTHENTICATION
 --------------
@@ -144,6 +148,8 @@ To obtain an API key, contact the SCEMAS system administrator.
 
 NOTES
 -----
-- All endpoints are read-only; in production they require an API key (see AUTHENTICATION above)
+- All public endpoints are read-only
+- In production they require an API key (see AUTHENTICATION above)
 - Data is intended for public display only and does not include sensitive information
-- Each endpoint returns only the single most recent reading for the given zone
+- The health check endpoint (GET /) does not require an API key
+- Sensor types tracked: temperature, humidity, and oxygen

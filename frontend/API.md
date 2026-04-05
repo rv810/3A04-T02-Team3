@@ -1,19 +1,63 @@
 # SCEMAS Backend API Documentation
 
-Base URL (local): `http://localhost:8000`  
-Base URL (AWS): `https://api.scemas.city.ca` *(update when deployed)*
+Base URL (local): `http://localhost:8000`
 
-All protected routes require a `Bearer` token in the `Authorization` header obtained from AWS Cognito.
+All protected routes require a `Bearer` token in the `Authorization` header obtained from Supabase Auth.
 
 ---
 
-## Authentication
+## Overview
 
-SCEMAS uses **AWS Cognito** for identity. The frontend exchanges credentials for a Cognito JWT (ID Token), which it attaches to every subsequent request.
+SCEMAS uses **Supabase Auth** for identity management. Users authenticate via email/password and receive a JWT access token. This token is sent as `Authorization: Bearer <access_token>` on all protected requests.
+
+Three roles exist: **public**, **operator**, and **admin**. Each role gates access to different endpoint groups (see [Role Authorization Summary](#role-authorization-summary)).
+
+Sensor types in the system are: `temp` (temperature), `humidity`, and `ox` (oxygen).
+
+---
+
+## 1. Authentication
+
+### POST `/auth/register`
+
+Register a new account. Self-registered accounts always receive the `public` role.
+
+**Auth**: none
+
+**Request body**
+```json
+{
+  "username": "alexchen",
+  "email": "alex.chen@city.ca",
+  "password": "hunter2",
+  "phone_num": "905-555-0100"
+}
+```
+`phone_num` is optional.
+
+**Response 200**
+```json
+{
+  "id": "d4e5f6a7-...",
+  "username": "alexchen",
+  "email": "alex.chen@city.ca",
+  "phone_num": "905-555-0100",
+  "userrole": "public",
+  "created_at": "2026-04-05T12:00:00Z",
+  "last_login": null
+}
+```
+
+**Response 409** — `"An account with this email already exists"`
+**Response 400** — validation error
+
+---
 
 ### POST `/auth/login`
 
-Authenticate a user and receive tokens.
+Authenticate and receive an access token.
+
+**Auth**: none
 
 **Request body**
 ```json
@@ -26,161 +70,200 @@ Authenticate a user and receive tokens.
 **Response 200**
 ```json
 {
-  "access_token": "<Cognito AccessToken>",
-  "id_token":     "<Cognito IdToken>",
-  "refresh_token": "<Cognito RefreshToken>",
-  "expires_in":   3600,
+  "access_token": "<Supabase JWT>",
+  "token_type": "bearer",
   "user": {
-    "id":    "u1",
-    "name":  "Alex Chen",
+    "id": "d4e5f6a7-...",
+    "username": "alexchen",
     "email": "alex.chen@city.ca",
-    "role":  "admin"
+    "phone_num": "905-555-0100",
+    "userrole": "admin",
+    "created_at": "2026-04-01T08:00:00Z",
+    "last_login": "2026-04-05T12:00:00Z"
   }
 }
 ```
 
-**Response 401** — wrong credentials  
-**Response 403** — account disabled
-
-> **Frontend usage**: store `id_token` + `user` in localStorage key `scemas_session`. Send `Authorization: Bearer <id_token>` on all protected requests.
+**Response 401** — `"Invalid credentials"`
 
 ---
 
 ### POST `/auth/logout`
 
-Invalidates the refresh token server-side (Cognito global sign-out).
+Invalidate the current session.
 
-**Headers**: `Authorization: Bearer <id_token>`  
-**Response 204** — no body
+**Auth**: any authenticated user
+
+**Response 200**
+```json
+{ "message": "Logged out successfully" }
+```
 
 ---
 
-### POST `/auth/refresh`
+## 2. Account Management
 
-Obtain a new access/id token using the refresh token.
+### GET `/accounts/me`
+
+Get the current user's account information.
+
+**Auth**: any authenticated user
+
+**Response 200** — `AccountInformation` object (same shape as the `user` field in login response)
+
+**Response 404** — `"Account not found"`
+
+---
+
+### PUT `/accounts/me`
+
+Update the current user's account. All fields are optional — only send what you want to change.
+
+**Auth**: any authenticated user
 
 **Request body**
 ```json
-{ "refresh_token": "<Cognito RefreshToken>" }
+{
+  "username": "newname",
+  "phone_num": "905-555-0200",
+  "password": "newpassword123"
+}
 ```
 
-**Response 200** — same shape as `/auth/login` (no new refresh token)
+**Response 200** — updated `AccountInformation` object
 
 ---
 
-## Sensors
+### DELETE `/accounts/me`
 
-### GET `/sensors`
+Delete the current user's account permanently.
 
-Return all sensors with their latest readings.
+**Auth**: any authenticated user
 
-**Headers**: `Authorization: Bearer <id_token>`  
-**Query params** (all optional):
+**Response 200**
+```json
+{ "message": "Account deleted successfully" }
+```
 
-| Param    | Type   | Description                          |
-|----------|--------|--------------------------------------|
-| `zone`   | string | Filter by zone name                  |
-| `status` | string | `active` \| `warning` \| `offline`   |
+---
+
+## 3. Admin User Management
+
+### POST `/accounts/create-user`
+
+Create a new user account with a specified role. Only admins can assign `operator` or `admin` roles.
+
+**Auth**: admin only
+
+**Request body**
+```json
+{
+  "username": "janesmith",
+  "email": "jane.smith@city.ca",
+  "password": "tempPass123",
+  "phone_num": "905-555-0300",
+  "userrole": "operator"
+}
+```
+`phone_num` is optional. `userrole` is required and must be one of: `admin`, `operator`, `public`.
+
+**Response 200** — `AccountInformation` object
+
+**Response 403** — `"Only admins can assign operator or admin roles"`
+**Response 409** — `"An account with this email already exists"`
+
+---
+
+### GET `/accounts/users`
+
+List all user accounts, ordered by creation date (newest first).
+
+**Auth**: admin only
 
 **Response 200**
 ```json
 [
   {
-    "sensorid":"b64c30d7-b063-4d1e-96cc-c995130ff48d",
-    "sensor_type": "humidity"
-    "zone":"waterfront",
-    "value":"65.202",
-    "timestamp":"2026-04-03 18:47:42.25819+00"
+    "id": "d4e5f6a7-...",
+    "username": "alexchen",
+    "email": "alex.chen@city.ca",
+    "phone_num": "905-555-0100",
+    "userrole": "admin",
+    "created_at": "2026-04-01T08:00:00Z",
+    "last_login": "2026-04-05T12:00:00Z"
   }
 ]
 ```
 
 ---
 
-### GET `/sensors/{id}`
+### PUT `/accounts/users/{user_id}`
 
-Return a single sensor.
+Edit another user's account (admin only). All fields are optional.
 
-**Response 200** — same object shape as above  
-**Response 404** — sensor not found
+**Auth**: admin only
 
----
+**Path parameter**: `user_id` (string, UUID)
 
-### GET `/sensors/city-averages`
-
-Pre-aggregated city-wide averages across all **non-offline** sensors. Used by the Sensor tab gauges.
-
-**Headers**: `Authorization: Bearer <id_token>`
-
-**Response 200**
+**Request body**
 ```json
 {
-  "aqi":         56,
-  "temperature": 22,
-  "humidity":    57,
+  "username": "updatedname",
+  "phone_num": "905-555-0400",
+  "userrole": "admin"
 }
 ```
 
+**Response 200** — updated `AccountInformation` object
+
 ---
 
-## Metrics / Chart Data
+### DELETE `/accounts/users/{user_id}`
 
-### GET `/metrics/history`
+Delete a user account permanently.
 
-Hourly aggregated readings for the 24-hour trend chart on the Overview tab.
+**Auth**: admin only
 
-**Headers**: `Authorization: Bearer <id_token>`  
-**Query params**:
-
-| Param    | Type     | Description                               |
-|----------|----------|-------------------------------------------|
-| `from`   | ISO 8601 | Start of window (default: 24 h ago)       |
-| `to`     | ISO 8601 | End of window (default: now)              |
-| `zone`   | string   | Limit to one zone (default: city-wide)    |
+**Path parameter**: `user_id` (string, UUID)
 
 **Response 200**
 ```json
-[
-  { "time": "00:00", "aqi": 38, "noise": 42, "temperature": 17, "humidity": 65 },
-  { "time": "01:00", "aqi": 35, "noise": 40, "temperature": 17, "humidity": 66 }
-]
+{ "message": "User deleted successfully" }
 ```
-
-Time strings are `HH:MM` in the requester's local time (server returns UTC epoch; frontend formats).
 
 ---
 
-## Alerts
+## 4. Alerts
 
-### GET `/alerts`
+### GET `/operator/alerts`
 
-Return alerts with optional filtering. Supports both active alerts and history views.
+Return alerts with optional status filtering and pagination.
 
-**Headers**: `Authorization: Bearer <id_token>`  
-**Query params**:
+**Auth**: operator or admin
 
-| Param      | Type   | Description                                                 |
-|------------|--------|-------------------------------------------------------------|
-| `status`   | string | Comma-separated: `active,acknowledged,resolved`             |
-| `zone`     | string | Filter by zone name                                         |
-| `severity` | string | `low` \| `medium` \| `high` \| `critical`                   |
-| `from`     | date   | ISO date string — filter `triggered_at >= from`            |
-| `to`       | date   | ISO date string — filter `triggered_at <= to`              |
-| `limit`    | int    | Max rows (default 200)                                      |
-| `offset`   | int    | Pagination offset                                           |
+**Query parameters**
+
+| Param    | Type   | Default    | Description                                         |
+|----------|--------|------------|-----------------------------------------------------|
+| `status` | string | `"active"` | Comma-separated statuses: `active,acknowledged,resolved` |
+| `limit`  | int    | `200`      | Max rows to return                                  |
+| `offset` | int    | `0`        | Pagination offset                                   |
 
 **Response 200**
 ```json
 [
   {
-    "id":            "a1",
-    "sensor_name":   "IN-01",
-    "zone":          "Industrial Zone",
-    "metric":        "noise",
-    "message":       "Noise level exceeded 80 dB threshold (current: 82 dB)",
-    "severity":      "high",
-    "status":        "active",
-    "triggered_at":  "2026-03-26T09:42:00Z",
+    "alertid": 42,
+    "alerttype": "temp",
+    "status": "active",
+    "ruleviolated": 5,
+    "humidity_sensor_id": null,
+    "oxygen_sensor_id": null,
+    "temp_sensor_id": 128,
+    "zone": "Downtown Core",
+    "message": "temp value 38.5 C violated rule 5 (acceptable range: 15.0\u201335.0)",
+    "severity": "high",
+    "triggered_at": "2026-04-05T09:42:00Z",
     "resolved_note": null
   }
 ]
@@ -188,228 +271,456 @@ Return alerts with optional filtering. Supports both active alerts and history v
 
 ---
 
-### PATCH `/alerts/{id}/acknowledge`
+### GET `/operator/alerts/acknowledged`
 
-Set alert status to `acknowledged`.
+Return all acknowledged alerts.
 
-**Headers**: `Authorization: Bearer <id_token>`  
-**Request body**: none  
-**Response 200**
-```json
-{ "id": "a1", "status": "acknowledged" }
-```
-**Response 403** — caller lacks `operator` or `admin` role  
-**Response 404** — alert not found
+**Auth**: operator or admin
+
+**Response 200** — array of `AlertsInfo` objects
 
 ---
 
-### PATCH `/alerts/{id}/resolve`
+### GET `/operator/alerts/resolved`
 
-Set alert status to `resolved` with an optional note.
+Return all resolved alerts.
 
-**Headers**: `Authorization: Bearer <id_token>`  
-**Request body**
-```json
-{ "note": "Investigated on-site — compressor noise, scheduled for maintenance" }
-```
-`note` is optional (omit or send `null`).
+**Auth**: operator or admin
 
-**Response 200**
-```json
-{ "id": "a1", "status": "resolved", "resolved_note": "..." }
-```
-**Response 403** — caller lacks `operator` or `admin` role
+**Response 200** — array of `AlertsInfo` objects
 
 ---
 
-## Alert Rules *(admin only)*
+### PUT `/operator/alerts/{alert_id}/acknowledge`
 
-### GET `/alert-rules`
+Acknowledge an active alert.
+
+**Auth**: operator or admin
+
+**Path parameter**: `alert_id` (int)
+
+**Response 200**
+```json
+{ "message": "Alert acknowledged" }
+```
+
+**Response 409** — `"Alert is already acknowledged"` or `"Alert is already resolved"`
+
+---
+
+### PUT `/operator/alerts/{alert_id}/resolve`
+
+Resolve an alert with an optional note.
+
+**Auth**: operator or admin
+
+**Path parameter**: `alert_id` (int)
+
+**Request body** (optional)
+```json
+{ "note": "Investigated on-site, sensor recalibrated" }
+```
+
+**Response 200**
+```json
+{ "message": "Alert resolved", "note": "Investigated on-site, sensor recalibrated" }
+```
+
+**Response 409** — `"Alert is already resolved"`
+
+---
+
+## 5. Alert Rules (admin only)
+
+### GET `/admin/rules`
 
 Return all alert rules.
 
-**Headers**: `Authorization: Bearer <id_token>` *(admin role required)*
+**Auth**: admin only
 
 **Response 200**
 ```json
 [
   {
-    "id":        "r1",
-    "name":      "High AQI Alert",
-    "metric":    "aqi",
-    "operator":  "gt",
-    "threshold": 75,
-    "severity":  "high",
-    "enabled":   true,
-    "zone":      null
+    "ruleID": 5,
+    "createdby": "d4e5f6a7-...",
+    "lowerbound": 15.0,
+    "upperbound": 35.0,
+    "ruletype": "temp",
+    "severity": "high",
+    "name": "Temperature Warning",
+    "enabled": true
   }
 ]
 ```
 
-`zone` is `null` for rules that apply to all zones.
-
 ---
 
-### POST `/alert-rules`
+### POST `/admin/rules`
 
 Create a new alert rule.
 
-**Headers**: `Authorization: Bearer <id_token>` *(admin)*  
+**Auth**: admin only
+
 **Request body**
 ```json
 {
-  "name":      "High AQI Alert",
-  "metric":    "aqi",
-  "operator":  "gt",
-  "threshold": 75,
-  "severity":  "high",
-  "enabled":   true,
-  "zone":      "Industrial Zone"
+  "lowerbound": 15.0,
+  "upperbound": 35.0,
+  "ruletype": "temp",
+  "severity": "high",
+  "name": "Temperature Warning"
 }
 ```
-`zone` is optional — omit or send `null` for all zones.
+`severity` and `name` are optional. `ruletype` must be one of: `temp`, `humidity`, `ox`.
 
-**Response 201**
-```json
-{ "id": "r7", "name": "High AQI Alert", ... }
-```
-**Response 422** — validation error (missing required field, bad metric/operator value)
+**Response 200** — `AlertRule` object with auto-generated `ruleID` and `createdby`
 
----
-
-### PUT `/alert-rules/{id}`
-
-Replace an existing rule entirely.
-
-**Headers**: `Authorization: Bearer <id_token>` *(admin)*  
-**Request body**: same shape as POST  
-**Response 200** — updated rule object  
-**Response 404** — rule not found
+**Response 400** — `"Lower bound must be less than upper bound"` (when `lowerbound >= upperbound`)
+**Response 409** — `"An identical alert rule already exists"` (same `ruletype`, `lowerbound`, `upperbound`)
 
 ---
 
-### PATCH `/alert-rules/{id}/toggle`
+### PUT `/admin/rules/{rule_id}`
 
-Flip the `enabled` boolean.
+Update an existing alert rule. All fields are optional — only send what you want to change.
 
-**Headers**: `Authorization: Bearer <id_token>` *(admin)*  
-**Request body**: none  
-**Response 200**
+**Auth**: admin only
+
+**Path parameter**: `rule_id` (int)
+
+**Request body**
 ```json
-{ "id": "r1", "enabled": false }
+{
+  "lowerbound": 10.0,
+  "upperbound": 40.0,
+  "ruletype": "temp",
+  "severity": "medium",
+  "name": "Updated Rule Name",
+  "enabled": true
+}
 ```
 
----
+**Response 200** — updated `AlertRule` object
 
-### DELETE `/alert-rules/{id}`
-
-Delete a rule permanently.
-
-**Headers**: `Authorization: Bearer <id_token>` *(admin)*  
-**Response 204** — no body  
-**Response 404** — rule not found
+**Response 400** — `"Lower bound must be less than upper bound"`
 
 ---
 
-## Users *(admin only)*
+### DELETE `/admin/rules/{rule_id}`
 
-### GET `/users`
+Delete an alert rule permanently.
 
-Return all user accounts.
+**Auth**: admin only
 
-**Headers**: `Authorization: Bearer <id_token>` *(admin)*
+**Path parameter**: `rule_id` (int)
+
+**Response 204** — no body
+
+**Response 404** — `"Alert rule not found"`
+
+---
+
+### PATCH `/admin/rules/{rule_id}/toggle`
+
+Toggle the `enabled` state of a rule.
+
+**Auth**: admin only
+
+**Path parameter**: `rule_id` (int)
+
+**Response 200** — `AlertRule` object with `enabled` flipped
+
+**Response 404** — `"Alert rule not found"`
+
+---
+
+## 6. Audit Log
+
+### GET `/operator/audit-log`
+
+Return audit log entries visible to operators. Ordered by timestamp descending.
+
+**Auth**: operator or admin
+
+**Query parameters**
+
+| Param    | Type | Default | Description        |
+|----------|------|---------|--------------------|
+| `limit`  | int  | `200`   | Max rows to return |
+| `offset` | int  | `0`     | Pagination offset  |
 
 **Response 200**
 ```json
 [
   {
-    "id":         "u1",
-    "name":       "Alex Chen",
-    "email":      "alex.chen@city.ca",
-    "role":       "admin",
-    "status":     "active",
-    "last_login": "2026-03-26T09:01:00Z"
+    "id": 101,
+    "timestamp": "2026-04-05T09:42:00Z",
+    "eventtype": "alert_acknowledged",
+    "description": "Alert 42 acknowledged",
+    "user_id": "d4e5f6a7-...",
+    "humidity_sensor_id": null,
+    "oxygen_sensor_id": null,
+    "temp_sensor_id": 128
   }
 ]
 ```
 
 ---
 
-### POST `/users`
+### GET `/admin/audit-log`
 
-Create a Cognito account and insert a user record. The user receives a Cognito-generated temporary password via email.
+Return audit log entries (same data, admin-level access). Ordered by timestamp descending.
 
-**Headers**: `Authorization: Bearer <id_token>` *(admin)*  
-**Request body**
-```json
-{
-  "name":  "Jane Smith",
-  "email": "jane.smith@city.ca",
-  "role":  "operator"
-}
-```
+**Auth**: admin only
 
-**Response 201**
-```json
-{
-  "id":     "u6",
-  "name":   "Jane Smith",
-  "email":  "jane.smith@city.ca",
-  "role":   "operator",
-  "status": "active",
-  "last_login": null
-}
-```
-**Response 409** — email already exists  
-**Response 422** — invalid role value
+**Query parameters**: same as `/operator/audit-log`
+
+**Response 200** — array of `AuditLog` objects (same shape as above)
 
 ---
 
-## Realtime — Sensor Updates (WebSocket)
+## 7. Sensors
 
-For live sensor readings without polling.
+### GET `/sensors`
 
-**Endpoint**: `ws://localhost:8000/ws/sensors`  
-**Auth**: pass the id token as a query param: `?token=<id_token>`
+Return all sensors with their latest readings, optionally filtered by zone.
 
-**Server pushes** whenever a sensor reading is updated by AWS IoT:
+**Auth**: operator or admin
+
+**Query parameters**
+
+| Param  | Type   | Default | Description        |
+|--------|--------|---------|--------------------|
+| `zone` | string | none    | Filter by zone name |
+
+**Response 200**
+```json
+[
+  {
+    "sensorid": "b64c30d7-b063-4d1e-96cc-c995130ff48d",
+    "zone": "waterfront",
+    "value": 65.202,
+    "timestamp": "2026-04-03T18:47:42.258190+00:00",
+    "sensor_type": "humidity"
+  }
+]
+```
+
+`sensor_type` is added by the backend: `"temperature"`, `"humidity"`, or `"oxygen"`.
+
+---
+
+### GET `/sensors/{id}`
+
+Return the latest reading for a single sensor.
+
+**Auth**: operator or admin
+
+**Path parameter**: `id` (string, sensor UUID)
+
+**Response 200**
+```json
+{
+  "zone": "waterfront",
+  "value": 65.202,
+  "timestamp": "2026-04-03T18:47:42.258190+00:00",
+  "sensor_type": "humidity"
+}
+```
+
+**Response 404** — `"sensor not found"`
+
+---
+
+### GET `/sensors/city-averages`
+
+City-wide averages from the latest readings across all zones.
+
+**Auth**: operator or admin
+
+**Response 200**
+```json
+{
+  "temperature": 22.4,
+  "humidity": 57.1,
+  "oxygen": 20.8
+}
+```
+
+---
+
+### GET `/sensors/readings-today`
+
+Total number of sensor readings received today (UTC).
+
+**Auth**: operator or admin
+
+**Response 200**
+```json
+{ "count": 1482 }
+```
+
+---
+
+## 8. Public Data
+
+These endpoints serve read-only data for public displays. In production, they require an API key via the `x-api-key` header. In development (when `PUBLIC_API_KEY` env var is not set), no key is required.
+
+If the key is missing or invalid in production:
+**Response 401** — `"Invalid or missing API key"`
+
+---
+
+### GET `/public/summary/{zone}`
+
+Latest temperature, humidity, and oxygen for one zone.
+
+**Path parameter**: `zone` (string)
+
+**Response 200**
+```json
+{
+  "zone": "Downtown Core",
+  "temperature": {
+    "value": 22.5,
+    "unit": "C",
+    "last_updated": "2026-04-05T12:00:00Z"
+  },
+  "humidity": {
+    "value": 55.0,
+    "unit": "%",
+    "last_updated": "2026-04-05T11:58:00Z"
+  },
+  "oxygen": {
+    "value": 20.9,
+    "unit": "%",
+    "last_updated": "2026-04-05T11:55:00Z"
+  },
+  "status": "online"
+}
+```
+
+Metrics with no data return `null` instead of the object. `status` is `"online"` if any metric has data, `"offline"` otherwise.
+
+---
+
+### GET `/public/zones`
+
+Summaries for all zones that have sensor data.
+
+**Response 200** — array of zone summary objects (same shape as above)
+
+---
+
+### GET `/public/metrics/history`
+
+Hourly averaged readings for the last 24 hours.
+
+**Response 200**
+```json
+[
+  {
+    "time": "09:00",
+    "temperature": 21.3,
+    "humidity": 58.2,
+    "oxygen": 20.9
+  },
+  {
+    "time": "10:00",
+    "temperature": 22.1,
+    "humidity": 56.8,
+    "oxygen": null
+  }
+]
+```
+
+Metrics with no readings in an hour return `null`.
+
+---
+
+## 9. Telemetry Ingestion
+
+### POST `/api/telemetry`
+
+Receives sensor data from AWS IoT Core. Not intended for frontend use.
+
+**Auth**: none (webhook endpoint)
+
+**Request body**
+```json
+{
+  "sensor_type": "temp",
+  "sensor_id": "b64c30d7-...",
+  "zone": "waterfront",
+  "value": 22.5,
+  "unit": "C",
+  "timestamp": "2026-04-05T12:00:00Z"
+}
+```
+
+`sensor_type` must be one of: `temp`, `humidity`, `ox`.
+
+**Response 200**
+```json
+{ "status": "success", "message": "Validated, stored, and broadcasted" }
+```
+
+**Response 400** — `"Missing sensor type"` or `"Unknown sensor type"`
+**Response 422** — `"Data validation failed"`
+
+---
+
+## 10. WebSocket — Real-time Updates
+
+**Endpoint**: `ws://localhost:8000/ws?token=<access_token>`
+
+**Auth**: JWT passed as `token` query parameter. Only `operator` and `admin` roles are allowed. Connection is closed with code `1008` if the token is missing, invalid, or the user lacks the required role.
+
+**Server pushes** when a new sensor reading arrives:
 ```json
 {
   "event": "sensor_update",
   "data": {
-    "id":          "s1",
-    "aqi":         51,
-    "noise":       64,
-    "temperature": 22,
-    "humidity":    59,
-    "status":      "active",
-    "last_seen":   "2026-04-03T09:45:00Z"
+    "value": 22.5,
+    "sensor_id": "b64c30d7-...",
+    "zone": "waterfront",
+    "unit": "C",
+    "timestamp": "2026-04-05T12:00:00Z",
+    "db_sensor_id": 128
   }
 }
 ```
 
-**Server pushes** when a new alert is created by the rule engine:
-```json
-{
-  "event": "new_alert",
-  "data": {
-    "id":           "a9",
-    "sensor_name":  "DT-02",
-    "zone":         "Downtown Core",
-    "metric":       "aqi",
-    "message":      "AQI exceeded 75 threshold (current: 79)",
-    "severity":     "high",
-    "status":       "active",
-    "triggered_at": "2026-04-03T09:45:00Z"
-  }
-}
-```
+The client does not send meaningful messages. The connection is kept alive by the server's receive loop.
 
-Client does not send messages — read-only subscription.
+Note: Alert updates are not pushed via WebSocket. The frontend re-fetches alerts on a debounced timer after receiving sensor updates.
 
 ---
 
-## Error Response Format
+## 11. Role Authorization Summary
+
+| Endpoint Group          | `public` | `operator` | `admin` |
+|-------------------------|----------|------------|---------|
+| Auth (register/login)   | \u2713        | \u2713          | \u2713       |
+| Auth (logout)           | \u2713        | \u2713          | \u2713       |
+| Account (own)           | \u2713        | \u2713          | \u2713       |
+| Admin User Management   | \u2014        | \u2014          | \u2713       |
+| Alerts                  | \u2014        | \u2713          | \u2713       |
+| Acknowledge / Resolve   | \u2014        | \u2713          | \u2713       |
+| Alert Rules             | \u2014        | \u2014          | \u2713       |
+| Audit Log (operator)    | \u2014        | \u2713          | \u2713       |
+| Audit Log (admin)       | \u2014        | \u2014          | \u2713       |
+| Sensors                 | \u2014        | \u2713          | \u2713       |
+| Public Data             | \u2713 *     | \u2713 *        | \u2713 *     |
+| WebSocket               | \u2014        | \u2713          | \u2713       |
+| Telemetry Ingestion     | n/a      | n/a        | n/a     |
+
+\* Public Data endpoints use API key auth, not role-based auth.
+
+---
+
+## 12. Error Response Format
 
 All errors follow:
 
@@ -419,7 +730,7 @@ All errors follow:
 }
 ```
 
-FastAPI's default 422 validation errors use:
+FastAPI's 422 validation errors use:
 
 ```json
 {
@@ -431,46 +742,13 @@ FastAPI's default 422 validation errors use:
 
 ---
 
-## Role Authorization Summary
+## Health Check
 
-| Endpoint group     | `public` | `operator` | `admin` |
-|--------------------|----------|------------|---------|
-| Auth               | ✓        | ✓          | ✓       |
-| GET /sensors       | ✓        | ✓          | ✓       |
-| GET /metrics       | ✓        | ✓          | ✓       |
-| GET /alerts        | —        | ✓          | ✓       |
-| PATCH acknowledge  | —        | ✓          | ✓       |
-| PATCH resolve      | —        | ✓          | ✓       |
-| Alert Rules        | —        | —          | ✓       |
-| Users              | —        | —          | ✓       |
-| WebSocket /sensors | —        | ✓          | ✓       |
+### GET `/`
 
----
+**Auth**: none
 
-## Frontend Integration Notes
-
-### Replacing mock data
-
-The frontend currently imports mock constants from `frontend/lib/data.ts`. When connecting to the real backend:
-
-1. **Create `frontend/lib/api.ts`** — thin fetch wrappers that attach the Cognito token from `localStorage.getItem('scemas_session')`.
-2. **Replace direct imports** in each component:
-   - `SENSORS` → `GET /sensors`
-   - `INITIAL_ALERTS` → `GET /alerts`
-   - `INITIAL_RULES` → `GET /alert-rules`
-   - `USERS` → `GET /users`
-   - `CHART_DATA` → `GET /metrics/history`
-3. **Auth**: replace the hardcoded `localStorage` session logic in `app/admin/page.tsx` and `app/operator/page.tsx` with a real call to `POST /auth/login`.
-4. **WebSocket**: in `SensorsTab.tsx`, open `ws://.../ws/sensors` on mount and merge incoming `sensor_update` events into React state.
-
-### CORS
-
-The FastAPI backend must allow `http://localhost:3000` (and the production frontend domain) in `CORSMiddleware`.
-
-### Environment variables
-
-Add to `frontend/.env.local`:
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_WS_URL=ws://localhost:8000
+**Response 200**
+```json
+{ "status": "SCEMAS Backend is awake and healthy!" }
 ```

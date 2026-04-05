@@ -4,48 +4,45 @@ import Link from 'next/link'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
-import { Wind, Volume2, Thermometer, Droplets, MapPin, MessageSquare, X, Send } from 'lucide-react'
-import {
-  CHART_DATA, ZONES, SENSORS, CITY_AVG, ZONE_STATUS_STYLES,
-} from '@/lib/data'
+import { Wind, Thermometer, Droplets, MapPin, MessageSquare, X, Send } from 'lucide-react'
+import { getAllZones, getMetricsHistory } from '@/lib/api'
+import type { ZoneSummary, MetricsHistoryPoint } from '@/lib/types'
 
-type Metric = 'aqi' | 'noise' | 'temperature' | 'humidity'
+type Metric = 'temperature' | 'humidity' | 'oxygen'
 
 const METRIC_META = [
-  { key: 'aqi'         as Metric, label: 'Air Quality Index', unit: 'AQI', icon: Wind,        color: 'text-blue-400',   bg: 'bg-blue-400/10',   stroke: '#3B82F6', yUnit: 'AQI' },
-  { key: 'noise'       as Metric, label: 'Noise Level',       unit: 'dB',  icon: Volume2,     color: 'text-purple-400', bg: 'bg-purple-400/10', stroke: '#A855F7', yUnit: 'dB'  },
-  { key: 'temperature' as Metric, label: 'Temperature',       unit: '°C',  icon: Thermometer, color: 'text-orange-400', bg: 'bg-orange-400/10', stroke: '#F97316', yUnit: '°C'  },
-  { key: 'humidity'    as Metric, label: 'Humidity',          unit: '%',   icon: Droplets,    color: 'text-cyan-400',   bg: 'bg-cyan-400/10',   stroke: '#06B6D4', yUnit: '%'   },
+  { key: 'temperature' as Metric, label: 'Temperature',  unit: '°C', icon: Thermometer, color: 'text-orange-400', bg: 'bg-orange-400/10', stroke: '#F97316', yUnit: '°C' },
+  { key: 'humidity'    as Metric, label: 'Humidity',      unit: '%',  icon: Droplets,    color: 'text-cyan-400',   bg: 'bg-cyan-400/10',  stroke: '#06B6D4', yUnit: '%'  },
+  { key: 'oxygen'      as Metric, label: 'Oxygen',        unit: '%',  icon: Wind,        color: 'text-green-400',  bg: 'bg-green-400/10', stroke: '#22C55E', yUnit: '%'  },
 ]
 
-const activeSensors = SENSORS.filter(s => s.status !== 'offline')
-
-function aqiLabel(v: number) { return v < 50 ? 'Good' : v < 75 ? 'Moderate' : 'Poor' }
-function noiseLabel(v: number) { return v < 65 ? 'Normal' : 'Elevated' }
+function getStatusLabel(metric: Metric, value: number): string {
+  if (metric === 'temperature') return value >= 15 && value <= 30 ? 'Normal' : 'Extreme'
+  if (metric === 'humidity') return value >= 30 && value <= 70 ? 'Normal' : 'Abnormal'
+  return value >= 19 && value <= 22 ? 'Normal' : 'Low'
+}
 
 function getBotResponse(input: string): string {
   const msg = input.toLowerCase()
-  if (msg.includes('air') || msg.includes('aqi'))
-    return `City-wide average AQI is ${CITY_AVG.aqi} — rated "${aqiLabel(CITY_AVG.aqi)}". The Industrial Zone is highest at 80 AQI. West District has the cleanest air at 38 AQI.`
-  if (msg.includes('noise'))
-    return `Average noise across active sensors is ${CITY_AVG.noise} dB. The Industrial Zone exceeds the 80 dB alert threshold. West District is quietest at ~52 dB.`
   if (msg.includes('temp'))
-    return `Current city average temperature is ${CITY_AVG.temperature}°C. The Industrial Zone is warmest at 26°C.`
+    return 'Check the dashboard for the latest city-wide temperature readings across all monitored zones.'
   if (msg.includes('humid'))
-    return `Average humidity is ${CITY_AVG.humidity}%. All zones are within normal range (40–70%). East District is slightly higher at 63%.`
+    return 'Current humidity levels are shown on the dashboard. All zones report readings updated in real time.'
+  if (msg.includes('oxygen') || msg.includes('o2'))
+    return 'Oxygen concentration data is available on the dashboard for each monitored zone.'
   if (msg.includes('alert') || msg.includes('warn'))
-    return 'There are 3 active alerts: 2 high-severity in the Industrial Zone (noise & AQI) and 1 medium-severity in Downtown Core (AQI). City operators are monitoring the situation.'
+    return 'Active alerts are managed by city operators. Check zone status cards for online/offline indicators.'
   if (msg.includes('zone') || msg.includes('area') || msg.includes('district'))
-    return 'The city has 4 monitoring zones: Downtown Core (moderate), East District (moderate), West District (good — best air quality), Industrial Zone (poor — active alerts).'
+    return 'Zone status cards on the dashboard show each monitored zone with its latest temperature and online/offline status.'
   if (msg.includes('sensor'))
-    return `${activeSensors.length} of ${SENSORS.length} sensors are active and reporting every 5 seconds. Sensor ET-03 (East District) is currently offline.`
+    return 'Sensor data feeds into the zone summaries shown on the dashboard. Each zone aggregates readings from its deployed sensors.'
   if (/^(hi|hello|hey)/.test(msg))
-    return "Hi! I'm the SCEMAS environmental assistant. Ask me about air quality, noise, temperature, humidity, city zones, or active alerts."
-  return 'I can help with: air quality (AQI), noise levels, temperature, humidity, zone status, and active alerts. What would you like to know?'
+    return "Hi! I'm the SCEMAS environmental assistant. Ask me about temperature, humidity, oxygen levels, city zones, or active alerts."
+  return 'I can help with: temperature, humidity, oxygen levels, zone status, and alerts. What would you like to know?'
 }
 
 export default function PublicDashboard() {
-  const [metric, setMetric] = useState<Metric>('aqi')
+  const [metric, setMetric] = useState<Metric>('temperature')
   const [chatOpen, setChatOpen] = useState(false)
   const [chatInput, setChatInput] = useState('')
   const [messages, setMessages] = useState([
@@ -54,11 +51,34 @@ export default function PublicDashboard() {
   const [clock, setClock] = useState('')
   const chatEndRef = useRef<HTMLDivElement>(null)
 
+  const [zones, setZones] = useState<ZoneSummary[]>([])
+  const [history, setHistory] = useState<MetricsHistoryPoint[]>([])
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => {
     const tick = () => setClock(new Date().toLocaleString('en-CA', { hour12: false }))
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function fetchData() {
+      try {
+        const [z, h] = await Promise.all([getAllZones(), getMetricsHistory()])
+        if (!cancelled) {
+          setZones(z)
+          setHistory(h)
+        }
+      } catch (err) {
+        console.error('Failed to fetch public data:', err)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    fetchData()
+    return () => { cancelled = true }
   }, [])
 
   useEffect(() => {
@@ -75,21 +95,28 @@ export default function PublicDashboard() {
     }, 350)
   }
 
-  const selected = METRIC_META.find(m => m.key === metric)!
+  // Compute city-wide averages from zone data
+  function computeAverage(key: Metric): number | null {
+    const values = zones.map(z => z[key]?.value).filter((v): v is number => v != null)
+    if (values.length === 0) return null
+    return Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10
+  }
 
-  const metricValues: Record<Metric, number> = {
-    aqi: CITY_AVG.aqi,
-    noise: CITY_AVG.noise,
-    temperature: CITY_AVG.temperature,
-    humidity: CITY_AVG.humidity,
+  const cityAvg: Record<Metric, number | null> = {
+    temperature: computeAverage('temperature'),
+    humidity: computeAverage('humidity'),
+    oxygen: computeAverage('oxygen'),
   }
+
   const metricStatus: Record<Metric, string> = {
-    aqi:         aqiLabel(CITY_AVG.aqi),
-    noise:       noiseLabel(CITY_AVG.noise),
-    temperature: 'Normal',
-    humidity:    'Normal',
+    temperature: cityAvg.temperature != null ? getStatusLabel('temperature', cityAvg.temperature) : '—',
+    humidity:    cityAvg.humidity != null ? getStatusLabel('humidity', cityAvg.humidity) : '—',
+    oxygen:      cityAvg.oxygen != null ? getStatusLabel('oxygen', cityAvg.oxygen) : '—',
   }
-  const statusGood = (m: Metric) => ['Good', 'Normal'].includes(metricStatus[m])
+
+  const statusGood = (m: Metric) => ['Normal'].includes(metricStatus[m])
+
+  const selected = METRIC_META.find(m => m.key === metric)!
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -127,15 +154,15 @@ export default function PublicDashboard() {
           <p className="text-xs text-gray-500 mb-1">Public · Real-time environmental data</p>
           <h1 className="text-2xl font-bold">City Environmental Status</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Live readings from {activeSensors.length} active sensors across {ZONES.length} zones · Updated every 5 s
+            Live readings from {zones.length} monitored zone{zones.length !== 1 ? 's' : ''} · Updated every 5 s
           </p>
         </div>
 
         {/* Metric Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {METRIC_META.map(m => {
             const Icon = m.icon
-            const v = metricValues[m.key]
+            const v = cityAvg[m.key]
             const good = statusGood(m.key)
             return (
               <button
@@ -151,7 +178,7 @@ export default function PublicDashboard() {
                   <Icon className={`w-4 h-4 ${m.color}`} />
                 </div>
                 <div className="text-2xl font-bold tabular-nums">
-                  {v}
+                  {v != null ? v : '—'}
                   <span className="text-xs font-normal text-gray-500 ml-1">{m.unit}</span>
                 </div>
                 <div className="text-xs text-gray-500 mt-0.5">{m.label}</div>
@@ -170,66 +197,81 @@ export default function PublicDashboard() {
             <span className="text-xs text-gray-600">Last 24 hours</span>
           </div>
           <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={CHART_DATA} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
-                <XAxis
-                  dataKey="time"
-                  stroke="#374151"
-                  tick={{ fontSize: 10, fill: '#6B7280' }}
-                  interval={3}
-                />
-                <YAxis
-                  stroke="#374151"
-                  tick={{ fontSize: 10, fill: '#6B7280' }}
-                  unit={` ${selected.yUnit}`}
-                  width={52}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#111827',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#F9FAFB',
-                    fontSize: 12,
-                  }}
-                  labelStyle={{ color: '#9CA3AF' }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey={metric}
-                  stroke={selected.stroke}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4, strokeWidth: 0 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <div className="flex items-center justify-center h-full text-sm text-gray-500">Loading...</div>
+            ) : history.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-sm text-gray-500">No data available</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={history} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
+                  <XAxis
+                    dataKey="time"
+                    stroke="#374151"
+                    tick={{ fontSize: 10, fill: '#6B7280' }}
+                    interval={3}
+                  />
+                  <YAxis
+                    stroke="#374151"
+                    tick={{ fontSize: 10, fill: '#6B7280' }}
+                    unit={` ${selected.yUnit}`}
+                    width={52}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#111827',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#F9FAFB',
+                      fontSize: 12,
+                    }}
+                    labelStyle={{ color: '#9CA3AF' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey={metric}
+                    stroke={selected.stroke}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
         {/* Zone Status */}
         <div>
           <h2 className="font-semibold text-sm mb-3">Zone Status</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {ZONES.map(z => (
-              <div key={z.name} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-                  <span className="text-xs font-medium truncate">{z.name}</span>
-                </div>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <div className="text-xl font-bold">{z.avgAqi}</div>
-                    <div className="text-[10px] text-gray-500">avg AQI</div>
+          <div className="grid grid-cols-3 gap-3">
+            {loading ? (
+              <div className="col-span-3 text-center text-sm text-gray-500 py-8">Loading zones...</div>
+            ) : zones.length === 0 ? (
+              <div className="col-span-3 text-center text-sm text-gray-500 py-8">No zone data available</div>
+            ) : (
+              zones.map(z => (
+                <div key={z.zone} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                    <span className="text-xs font-medium truncate capitalize">{z.zone}</span>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium capitalize ${ZONE_STATUS_STYLES[z.status]}`}>
-                    {z.status}
-                  </span>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="text-xl font-bold">{z.temperature?.value != null ? z.temperature.value : 'N/A'}</div>
+                      <div className="text-[10px] text-gray-500">°C temperature</div>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
+                      z.status === 'online'
+                        ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                        : 'bg-red-500/20 text-red-400 border-red-500/30'
+                    }`}>
+                      {z.status}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-[10px] text-gray-600 mt-2">{z.active}/{z.sensors} sensors active</div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </main>
@@ -278,7 +320,7 @@ export default function PublicDashboard() {
           <div className="p-3 border-t border-gray-800 flex gap-2">
             <input
               className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
-              placeholder="Ask about air quality, noise…"
+              placeholder="Ask about temperature, humidity..."
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}

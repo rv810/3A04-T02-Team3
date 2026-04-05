@@ -5,13 +5,13 @@ SCEMAS is a cloud-native IoT platform that ingests real-time environmental telem
 **Course:** SE 3A04 — Software Design III, McMaster University, Winter 2026  
 **Tutorial:** T02 | **Team:** 3
 
-| Name | |
-|------|--|
-| Resham Vani | |
-| Sama Al-Oda | |
-| Ranvir Jhajj | |
-| Patrick Molka | |
-| Atharva Kulkarni | |
+| Name |
+|------|
+| Resham Vani |
+| Sama Al-Oda |
+| Ranvir Jhajj |
+| Patrick Molka |
+| Atharva Kulkarni |
 
 ---
 

@@ -1,5 +1,6 @@
 from database import supabase
 from typing import Optional
+from datetime import datetime, timezone
 
 class SensorsAbstraction:
     def getSensors(self, zone: Optional[str] = None) -> list:
@@ -68,3 +69,14 @@ class SensorsAbstraction:
             "temperature": temp,
             "humidity": humidity
         }
+
+    def getReadingsToday(self):
+        '''
+        Count all sensor readings from today (UTC).
+        '''
+        cutoff = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        temp = supabase.table("tempsensor").select("id", count="exact").gte("timestamp", cutoff).execute()
+        humidity = supabase.table("humiditysensor").select("id", count="exact").gte("timestamp", cutoff).execute()
+        oxygen = supabase.table("oxygensensor").select("id", count="exact").gte("timestamp", cutoff).execute()
+        total = (temp.count or 0) + (humidity.count or 0) + (oxygen.count or 0)
+        return {"count": total}

@@ -46,6 +46,8 @@ export default function PublicDashboard() {
 
   useEffect(() => {
     let cancelled = false
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
     async function fetchData() {
       try {
         const [z, h] = await Promise.all([getAllZones(), getMetricsHistory()])
@@ -59,8 +61,22 @@ export default function PublicDashboard() {
         if (!cancelled) setLoading(false)
       }
     }
-    fetchData()
-    return () => { cancelled = true }
+
+    fetchData().then(() => {
+      if (!cancelled) {
+        intervalId = setInterval(async () => {
+          try {
+            const z = await getAllZones()
+            if (!cancelled) setZones(z)
+          } catch { /* silent re-fetch failure */ }
+        }, 30_000)
+      }
+    })
+
+    return () => {
+      cancelled = true
+      if (intervalId) clearInterval(intervalId)
+    }
   }, [])
 
   useEffect(() => {

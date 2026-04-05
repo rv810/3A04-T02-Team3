@@ -88,11 +88,13 @@ class AdminAbstraction:
         )
         return len(response.data) > 0
 
-    def retrieveAuditLog(self) -> List[AuditLog]:
+    def retrieveAuditLog(self, limit: int = 200, offset: int = 0) -> List[AuditLog]:
         response = (
             supabase.table("auditlog")
             .select("*")
             .order("timestamp", desc=True)
+            .limit(limit)
+            .offset(offset)
             .execute()
         )
         return [AuditLog(**row) for row in response.data]

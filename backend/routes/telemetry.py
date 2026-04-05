@@ -108,6 +108,10 @@ async def get_sensors(
 async def get_city_averages(current_user: dict = Depends(require_operator)):
     return sensors_controller.getCityAverages()
 
+@router.get("/sensors/readings-today")
+async def get_readings_today(current_user: dict = Depends(require_operator)):
+    return sensors_controller.getReadingsToday()
+
 @router.get("/sensors/{id}")
 async def get_sensor(id: str, current_user: dict = Depends(require_operator)):
     sensor = sensors_controller.getSensor(id)

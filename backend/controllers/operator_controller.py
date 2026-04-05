@@ -17,8 +17,8 @@ class OperatorController:
         except ValueError as e:
             raise HTTPException(status_code=409, detail=str(e))
 
-    def viewAlertsByStatus(self, statuses: list[str] = None):
-        return self.operatorAbstraction.retrieveAlertsByStatus(statuses)
+    def viewAlertsByStatus(self, statuses: list[str] = None, limit: int = 200, offset: int = 0):
+        return self.operatorAbstraction.retrieveAlertsByStatus(statuses, limit=limit, offset=offset)
 
     def viewAlerts(self):
         return self.operatorAbstraction.retrieveActiveAlerts()
@@ -29,5 +29,5 @@ class OperatorController:
     def viewResolvedAlerts(self):
         return self.operatorAbstraction.retrieveResolvedAlerts()
 
-    def viewAuditLog(self):
-        return self.operatorAbstraction.retrieveAuditLog()
+    def viewAuditLog(self, limit: int = 200, offset: int = 0):
+        return self.operatorAbstraction.retrieveAuditLog(limit=limit, offset=offset)

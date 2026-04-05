@@ -40,5 +40,5 @@ class AdminController:
         except Exception:
             raise HTTPException(status_code=404, detail="Alert rule not found")
 
-    def viewAuditLog(self):
-        return self.adminAbstraction.retrieveAuditLog()
+    def viewAuditLog(self, limit: int = 200, offset: int = 0):
+        return self.adminAbstraction.retrieveAuditLog(limit=limit, offset=offset)

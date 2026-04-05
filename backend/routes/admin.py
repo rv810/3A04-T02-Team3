@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from typing import List
 from middleware.auth import require_admin
 from controllers.admin_controller import AdminController
@@ -28,5 +28,9 @@ def toggle_alert_rule(rule_id: int, current_user: dict = Depends(require_admin))
     return controller.toggleAlertRule(rule_id, user_id=current_user["id"])
 
 @router.get("/audit-log", response_model=List[AuditLog])
-def get_audit_log(current_user: dict = Depends(require_admin)):
-    return controller.viewAuditLog()
+def get_audit_log(
+    limit: int = Query(default=200, description="Max results to return"),
+    offset: int = Query(default=0, description="Number of results to skip"),
+    current_user: dict = Depends(require_admin)
+):
+    return controller.viewAuditLog(limit=limit, offset=offset)

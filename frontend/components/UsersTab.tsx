@@ -20,13 +20,13 @@ interface Props {
 
 export function UsersTab({ users, onCreateUser, onFireToast }: Props) {
   const [showForm,  setShowForm]  = useState(false)
-  const [newUser,   setNewUser]   = useState({ name: '', email: '', role: 'operator' as Role })
+  const [newUser,   setNewUser]   = useState({ name: '', email: '', password: '', role: 'operator' as Role })
   const [userError, setUserError] = useState('')
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!newUser.name.trim() || !newUser.email.trim()) {
-      setUserError('Name and email are required.')
+    if (!newUser.name.trim() || !newUser.email.trim() || !newUser.password) {
+      setUserError('Name, email, and password are required.')
       return
     }
     if (users.some(u => u.email.toLowerCase() === newUser.email.toLowerCase())) {
@@ -34,7 +34,7 @@ export function UsersTab({ users, onCreateUser, onFireToast }: Props) {
       return
     }
     onCreateUser({ id: `u${Date.now()}`, name: newUser.name.trim(), email: newUser.email.trim(), role: newUser.role, status: 'active', lastLogin: 'Never' })
-    setNewUser({ name: '', email: '', role: 'operator' })
+    setNewUser({ name: '', email: '', password: '', role: 'operator' })
     setUserError('')
     setShowForm(false)
     onFireToast(`User ${newUser.name} created`)
@@ -67,6 +67,12 @@ export function UsersTab({ users, onCreateUser, onFireToast }: Props) {
               <input required type="email" value={newUser.email}
                 onChange={e => { setNewUser(u => ({ ...u, email: e.target.value })); setUserError('') }}
                 placeholder="jane@city.ca" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Password</label>
+              <input required type="password" value={newUser.password}
+                onChange={e => { setNewUser(u => ({ ...u, password: e.target.value })); setUserError('') }}
+                placeholder="Minimum 8 characters" className={inputCls} />
             </div>
             <div>
               <label className="block text-xs text-gray-400 mb-1">Role</label>

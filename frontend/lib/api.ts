@@ -54,7 +54,7 @@ async function request<T>(
 
   const res = await fetch(`${API_URL}${path}`, { ...options, headers })
 
-  if (res.status === 401) {
+  if (res.status === 401 && requiresAuth) {
     localStorage.removeItem(SESSION_KEY)
     window.location.href = '/login?expired=true'
     throw new Error('Session expired')

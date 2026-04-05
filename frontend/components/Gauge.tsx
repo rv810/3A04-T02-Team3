@@ -7,7 +7,7 @@ export function Gauge({ value, max, label, unit, color }: {
   const valLen = bgLen * Math.min(value / max, 1)
   return (
     <div className="flex flex-col items-center gap-1">
-      <svg viewBox="0 0 100 100" className="w-24 h-24">
+      <svg viewBox="0 0 100 100" className="w-24 h-24" role="img" aria-label={`${label}: ${value}${unit}`}>
         <circle cx="50" cy="50" r={r} fill="none" stroke="#1F2937" strokeWidth="9"
           strokeDasharray={`${bgLen} ${circ - bgLen}`} transform="rotate(135 50 50)" strokeLinecap="round" />
         <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="9"

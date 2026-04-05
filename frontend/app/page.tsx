@@ -162,7 +162,7 @@ export default function PublicDashboard() {
           <div className="flex items-center gap-4">
             <span className="text-xs text-gray-600 hidden sm:block tabular-nums">{clock}</span>
             <div className="flex items-center gap-1.5 text-xs text-green-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" aria-hidden="true" />
               Live
             </div>
             <Link
@@ -317,14 +317,14 @@ export default function PublicDashboard() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-3 h-3 text-white" />
+                <MessageSquare className="w-3 h-3 text-white" aria-hidden="true" />
               </div>
               <div>
                 <div className="text-xs font-semibold">Environmental Assistant</div>
                 <div className="text-[10px] text-green-400">AI · Powered by SCEMAS</div>
               </div>
             </div>
-            <button onClick={() => setChatOpen(false)} className="text-gray-600 hover:text-gray-300 transition-colors">
+            <button onClick={() => setChatOpen(false)} className="text-gray-600 hover:text-gray-300 transition-colors" aria-label="Close chat">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -355,6 +355,7 @@ export default function PublicDashboard() {
             <button
               onClick={sendMessage}
               className="w-8 h-8 bg-blue-600 hover:bg-blue-500 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
+              aria-label="Send message"
             >
               <Send className="w-3 h-3 text-white" />
             </button>
@@ -364,7 +365,7 @@ export default function PublicDashboard() {
         <button
           onClick={() => setChatOpen(true)}
           className="fixed bottom-5 right-5 w-13 h-13 bg-blue-600 hover:bg-blue-500 rounded-full shadow-lg flex items-center justify-center transition-colors z-50 p-3.5"
-          title="Ask the environmental assistant"
+          title="Ask the environmental assistant" aria-label="Ask the environmental assistant"
         >
           <MessageSquare className="w-5 h-5 text-white" />
         </button>

@@ -126,8 +126,24 @@ ENDPOINTS
      "details": "<error details>"
    }
 
+AUTHENTICATION
+--------------
+In production, all public endpoints require an API key passed via the
+x-api-key HTTP header. If the server is running without PUBLIC_API_KEY
+set (development mode), no key is required.
+
+Example Request with API Key:
+  curl -H "x-api-key: YOUR_API_KEY" https://api.scemas.ca/public/zones
+
+If the key is missing or invalid, the server returns:
+  HTTP 401
+  { "detail": "Invalid or missing API key" }
+
+To obtain an API key, contact the SCEMAS system administrator.
+
+
 NOTES
 -----
-- All endpoints are read-only and require no authentication
+- All endpoints are read-only; in production they require an API key (see AUTHENTICATION above)
 - Data is intended for public display only and does not include sensitive information
 - Each endpoint returns only the single most recent reading for the given zone

@@ -4,6 +4,7 @@ import type {
   AccountInformation,
   CreateAccountRequest,
   AdminCreateAccountRequest,
+  AdminEditAccountRequest,
   EditAccountRequest,
   AlertsInfo,
   AlertRule,
@@ -21,6 +22,12 @@ import type {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 const SESSION_KEY = 'scemas_session'
+
+function publicHeaders(): Record<string, string> {
+  const key = process.env.NEXT_PUBLIC_API_KEY
+  if (!key) return {}
+  return { 'x-api-key': key }
+}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -119,6 +126,22 @@ export async function adminCreateUser(data: AdminCreateAccountRequest): Promise<
   })
 }
 
+export async function adminEditUser(
+  userId: string,
+  data: AdminEditAccountRequest,
+): Promise<AccountInformation> {
+  return request<AccountInformation>(`/accounts/users/${userId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function adminDeleteUser(userId: string): Promise<void> {
+  await request<{ message: string }>(`/accounts/users/${userId}`, {
+    method: 'DELETE',
+  })
+}
+
 // ── Operator: Alerts ────────────────────────────────────────────────────────
 
 export async function getAlerts(status?: string): Promise<AlertsInfo[]> {
@@ -205,13 +228,15 @@ export async function getReadingsToday(): Promise<{ count: number }> {
 // ── Public (no auth) ────────────────────────────────────────────────────────
 
 export async function getZoneSummary(zone: string): Promise<ZoneSummary> {
-  return request<ZoneSummary>(`/public/summary/${encodeURIComponent(zone)}`, {}, false)
+  return request<ZoneSummary>(`/public/summary/${encodeURIComponent(zone)}`, {
+    headers: publicHeaders(),
+  }, false)
 }
 
 export async function getAllZones(): Promise<ZoneSummary[]> {
-  return request<ZoneSummary[]>('/public/zones', {}, false)
+  return request<ZoneSummary[]>('/public/zones', { headers: publicHeaders() }, false)
 }
 
 export async function getMetricsHistory(): Promise<MetricsHistoryPoint[]> {
-  return request<MetricsHistoryPoint[]>('/public/metrics/history', {}, false)
+  return request<MetricsHistoryPoint[]>('/public/metrics/history', { headers: publicHeaders() }, false)
 }

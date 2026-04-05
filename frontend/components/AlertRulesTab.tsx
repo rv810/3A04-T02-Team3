@@ -195,10 +195,10 @@ export function AlertRulesTab({ rules, onToggle, onDelete, onCreate, onUpdate, o
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
-                      <button onClick={() => startEdit(r)} className="p-1.5 text-gray-600 hover:text-purple-400 transition-colors rounded">
+                      <button onClick={() => startEdit(r)} className="p-1.5 text-gray-600 hover:text-purple-400 transition-colors rounded" aria-label="Edit rule">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => onDelete(r.ruleID!)} className="p-1.5 text-gray-600 hover:text-red-400 transition-colors rounded">
+                      <button onClick={() => onDelete(r.ruleID!)} className="p-1.5 text-gray-600 hover:text-red-400 transition-colors rounded" aria-label="Delete rule">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>

@@ -7,11 +7,11 @@ import {
   getAlerts, acknowledgeAlert, resolveAlert,
   getSensors, getCityAverages, getMetricsHistory, getReadingsToday,
   getAlertRules, createAlertRule, updateAlertRule, deleteAlertRule, toggleAlertRule,
-  listUsers, adminCreateUser,
+  listUsers, adminCreateUser, adminEditUser, adminDeleteUser,
 } from '@/lib/api'
 import type {
   Session, AlertsInfo, SensorReading, CityAverages, MetricsHistoryPoint,
-  AlertRule, AccountInformation, CreateAlertRuleRequest, UpdateAlertRuleRequest, AdminCreateAccountRequest,
+  AlertRule, AccountInformation, CreateAlertRuleRequest, UpdateAlertRuleRequest, AdminCreateAccountRequest, AdminEditAccountRequest,
 } from '@/lib/types'
 import { useWebSocket } from '@/lib/useWebSocket'
 import { Sidebar }           from '@/components/Sidebar'
@@ -58,6 +58,7 @@ export default function AdminDashboard() {
   const [resolveNote,  setResolveNote]  = useState('')
   const [toast,        setToast]        = useState<string | null>(null)
   const [token, setToken] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState('')
   const alertDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   async function fetchAlerts() {
@@ -111,6 +112,7 @@ export default function AdminDashboard() {
       setUserName(session.user.username)
       setUserRole(session.user.userrole)
       setToken(session.access_token)
+      setCurrentUserId(session.user.id || '')
 
       Promise.allSettled([
         getAlerts('active,acknowledged,resolved'),
@@ -220,6 +222,26 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleUpdateUser(userId: string, data: AdminEditAccountRequest) {
+    try {
+      await adminEditUser(userId, data)
+      await fetchUsers()
+      fireToast('User updated')
+    } catch (err) {
+      fireToast(`Failed to update user: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
+  async function handleDeleteUser(userId: string) {
+    try {
+      await adminDeleteUser(userId)
+      await fetchUsers()
+      fireToast('User deleted')
+    } catch (err) {
+      fireToast(`Failed to delete user: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
   // ── Logout ────────────────────────────────────────────────────────────────
 
   async function logout() {
@@ -249,7 +271,7 @@ export default function AdminDashboard() {
 
       <div className="flex-1 overflow-auto relative">
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2 text-xs">
-          <span className={`w-2 h-2 rounded-full ${wsStatus === 'connected' ? 'bg-green-500' : wsStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`} />
+          <span className={`w-2 h-2 rounded-full ${wsStatus === 'connected' ? 'bg-green-500' : wsStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`} aria-hidden="true" />
           <span className="text-gray-400">
             {wsStatus === 'connected' ? 'Live' : wsStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
           </span>
@@ -295,8 +317,11 @@ export default function AdminDashboard() {
           <UsersTab
             users={users}
             onCreateUser={handleCreateUser}
+            onUpdateUser={handleUpdateUser}
+            onDeleteUser={handleDeleteUser}
             onFireToast={fireToast}
             loading={usersLoading}
+            currentUserId={currentUserId}
           />
         )}
       </div>

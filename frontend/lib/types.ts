@@ -52,6 +52,12 @@ export interface EditAccountRequest {
   password?: string | null
 }
 
+export interface AdminEditAccountRequest {
+  username?: string
+  phone_num?: string
+  userrole?: Role
+}
+
 // ── Alerts ──────────────────────────────────────────────────────────────────
 
 export interface AlertsInfo {

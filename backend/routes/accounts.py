@@ -5,6 +5,7 @@ from controllers.accounts_controller import AccountsController
 from models.account import (
     CreateAccountRequest,
     AdminCreateAccountRequest,
+    AdminEditAccountRequest,
     LoginRequest,
     EditAccountRequest,
     AccountInformation,
@@ -76,3 +77,21 @@ def create_user(
 @router.get("/accounts/users", response_model=List[AccountInformation])
 def list_users(current_user: dict = Depends(require_admin)):
     return controller.listAllAccounts()
+
+
+@router.put("/accounts/users/{user_id}", response_model=AccountInformation)
+def admin_edit_user(
+    user_id: str,
+    data: AdminEditAccountRequest,
+    current_user: dict = Depends(require_admin)
+):
+    return controller.adminEditAccount(user_id, data, current_user["id"])
+
+
+@router.delete("/accounts/users/{user_id}")
+def admin_delete_user(
+    user_id: str,
+    current_user: dict = Depends(require_admin)
+):
+    controller.adminDeleteAccount(user_id, current_user["id"])
+    return {"message": "User deleted successfully"}

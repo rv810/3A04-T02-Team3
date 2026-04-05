@@ -147,7 +147,7 @@ export default function OperatorDashboard() {
 
       <div className="flex-1 overflow-auto relative">
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2 text-xs">
-          <span className={`w-2 h-2 rounded-full ${wsStatus === 'connected' ? 'bg-green-500' : wsStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`} />
+          <span className={`w-2 h-2 rounded-full ${wsStatus === 'connected' ? 'bg-green-500' : wsStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`} aria-hidden="true" />
           <span className="text-gray-400">
             {wsStatus === 'connected' ? 'Live' : wsStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
           </span>

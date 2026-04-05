@@ -3,7 +3,6 @@ Authentication and RBAC middleware — validates JWTs and enforces role-based ac
 
 Subsystem: Account Management — middleware layer
 PAC Layer: Control
-Pattern:   N/A
 Reqs:      SR-AC1 (authentication), SR-AC2 (RBAC), SR-AC3 (admin restriction)
 """
 

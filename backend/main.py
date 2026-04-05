@@ -1,23 +1,15 @@
 """
-Application entry point — configures CORS, registers all route modules.
+Application entry point — initializes FastAPI and delegates to the
+top-level PAC coordinator for agent mounting and event wiring.
 
-Subsystem: System infrastructure — serves all three subsystems
-PAC Layer: N/A
-Pattern:   N/A
+Subsystem: System infrastructure
 Reqs:      SR-AC1 (authentication infrastructure), SR-AC2 (RBAC route grouping)
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer
 
-from routes.accounts import router as accounts_router
-from routes.operator import router as operator_router
-from routes.admin import router as admin_router
-from routes.telemetry import router as telemetry_router
-from routes.public import router as public_router
-
-security = HTTPBearer()
+from coordinator import initialize_agents, wire_event_subscriptions
 
 app = FastAPI(
     title="SCEMAS API",
@@ -32,11 +24,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(accounts_router)
-app.include_router(operator_router)
-app.include_router(admin_router)
-app.include_router(telemetry_router)
-app.include_router(public_router)
+# Coordinator initializes all PAC agents and wires inter-agent events
+initialize_agents(app)
+wire_event_subscriptions()
 
 @app.get("/")
 async def health_check():

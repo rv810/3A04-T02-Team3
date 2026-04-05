@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, AlertTriangle, Activity, Radio } from 'lucide-react'
 import { INITIAL_ALERTS, Alert } from '@/lib/data'
+import { logout as apiLogout } from '@/lib/api'
+import type { Session } from '@/lib/types'
 import { Sidebar }           from '@/components/Sidebar'
 import { OverviewTab }       from '@/components/OverviewTab'
 import { AlertsTable }       from '@/components/AlertsTable'
@@ -28,12 +30,18 @@ export default function OperatorDashboard() {
   const [resolveNote, setResolveNote] = useState('')
 
   useEffect(() => {
-    const raw = localStorage.getItem('scemas_session')
-    if (!raw) { router.push('/login'); return }
-    const { role, name } = JSON.parse(raw)
-    if (role !== 'admin' && role !== 'operator') { router.push('/login'); return }
-    setUserName(name)
-    setUserRole(role)
+    try {
+      const raw = localStorage.getItem('scemas_session')
+      if (!raw) { router.push('/login'); return }
+      const session: Session = JSON.parse(raw)
+      if (!session.access_token || !session.user) { router.push('/login'); return }
+      const role = session.user.userrole
+      if (role !== 'admin' && role !== 'operator') { router.push('/login'); return }
+      setUserName(session.user.username)
+      setUserRole(role)
+    } catch {
+      router.push('/login')
+    }
   }, [router])
 
   function acknowledge(id: string) {
@@ -47,7 +55,11 @@ export default function OperatorDashboard() {
     setResolvingId(null)
     setResolveNote('')
   }
-  function logout() { localStorage.removeItem('scemas_session'); router.push('/') }
+  async function logout() {
+    try { await apiLogout() } catch { /* ignore – clearing session anyway */ }
+    localStorage.removeItem('scemas_session')
+    router.push('/')
+  }
 
   if (!userName) return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-600 text-sm">

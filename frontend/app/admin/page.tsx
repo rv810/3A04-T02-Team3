@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, AlertTriangle, Activity, Radio, Settings, Users } from 'lucide-react'
 import { INITIAL_ALERTS, INITIAL_RULES, USERS, Alert, AlertRule, User } from '@/lib/data'
+import { logout as apiLogout } from '@/lib/api'
+import type { Session } from '@/lib/types'
 import { Sidebar }           from '@/components/Sidebar'
 import { OverviewTab }       from '@/components/OverviewTab'
 import { AlertsTable }       from '@/components/AlertsTable'
@@ -30,16 +32,23 @@ export default function AdminDashboard() {
   const [rules,    setRules]    = useState<AlertRule[]>(INITIAL_RULES)
   const [users,    setUsers]    = useState<User[]>([...USERS])
   const [userName, setUserName] = useState('')
+  const [userRole, setUserRole] = useState('')
   const [resolvingId,  setResolvingId]  = useState<string | null>(null)
   const [resolveNote,  setResolveNote]  = useState('')
   const [toast,        setToast]        = useState<string | null>(null)
 
   useEffect(() => {
-    const raw = localStorage.getItem('scemas_session')
-    if (!raw) { router.push('/login'); return }
-    const { role, name } = JSON.parse(raw)
-    if (role !== 'admin') { router.push('/login'); return }
-    setUserName(name)
+    try {
+      const raw = localStorage.getItem('scemas_session')
+      if (!raw) { router.push('/login'); return }
+      const session: Session = JSON.parse(raw)
+      if (!session.access_token || !session.user) { router.push('/login'); return }
+      if (session.user.userrole !== 'admin') { router.push('/login'); return }
+      setUserName(session.user.username)
+      setUserRole(session.user.userrole)
+    } catch {
+      router.push('/login')
+    }
   }, [router])
 
   function fireToast(msg: string) {
@@ -58,7 +67,11 @@ export default function AdminDashboard() {
     setResolvingId(null)
     setResolveNote('')
   }
-  function logout() { localStorage.removeItem('scemas_session'); router.push('/') }
+  async function logout() {
+    try { await apiLogout() } catch { /* ignore – clearing session anyway */ }
+    localStorage.removeItem('scemas_session')
+    router.push('/')
+  }
 
   if (!userName) return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-600 text-sm">
@@ -75,7 +88,7 @@ export default function AdminDashboard() {
         tab={tab}
         onTabChange={t => setTab(t as Tab)}
         userName={userName}
-        userRole="Administrator"
+        userRole={userRole}
         activeAlertCount={alerts.filter(a => a.status === 'active').length}
         variant="admin"
         onLogout={logout}

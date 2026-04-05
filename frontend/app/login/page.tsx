@@ -1,8 +1,10 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Wind, Shield, Cpu, Globe } from 'lucide-react'
+import { login as apiLogin } from '@/lib/api'
+import type { Session } from '@/lib/types'
 
 const DEMO_ACCOUNTS = [
   {
@@ -10,7 +12,6 @@ const DEMO_ACCOUNTS = [
     password: 'admin123',
     role: 'admin' as const,
     name: 'Alex Chen',
-    redirect: '/admin',
     label: 'System Administrator',
     description: 'Full access: alert rules, user management, all dashboards',
     icon: Shield,
@@ -23,7 +24,6 @@ const DEMO_ACCOUNTS = [
     password: 'operator123',
     role: 'operator' as const,
     name: 'Marcus Williams',
-    redirect: '/operator',
     label: 'City Operator',
     description: 'Monitor sensors, acknowledge & resolve alerts, view dashboards',
     icon: Cpu,
@@ -35,24 +35,51 @@ const DEMO_ACCOUNTS = [
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  function login(e: React.FormEvent) {
-    e.preventDefault()
-    const account = DEMO_ACCOUNTS.find(a => a.email === email && a.password === password)
-    if (!account) {
-      setError('Invalid credentials. Use a demo account below.')
-      return
+  useEffect(() => {
+    if (searchParams.get('expired') === 'true') {
+      setError('Your session has expired. Please sign in again.')
     }
-    localStorage.setItem('scemas_session', JSON.stringify({ role: account.role, name: account.name }))
-    router.push(account.redirect)
+  }, [searchParams])
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setSubmitting(true)
+    try {
+      const res = await apiLogin({ email, password })
+      const session: Session = { access_token: res.access_token, user: res.user }
+      localStorage.setItem('scemas_session', JSON.stringify(session))
+      const dest = res.user.userrole === 'admin' ? '/admin'
+                 : res.user.userrole === 'operator' ? '/operator'
+                 : '/'
+      router.push(dest)
+    } catch (err: unknown) {
+      setSubmitting(false)
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.')
+    }
   }
 
-  function quickLogin(account: typeof DEMO_ACCOUNTS[0]) {
-    localStorage.setItem('scemas_session', JSON.stringify({ role: account.role, name: account.name }))
-    router.push(account.redirect)
+  async function quickLogin(account: typeof DEMO_ACCOUNTS[0]) {
+    setError('')
+    setSubmitting(true)
+    try {
+      const res = await apiLogin({ email: account.email, password: account.password })
+      const session: Session = { access_token: res.access_token, user: res.user }
+      localStorage.setItem('scemas_session', JSON.stringify(session))
+      const dest = res.user.userrole === 'admin' ? '/admin'
+                 : res.user.userrole === 'operator' ? '/operator'
+                 : '/'
+      router.push(dest)
+    } catch (err: unknown) {
+      setSubmitting(false)
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.')
+    }
   }
 
   return (
@@ -74,7 +101,7 @@ export default function LoginPage() {
           <h1 className="text-lg font-semibold mb-1">Staff Portal Login</h1>
           <p className="text-sm text-gray-500 mb-5">Sign in with your city credentials</p>
 
-          <form onSubmit={login} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs text-gray-400 mb-1.5">Email</label>
               <input
@@ -82,7 +109,8 @@ export default function LoginPage() {
                 value={email}
                 onChange={e => { setEmail(e.target.value); setError('') }}
                 placeholder="you@city.ca"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
+                disabled={submitting}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
               />
             </div>
             <div>
@@ -92,15 +120,17 @@ export default function LoginPage() {
                 value={password}
                 onChange={e => { setPassword(e.target.value); setError('') }}
                 placeholder="••••••••"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
+                disabled={submitting}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
               />
             </div>
             {error && <p className="text-xs text-red-400">{error}</p>}
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
+              disabled={submitting}
+              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
             >
-              Sign In
+              {submitting ? 'Signing in…' : 'Sign In'}
             </button>
           </form>
         </div>
@@ -115,7 +145,8 @@ export default function LoginPage() {
                 <button
                   key={account.role}
                   onClick={() => quickLogin(account)}
-                  className={`w-full flex items-center gap-4 p-4 rounded-xl border bg-gray-800/50 transition-all text-left ${account.color}`}
+                  disabled={submitting}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl border bg-gray-800/50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed ${account.color}`}
                 >
                   <div className={`w-10 h-10 rounded-lg ${account.bg} flex items-center justify-center flex-shrink-0`}>
                     <Icon className={`w-5 h-5 ${account.iconColor}`} />

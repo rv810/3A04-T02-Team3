@@ -378,8 +378,3 @@ The JWT token may have expired. Log out and log back in to obtain a fresh token.
 | Frontend | Vercel (root directory: `frontend/`) | Pending |
 | Production URL | TBD | Pending |
 
----
-
-## License
-
-This is an academic project developed for SE 3A04 — Software Design III at McMaster University, Winter 2026 term. It is not licensed for commercial use.

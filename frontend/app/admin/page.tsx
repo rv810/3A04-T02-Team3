@@ -93,7 +93,7 @@ export default function AdminDashboard() {
       timestamp: d.timestamp as string,
       sensor_type: mapped,
     }
-    setSensors(prev => [newReading, ...prev])
+    setSensors(prev => [newReading, ...prev].slice(0, 500))
     getCityAverages().then(setCityAverages).catch(() => {})
     if (alertDebounce.current) clearTimeout(alertDebounce.current)
     alertDebounce.current = setTimeout(() => { fetchAlerts() }, 5000)
@@ -136,6 +136,7 @@ export default function AdminDashboard() {
     } catch {
       router.push('/login')
     }
+    return () => { if (alertDebounce.current) clearTimeout(alertDebounce.current) }
   }, [router])
 
   function fireToast(msg: string) {
@@ -149,7 +150,7 @@ export default function AdminDashboard() {
     try {
       await acknowledgeAlert(id)
       await fetchAlerts()
-    } catch { /* API error handled by client */ }
+    } catch (err) { fireToast('Failed to acknowledge alert') }
   }
 
   function startResolve(id: number) { setResolvingId(id); setResolveNote('') }
@@ -158,7 +159,7 @@ export default function AdminDashboard() {
     try {
       await resolveAlert(id, { note: resolveNote || undefined })
       await fetchAlerts()
-    } catch { /* API error handled by client */ }
+    } catch (err) { fireToast('Failed to resolve alert') }
     setResolvingId(null)
     setResolveNote('')
   }

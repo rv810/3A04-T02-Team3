@@ -62,7 +62,7 @@ export default function OperatorDashboard() {
       timestamp: d.timestamp as string,
       sensor_type: mapped,
     }
-    setSensors(prev => [newReading, ...prev])
+    setSensors(prev => [newReading, ...prev].slice(0, 500))
     getCityAverages().then(setCityAverages).catch(() => {})
     // Debounce alert re-fetch: 5s after last sensor update
     if (alertDebounce.current) clearTimeout(alertDebounce.current)
@@ -102,20 +102,21 @@ export default function OperatorDashboard() {
     } catch {
       router.push('/login')
     }
+    return () => { if (alertDebounce.current) clearTimeout(alertDebounce.current) }
   }, [router])
 
   async function acknowledge(id: number) {
     try {
       await acknowledgeAlert(id)
       await fetchAlerts()
-    } catch { /* API error handled by client */ }
+    } catch (err) { console.error('Failed to acknowledge alert', err) }
   }
   function startResolve(id: number) { setResolvingId(id); setResolveNote('') }
   async function confirmResolve(id: number) {
     try {
       await resolveAlert(id, { note: resolveNote || undefined })
       await fetchAlerts()
-    } catch { /* API error handled by client */ }
+    } catch (err) { console.error('Failed to resolve alert', err) }
     setResolvingId(null)
     setResolveNote('')
   }

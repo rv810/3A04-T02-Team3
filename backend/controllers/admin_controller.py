@@ -19,11 +19,15 @@ class AdminController:
             severity=rule.severity,
             name=rule.name,
         )
+        if rule.lowerbound >= rule.upperbound:
+            raise HTTPException(status_code=400, detail="Lower bound must be less than upper bound")
         if self.adminAbstraction.ruleExists(full_rule.ruletype, full_rule.lowerbound, full_rule.upperbound):
             raise HTTPException(status_code=409, detail="An identical alert rule already exists")
         return self.adminAbstraction.createAlertRule(full_rule, user_id=created_by_id)
 
     def updateAlertRule(self, rule_id: int, rule: UpdateAlertRuleRequest, user_id: str = None):
+        if rule.lowerbound is not None and rule.upperbound is not None and rule.lowerbound >= rule.upperbound:
+            raise HTTPException(status_code=400, detail="Lower bound must be less than upper bound")
         return self.adminAbstraction.updateAlertRule(rule_id, rule, user_id=user_id)
 
     def deleteAlertRule(self, rule_id: int, user_id: str = None):

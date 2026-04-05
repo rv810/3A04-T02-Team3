@@ -1,15 +1,24 @@
-import { SENSORS, SENSOR_STATUS_STYLES } from '@/lib/data'
-import { Gauge, aqiColor, noiseColor, humidColor } from './Gauge'
+import type { SensorReading, CityAverages } from '@/lib/types'
+import { Gauge, humidColor, oxygenColor } from './Gauge'
 
-export function SensorsTab() {
-  const active = SENSORS.filter(s => s.status !== 'offline')
-  const avg = (fn: (s: typeof SENSORS[0]) => number) =>
-    Math.round(active.reduce((sum, s) => sum + fn(s), 0) / active.length)
+interface Props {
+  sensors: SensorReading[]
+  cityAverages: CityAverages
+  loading: boolean
+}
 
-  const cityAqi   = avg(s => s.aqi)
-  const cityNoise = avg(s => s.noise)
-  const cityTemp  = avg(s => s.temperature)
-  const cityHumid = avg(s => s.humidity)
+export function SensorsTab({ sensors, cityAverages, loading }: Props) {
+  const temp  = cityAverages.temperature ?? 0
+  const humid = cityAverages.humidity ?? 0
+  const oxy   = cityAverages.oxygen ?? 0
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center h-64 text-gray-500 text-sm">
+        Loading sensor data…
+      </div>
+    )
+  }
 
   return (
     <div className="p-6 space-y-5">
@@ -18,10 +27,9 @@ export function SensorsTab() {
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
         <h2 className="font-semibold text-sm mb-4 text-gray-300">City-Wide Current Readings</h2>
         <div className="flex justify-around flex-wrap gap-4">
-          <Gauge value={cityAqi}   max={150} label="Air Quality (AQI)"  unit="AQI" color={aqiColor(cityAqi)}    />
-          <Gauge value={cityNoise} max={100} label="Noise Level"        unit="dB"  color={noiseColor(cityNoise)} />
-          <Gauge value={cityTemp}  max={40}  label="Temperature"        unit="°C"  color="#F97316" />
-          <Gauge value={cityHumid} max={100} label="Humidity"           unit="%"   color={humidColor(cityHumid)} />
+          <Gauge value={Math.round(temp)}  max={50}  label="Temperature" unit="°C" color="#F97316" />
+          <Gauge value={Math.round(humid)} max={100} label="Humidity"    unit="%"  color={humidColor(humid)} />
+          <Gauge value={Math.round(oxy)}   max={25}  label="Oxygen"     unit="%"  color={oxygenColor(oxy)} />
         </div>
       </div>
 
@@ -29,22 +37,26 @@ export function SensorsTab() {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-800 text-gray-500">
-              {['Sensor', 'Zone', 'AQI', 'Noise (dB)', 'Temp (°C)', 'Humidity (%)', 'Status', 'Last Seen'].map(h => (
+              {['Sensor ID', 'Zone', 'Type', 'Value', 'Last Reading'].map(h => (
                 <th key={h} className="text-left px-4 py-3 font-medium">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {SENSORS.map(s => (
-              <tr key={s.id} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
-                <td className="px-4 py-3 font-mono font-semibold">{s.name}</td>
+            {sensors.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-10 text-center text-gray-600">
+                  No sensor data
+                </td>
+              </tr>
+            )}
+            {sensors.map((s, i) => (
+              <tr key={`${s.sensorid}-${s.sensor_type}-${i}`} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
+                <td className="px-4 py-3 font-mono text-xs">{s.sensorid.slice(0, 8)}…</td>
                 <td className="px-4 py-3 text-gray-400">{s.zone}</td>
-                <td className="px-4 py-3 tabular-nums">{s.status !== 'offline' ? s.aqi         : <span className="text-gray-700">—</span>}</td>
-                <td className="px-4 py-3 tabular-nums">{s.status !== 'offline' ? s.noise       : <span className="text-gray-700">—</span>}</td>
-                <td className="px-4 py-3 tabular-nums">{s.status !== 'offline' ? s.temperature : <span className="text-gray-700">—</span>}</td>
-                <td className="px-4 py-3 tabular-nums">{s.status !== 'offline' ? s.humidity    : <span className="text-gray-700">—</span>}</td>
-                <td className="px-4 py-3"><span className={`font-medium ${SENSOR_STATUS_STYLES[s.status]}`}>● {s.status}</span></td>
-                <td className="px-4 py-3 text-gray-500">{s.lastSeen}</td>
+                <td className="px-4 py-3 capitalize text-gray-500">{s.sensor_type}</td>
+                <td className="px-4 py-3 tabular-nums">{s.value}</td>
+                <td className="px-4 py-3 text-gray-500">{new Date(s.timestamp).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>

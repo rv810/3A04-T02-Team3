@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, AlertTriangle, Activity, Radio, Settings, Users } from 'lucide-react'
-import { INITIAL_ALERTS, INITIAL_RULES, USERS, Alert, AlertRule, User } from '@/lib/data'
+import { INITIAL_RULES, USERS, AlertRule, User } from '@/lib/data'
 import { logout as apiLogout } from '@/lib/api'
-import type { Session } from '@/lib/types'
+import type { Session, AlertsInfo } from '@/lib/types'
 import { Sidebar }           from '@/components/Sidebar'
 import { OverviewTab }       from '@/components/OverviewTab'
 import { AlertsTable }       from '@/components/AlertsTable'
@@ -28,12 +28,12 @@ const NAV = [
 export default function AdminDashboard() {
   const router = useRouter()
   const [tab,      setTab]      = useState<Tab>('overview')
-  const [alerts,   setAlerts]   = useState<Alert[]>(INITIAL_ALERTS)
+  const [alerts,   setAlerts]   = useState<AlertsInfo[]>([])
   const [rules,    setRules]    = useState<AlertRule[]>(INITIAL_RULES)
   const [users,    setUsers]    = useState<User[]>([...USERS])
   const [userName, setUserName] = useState('')
   const [userRole, setUserRole] = useState('')
-  const [resolvingId,  setResolvingId]  = useState<string | null>(null)
+  const [resolvingId,  setResolvingId]  = useState<number | null>(null)
   const [resolveNote,  setResolveNote]  = useState('')
   const [toast,        setToast]        = useState<string | null>(null)
 
@@ -56,13 +56,13 @@ export default function AdminDashboard() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  function acknowledge(id: string) {
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: 'acknowledged' as const } : a))
+  function acknowledge(id: number) {
+    setAlerts(prev => prev.map(a => a.alertid === id ? { ...a, status: 'acknowledged' as const } : a))
   }
-  function startResolve(id: string) { setResolvingId(id); setResolveNote('') }
-  function confirmResolve(id: string) {
+  function startResolve(id: number) { setResolvingId(id); setResolveNote('') }
+  function confirmResolve(id: number) {
     setAlerts(prev => prev.map(a =>
-      a.id === id ? { ...a, status: 'resolved' as const, resolvedNote: resolveNote || undefined } : a
+      a.alertid === id ? { ...a, status: 'resolved' as const, resolved_note: resolveNote || null } : a
     ))
     setResolvingId(null)
     setResolveNote('')
@@ -98,6 +98,9 @@ export default function AdminDashboard() {
         {tab === 'overview' && (
           <OverviewTab
             alerts={alerts}
+            chartData={[]}
+            chartLoading={false}
+            activeSensorCount={0}
             onAcknowledge={acknowledge}
             onStartResolve={id => { setTab('alerts'); startResolve(id) }}
             onViewAllAlerts={() => setTab('alerts')}
@@ -116,7 +119,7 @@ export default function AdminDashboard() {
           />
         )}
         {tab === 'history'  && <AlertHistoryTable alerts={alerts} />}
-        {tab === 'sensors'  && <SensorsTab />}
+        {tab === 'sensors'  && <SensorsTab sensors={[]} cityAverages={{ oxygen: null, temperature: null, humidity: null }} loading={false} />}
         {tab === 'rules'    && (
           <AlertRulesTab
             rules={rules}

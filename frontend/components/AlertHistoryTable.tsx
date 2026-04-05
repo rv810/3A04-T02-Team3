@@ -1,19 +1,23 @@
 'use client'
 import { useState } from 'react'
-import { Alert, SEVERITY_STYLES, STATUS_STYLES, ZONE_NAMES } from '@/lib/data'
+import type { AlertsInfo } from '@/lib/types'
+import type { AlertSeverity } from '@/lib/data'
+import { SEVERITY_STYLES, STATUS_STYLES } from '@/lib/data'
 import { Badge } from './Badge'
 
 const selectCls = 'bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500'
 
-export function AlertHistoryTable({ alerts }: { alerts: Alert[] }) {
+export function AlertHistoryTable({ alerts }: { alerts: AlertsInfo[] }) {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'acknowledged' | 'resolved'>('all')
   const [filterZone,   setFilterZone]   = useState('all')
   const [filterDate,   setFilterDate]   = useState('')
 
+  const zoneOptions = Array.from(new Set(alerts.map(a => a.zone).filter(Boolean))) as string[]
+
   const filtered = alerts.filter(a => {
     if (filterStatus !== 'all' && a.status !== filterStatus) return false
     if (filterZone   !== 'all' && a.zone   !== filterZone)   return false
-    if (filterDate && !a.triggeredAt.startsWith(filterDate)) return false
+    if (filterDate && !(a.triggered_at ?? '').startsWith(filterDate)) return false
     return true
   })
 
@@ -37,7 +41,7 @@ export function AlertHistoryTable({ alerts }: { alerts: Alert[] }) {
           <label className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Zone</label>
           <select value={filterZone} onChange={e => setFilterZone(e.target.value)} className={selectCls}>
             <option value="all">All zones</option>
-            {ZONE_NAMES.map(z => <option key={z} value={z}>{z}</option>)}
+            {zoneOptions.map(z => <option key={z} value={z}>{z}</option>)}
           </select>
         </div>
         <div className="flex flex-col gap-1">
@@ -74,15 +78,15 @@ export function AlertHistoryTable({ alerts }: { alerts: Alert[] }) {
               </tr>
             )}
             {filtered.map(a => (
-              <tr key={a.id} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
-                <td className="px-4 py-3 font-mono font-medium">{a.sensorName}</td>
-                <td className="px-4 py-3 text-gray-400">{a.zone}</td>
-                <td className="px-4 py-3 uppercase text-gray-500">{a.metric}</td>
+              <tr key={a.alertid} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
+                <td className="px-4 py-3 font-mono font-medium">{a.temp_sensor_id ?? a.humidity_sensor_id ?? a.oxygen_sensor_id ?? '—'}</td>
+                <td className="px-4 py-3 text-gray-400">{a.zone ?? '—'}</td>
+                <td className="px-4 py-3 uppercase text-gray-500">{a.alerttype}</td>
                 <td className="px-4 py-3 max-w-xs">{a.message}</td>
-                <td className="px-4 py-3"><Badge className={SEVERITY_STYLES[a.severity]}>{a.severity}</Badge></td>
+                <td className="px-4 py-3"><Badge className={SEVERITY_STYLES[(a.severity ?? 'low') as AlertSeverity]}>{a.severity}</Badge></td>
                 <td className="px-4 py-3"><Badge className={STATUS_STYLES[a.status]}>{a.status}</Badge></td>
-                <td className="px-4 py-3 text-gray-500 tabular-nums">{a.triggeredAt}</td>
-                <td className="px-4 py-3 text-gray-600 italic">{a.resolvedNote ?? '—'}</td>
+                <td className="px-4 py-3 text-gray-500 tabular-nums">{a.triggered_at ? new Date(a.triggered_at).toLocaleString() : '—'}</td>
+                <td className="px-4 py-3 text-gray-600 italic">{a.resolved_note ?? '—'}</td>
               </tr>
             ))}
           </tbody>

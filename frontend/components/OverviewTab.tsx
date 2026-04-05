@@ -10,12 +10,13 @@ interface Props {
   chartData: MetricsHistoryPoint[]
   chartLoading: boolean
   activeSensorCount?: number
+  readingsToday?: number | null
   onAcknowledge: (id: number) => void
   onStartResolve: (id: number) => void
   onViewAllAlerts: () => void
 }
 
-export function OverviewTab({ alerts, chartData, chartLoading, activeSensorCount, onAcknowledge, onStartResolve, onViewAllAlerts }: Props) {
+export function OverviewTab({ alerts, chartData, chartLoading, activeSensorCount, readingsToday, onAcknowledge, onStartResolve, onViewAllAlerts }: Props) {
   const active       = alerts.filter(a => a.status === 'active')
   const acknowledged = alerts.filter(a => a.status === 'acknowledged')
 
@@ -27,7 +28,7 @@ export function OverviewTab({ alerts, chartData, chartLoading, activeSensorCount
         {[
           { label: 'Active Sensors', value: activeSensorCount ?? '—', sub: 'from latest readings',        subColor: 'text-gray-500' },
           { label: 'Active Alerts',  value: active.length,           sub: `${acknowledged.length} acknowledged`, subColor: 'text-yellow-400', valueColor: active.length > 0 ? 'text-red-400' : '' },
-          { label: 'Readings Today', value: '47,520',                sub: '5-second intervals',                  subColor: 'text-gray-500' },
+          { label: 'Readings Today', value: readingsToday != null ? readingsToday.toLocaleString() : '—', sub: '5-second intervals', subColor: 'text-gray-500' },
           { label: 'System Uptime',  value: '99.8%',                 sub: 'Last 30 days',                        subColor: 'text-gray-500', valueColor: 'text-green-400' },
         ].map(c => (
           <div key={c.label} className="bg-gray-900 border border-gray-800 rounded-xl p-4">

@@ -198,6 +198,10 @@ export async function getCityAverages(): Promise<CityAverages> {
   return request<CityAverages>('/sensors/city-averages')
 }
 
+export async function getReadingsToday(): Promise<{ count: number }> {
+  return request<{ count: number }>('/sensors/readings-today')
+}
+
 // ── Public (no auth) ────────────────────────────────────────────────────────
 
 export async function getZoneSummary(zone: string): Promise<ZoneSummary> {

@@ -5,7 +5,7 @@ import { Bell, AlertTriangle, Activity, Radio, Settings, Users } from 'lucide-re
 import {
   logout as apiLogout,
   getAlerts, acknowledgeAlert, resolveAlert,
-  getSensors, getCityAverages, getMetricsHistory,
+  getSensors, getCityAverages, getMetricsHistory, getReadingsToday,
   getAlertRules, createAlertRule, updateAlertRule, deleteAlertRule, toggleAlertRule,
   listUsers, adminCreateUser,
 } from '@/lib/api'
@@ -47,6 +47,7 @@ export default function AdminDashboard() {
   const [chartData, setChartData] = useState<MetricsHistoryPoint[]>([])
   const [rules,    setRules]    = useState<AlertRule[]>([])
   const [users,    setUsers]    = useState<AccountInformation[]>([])
+  const [readingsToday, setReadingsToday] = useState<number | null>(null)
   const [loading,       setLoading]       = useState(true)
   const [chartLoading,  setChartLoading]  = useState(true)
   const [rulesLoading,  setRulesLoading]  = useState(true)
@@ -118,13 +119,15 @@ export default function AdminDashboard() {
         getMetricsHistory(),
         getAlertRules(),
         listUsers(),
-      ]).then(([alertsR, sensorsR, avgR, chartR, rulesR, usersR]) => {
+        getReadingsToday(),
+      ]).then(([alertsR, sensorsR, avgR, chartR, rulesR, usersR, readingsTodayR]) => {
         if (alertsR.status === 'fulfilled')  setAlerts(alertsR.value)
         if (sensorsR.status === 'fulfilled') setSensors(sensorsR.value)
         if (avgR.status === 'fulfilled')     setCityAverages(avgR.value)
         if (chartR.status === 'fulfilled')   setChartData(chartR.value)
         if (rulesR.status === 'fulfilled')   setRules(rulesR.value)
         if (usersR.status === 'fulfilled')   setUsers(usersR.value)
+        if (readingsTodayR.status === 'fulfilled') setReadingsToday(readingsTodayR.value.count)
         setLoading(false)
         setChartLoading(false)
         setRulesLoading(false)
@@ -256,6 +259,7 @@ export default function AdminDashboard() {
             chartData={chartData}
             chartLoading={chartLoading}
             activeSensorCount={new Set(sensors.map(s => s.sensorid)).size}
+            readingsToday={readingsToday}
             onAcknowledge={acknowledge}
             onStartResolve={id => { setTab('alerts'); startResolve(id) }}
             onViewAllAlerts={() => setTab('alerts')}

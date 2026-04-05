@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, AlertTriangle, Activity, Radio } from 'lucide-react'
-import { logout as apiLogout, getAlerts, acknowledgeAlert, resolveAlert, getSensors, getCityAverages, getMetricsHistory } from '@/lib/api'
+import { logout as apiLogout, getAlerts, acknowledgeAlert, resolveAlert, getSensors, getCityAverages, getMetricsHistory, getReadingsToday } from '@/lib/api'
 import type { Session, AlertsInfo, SensorReading, CityAverages, MetricsHistoryPoint } from '@/lib/types'
 import { useWebSocket } from '@/lib/useWebSocket'
 import { Sidebar }           from '@/components/Sidebar'
@@ -31,6 +31,7 @@ export default function OperatorDashboard() {
   const [sensors,  setSensors]  = useState<SensorReading[]>([])
   const [cityAverages, setCityAverages] = useState<CityAverages>({ oxygen: null, temperature: null, humidity: null })
   const [chartData, setChartData] = useState<MetricsHistoryPoint[]>([])
+  const [readingsToday, setReadingsToday] = useState<number | null>(null)
   const [loading,      setLoading]      = useState(true)
   const [chartLoading, setChartLoading] = useState(true)
   const [userName, setUserName] = useState('')
@@ -88,11 +89,13 @@ export default function OperatorDashboard() {
         getSensors(),
         getCityAverages(),
         getMetricsHistory(),
-      ]).then(([alertsResult, sensorsResult, avgResult, chartResult]) => {
+        getReadingsToday(),
+      ]).then(([alertsResult, sensorsResult, avgResult, chartResult, readingsTodayR]) => {
         if (alertsResult.status === 'fulfilled')  setAlerts(alertsResult.value)
         if (sensorsResult.status === 'fulfilled') setSensors(sensorsResult.value)
         if (avgResult.status === 'fulfilled')     setCityAverages(avgResult.value)
         if (chartResult.status === 'fulfilled')   setChartData(chartResult.value)
+        if (readingsTodayR.status === 'fulfilled') setReadingsToday(readingsTodayR.value.count)
         setLoading(false)
         setChartLoading(false)
       })
@@ -154,6 +157,7 @@ export default function OperatorDashboard() {
             chartData={chartData}
             chartLoading={chartLoading}
             activeSensorCount={new Set(sensors.map(s => s.sensorid)).size}
+            readingsToday={readingsToday}
             onAcknowledge={acknowledge}
             onStartResolve={id => { setTab('alerts'); startResolve(id) }}
             onViewAllAlerts={() => setTab('alerts')}

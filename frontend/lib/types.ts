@@ -159,6 +159,10 @@ export interface MetricsHistoryPoint {
   oxygen: number | null
 }
 
+export interface ReadingsToday {
+  count: number
+}
+
 // ── Session ─────────────────────────────────────────────────────────────────
 
 export interface Session {
@@ -171,6 +175,4 @@ export interface Session {
 export {
   SEVERITY_STYLES,
   STATUS_STYLES,
-  SENSOR_STATUS_STYLES,
-  ZONE_STATUS_STYLES,
 } from './data'

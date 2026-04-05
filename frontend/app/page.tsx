@@ -22,24 +22,6 @@ function getStatusLabel(metric: Metric, value: number): string {
   return value >= 19 && value <= 22 ? 'Normal' : 'Low'
 }
 
-function getBotResponse(input: string): string {
-  const msg = input.toLowerCase()
-  if (msg.includes('temp'))
-    return 'Check the dashboard for the latest city-wide temperature readings across all monitored zones.'
-  if (msg.includes('humid'))
-    return 'Current humidity levels are shown on the dashboard. All zones report readings updated in real time.'
-  if (msg.includes('oxygen') || msg.includes('o2'))
-    return 'Oxygen concentration data is available on the dashboard for each monitored zone.'
-  if (msg.includes('alert') || msg.includes('warn'))
-    return 'Active alerts are managed by city operators. Check zone status cards for online/offline indicators.'
-  if (msg.includes('zone') || msg.includes('area') || msg.includes('district'))
-    return 'Zone status cards on the dashboard show each monitored zone with its latest temperature and online/offline status.'
-  if (msg.includes('sensor'))
-    return 'Sensor data feeds into the zone summaries shown on the dashboard. Each zone aggregates readings from its deployed sensors.'
-  if (/^(hi|hello|hey)/.test(msg))
-    return "Hi! I'm the SCEMAS environmental assistant. Ask me about temperature, humidity, oxygen levels, city zones, or active alerts."
-  return 'I can help with: temperature, humidity, oxygen levels, zone status, and alerts. What would you like to know?'
-}
 
 export default function PublicDashboard() {
   const [metric, setMetric] = useState<Metric>('temperature')
@@ -64,6 +46,8 @@ export default function PublicDashboard() {
 
   useEffect(() => {
     let cancelled = false
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
     async function fetchData() {
       try {
         const [z, h] = await Promise.all([getAllZones(), getMetricsHistory()])
@@ -77,8 +61,22 @@ export default function PublicDashboard() {
         if (!cancelled) setLoading(false)
       }
     }
-    fetchData()
-    return () => { cancelled = true }
+
+    fetchData().then(() => {
+      if (!cancelled) {
+        intervalId = setInterval(async () => {
+          try {
+            const z = await getAllZones()
+            if (!cancelled) setZones(z)
+          } catch { /* silent re-fetch failure */ }
+        }, 30_000)
+      }
+    })
+
+    return () => {
+      cancelled = true
+      if (intervalId) clearInterval(intervalId)
+    }
   }, [])
 
   useEffect(() => {
@@ -115,6 +113,35 @@ export default function PublicDashboard() {
   }
 
   const statusGood = (m: Metric) => ['Normal'].includes(metricStatus[m])
+
+  function getBotResponse(input: string): string {
+    if (loading) return 'Data is still loading, please try again in a moment.'
+    const msg = input.toLowerCase()
+    if (/^(hi|hello|hey)/.test(msg))
+      return "Hi! I'm the SCEMAS environmental assistant. Ask me about temperature, humidity, oxygen levels, city zones, or active alerts."
+    if (msg.includes('temp'))
+      return cityAvg.temperature != null
+        ? `The current city-wide average temperature is ${cityAvg.temperature}°C across ${zones.length} zones.`
+        : 'Temperature data is not available right now.'
+    if (msg.includes('humid'))
+      return cityAvg.humidity != null
+        ? `The current city-wide average humidity is ${cityAvg.humidity}% across ${zones.length} zones.`
+        : 'Humidity data is not available right now.'
+    if (msg.includes('oxygen') || msg.includes('o2'))
+      return cityAvg.oxygen != null
+        ? `The current city-wide average oxygen level is ${cityAvg.oxygen}% across ${zones.length} zones.`
+        : 'Oxygen data is not available right now.'
+    if (msg.includes('alert') || msg.includes('warn'))
+      return 'Check the operator dashboard for active alerts.'
+    if (msg.includes('zone') || msg.includes('area') || msg.includes('district')) {
+      if (zones.length === 0) return 'No zone data is available right now.'
+      const list = zones.map(z => `${z.zone} (${z.status})`).join(', ')
+      return `Monitoring ${zones.length} zones: ${list}.`
+    }
+    if (msg.includes('sensor'))
+      return `Currently monitoring ${zones.length} zones with real-time sensor data.`
+    return 'I can help with: temperature, humidity, oxygen levels, zone status, and alerts. What would you like to know?'
+  }
 
   const selected = METRIC_META.find(m => m.key === metric)!
 

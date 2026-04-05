@@ -1,14 +1,19 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, AlertTriangle, Activity, Radio } from 'lucide-react'
 import { logout as apiLogout, getAlerts, acknowledgeAlert, resolveAlert, getSensors, getCityAverages, getMetricsHistory } from '@/lib/api'
 import type { Session, AlertsInfo, SensorReading, CityAverages, MetricsHistoryPoint } from '@/lib/types'
+import { useWebSocket } from '@/lib/useWebSocket'
 import { Sidebar }           from '@/components/Sidebar'
 import { OverviewTab }       from '@/components/OverviewTab'
 import { AlertsTable }       from '@/components/AlertsTable'
 import { AlertHistoryTable } from '@/components/AlertHistoryTable'
 import { SensorsTab }        from '@/components/SensorsTab'
+
+const WS_SENSOR_TYPE_MAP: Record<string, SensorReading['sensor_type']> = {
+  temp: 'temperature', humidity: 'humidity', ox: 'oxygen',
+}
 
 type Tab = 'overview' | 'alerts' | 'history' | 'sensors'
 
@@ -32,6 +37,8 @@ export default function OperatorDashboard() {
   const [userRole, setUserRole] = useState('')
   const [resolvingId, setResolvingId] = useState<number | null>(null)
   const [resolveNote, setResolveNote] = useState('')
+  const [token, setToken] = useState<string | null>(null)
+  const alertDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   async function fetchAlerts() {
     try {
@@ -41,6 +48,27 @@ export default function OperatorDashboard() {
       setAlerts([])
     }
   }
+
+  const handleWsMessage = useCallback((msg: { event: string; data: Record<string, unknown> }) => {
+    if (msg.event !== 'sensor_update') return
+    const d = msg.data
+    const mapped = WS_SENSOR_TYPE_MAP[d.sensor_type as string]
+    if (!mapped) return
+    const newReading: SensorReading = {
+      sensorid: d.sensor_id as string,
+      zone: d.zone as string,
+      value: d.value as number,
+      timestamp: d.timestamp as string,
+      sensor_type: mapped,
+    }
+    setSensors(prev => [newReading, ...prev])
+    getCityAverages().then(setCityAverages).catch(() => {})
+    // Debounce alert re-fetch: 5s after last sensor update
+    if (alertDebounce.current) clearTimeout(alertDebounce.current)
+    alertDebounce.current = setTimeout(() => { fetchAlerts() }, 5000)
+  }, [])
+
+  const { status: wsStatus } = useWebSocket(token, handleWsMessage)
 
   useEffect(() => {
     try {
@@ -52,6 +80,7 @@ export default function OperatorDashboard() {
       if (role !== 'admin' && role !== 'operator') { router.push('/login'); return }
       setUserName(session.user.username)
       setUserRole(role)
+      setToken(session.access_token)
 
       // Fetch all data in parallel
       Promise.allSettled([
@@ -112,7 +141,13 @@ export default function OperatorDashboard() {
         onLogout={logout}
       />
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto relative">
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2 text-xs">
+          <span className={`w-2 h-2 rounded-full ${wsStatus === 'connected' ? 'bg-green-500' : wsStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`} />
+          <span className="text-gray-400">
+            {wsStatus === 'connected' ? 'Live' : wsStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
+          </span>
+        </div>
         {tab === 'overview' && (
           <OverviewTab
             alerts={alerts}

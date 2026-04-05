@@ -255,7 +255,7 @@ export default function AdminDashboard() {
             alerts={alerts}
             chartData={chartData}
             chartLoading={chartLoading}
-            activeSensorCount={sensors.length}
+            activeSensorCount={new Set(sensors.map(s => s.sensorid)).size}
             onAcknowledge={acknowledge}
             onStartResolve={id => { setTab('alerts'); startResolve(id) }}
             onViewAllAlerts={() => setTab('alerts')}

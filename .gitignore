@@ -21,6 +21,9 @@ __pycache__/
 *.cb2
 .*.lb
 
+sensors/*.pem
+sensors/*.key
+
 ## Intermediate documents:
 *.dvi
 *.xdv

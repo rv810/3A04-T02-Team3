@@ -253,7 +253,7 @@ export default function PublicDashboard() {
                   </div>
                 )
               }))
-            )}
+            }
           </div>
         </div>
       </main>

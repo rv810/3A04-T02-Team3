@@ -151,3 +151,51 @@ class PublicAbstraction:
             result.append(entry)
 
         return result
+    
+    def getHourlyMaximum(self) -> list:
+        """
+        Retrieves the maximum sensor readings for all zones in the current hour.
+        Used for zone status cards to show peak values.
+        """
+        now = datetime.now(timezone.utc)
+        hour_start = now.replace(minute=0, second=0, microsecond=0)
+        hour_end = hour_start + timedelta(hours=1)
+        
+        hour_start_iso = hour_start.isoformat()
+        hour_end_iso = hour_end.isoformat()
+
+        sensor_tables = {
+            "temperature": "tempsensor",
+            "humidity": "humiditysensor",
+            "oxygen": "oxygensensor",
+        }
+
+        # Get all zones
+        zones = set()
+        for table in ("tempsensor", "humiditysensor", "oxygensensor"):
+            response = supabase.table(table).select("zone").execute()
+            for row in response.data:
+                zones.add(row["zone"])
+
+        # Get max values for each zone
+        result = []
+        for zone in sorted(zones):
+            zone_max = {"zone": zone}
+            for metric, table in sensor_tables.items():
+                response = (
+                    supabase.table(table)
+                    .select("value")
+                    .eq("zone", zone)
+                    .gte("timestamp", hour_start_iso)
+                    .lt("timestamp", hour_end_iso)
+                    .order("value", desc=True)
+                    .limit(1)
+                    .execute()
+                )
+                if response.data:
+                    zone_max[metric] = response.data[0]["value"]
+                else:
+                    zone_max[metric] = None
+            result.append(zone_max)
+
+        return result

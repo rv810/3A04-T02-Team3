@@ -79,7 +79,7 @@ export default function PublicDashboard() {
             const z = await getAllZones()
             if (!cancelled) setZones(z)
           } catch { /* silent re-fetch failure */ }
-        }, 30_000)
+        }, 5_000)
       }
     })
 

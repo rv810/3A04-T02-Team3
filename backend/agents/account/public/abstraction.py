@@ -66,7 +66,7 @@ class PublicAbstraction:
         # Query each table exactly once, grabbing only the most recent data
         for metric, table in sensor_tables.items():
             
-            # .limit(100) ensures we catch all active zones without downloading the whole DB
+            # .limit(10) ensures we catch all active zones without downloading the whole DB
             response = (
                 supabase.table(table)
                 .select("zone, value, unit, timestamp")
@@ -108,7 +108,8 @@ class PublicAbstraction:
         Returns the last 24 hours of sensor readings bucketed into hourly averages.
         Used by the public dashboard 24-hour trend chart.
         """
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+        now = datetime.now(timezone.utc)
+        cutoff = now - timedelta(hours=24)
         cutoff_iso = cutoff.isoformat()
 
         sensor_tables = {
@@ -117,8 +118,12 @@ class PublicAbstraction:
             "oxygen": "oxygensensor",
         }
 
-        # Collect readings per hour per metric
-        buckets = {}  # hour_key -> {metric: [values]}
+        # Pre-fill all 24 hourly buckets so the chart has a continuous timeline
+        buckets = {}
+        for i in range(24):
+            hour_dt = cutoff + timedelta(hours=i)
+            hour_key = f"{hour_dt.year}-{hour_dt.month:02d}-{hour_dt.day:02d} {hour_dt.hour:02d}:00"
+            buckets[hour_key] = {"temperature": [], "humidity": [], "oxygen": []}
 
         for metric, table in sensor_tables.items():
             response = (
@@ -129,25 +134,20 @@ class PublicAbstraction:
             )
             for row in response.data:
                 ts_str = row["timestamp"]
-                # Handle Supabase ISO timestamps
                 ts_str = ts_str.replace("Z", "+00:00")
                 ts = datetime.fromisoformat(ts_str)
-                # Why hour_key includes date: prevents cross-day bucket merging —
-                # without the date component, 2pm Monday and 2pm Tuesday readings
-                # would merge into one bucket.
                 hour_key = f"{ts.year}-{ts.month:02d}-{ts.day:02d} {ts.hour:02d}:00"
 
-                if hour_key not in buckets:
-                    buckets[hour_key] = {"temperature": [], "humidity": [], "oxygen": []}
-                buckets[hour_key][metric].append(row["value"])
+                if hour_key in buckets:
+                    buckets[hour_key][metric].append(row["value"])
 
-        # Build sorted result (sorted chronologically by full datetime key)
+        # Build sorted result with rounded values
         result = []
         for hour_key in sorted(buckets.keys()):
             entry = {"time": hour_key[-5:]}  # Display hour only, e.g. "14:00"
             for metric in ("temperature", "humidity", "oxygen"):
                 values = buckets[hour_key][metric]
-                entry[metric] = sum(values) / len(values) if values else None
+                entry[metric] = round(sum(values) / len(values), 2) if values else None
             result.append(entry)
 
         return result

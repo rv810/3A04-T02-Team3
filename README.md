@@ -478,5 +478,5 @@ Verify that all three certificate files exist in `sensors/` and the paths in `se
 
 | Component | Platform | URL |
 |-----------|--------|--------|
-| Backend | Render | Pending |
-| Frontend | Vercel | Pending | 
+| Backend | Render | https://threea04-t02-team3.onrender.com/ |
+| Frontend | Vercel | https://3a04-t02-team3.vercel.app/ | 

@@ -17,10 +17,7 @@ from events.event_bus import event_bus
 from websocket_manager import ws_manager
 
 # Import agent routers (Presentation layer of each agent)
-from agents.account.presentation import router as account_router
-from agents.account.admin.presentation import router as admin_router
-from agents.account.operator.presentation import router as operator_router
-from agents.account.public.presentation import router as public_router
+from agents.account.presentation import router as account_router 
 from agents.telemetry.presentation import router as telemetry_router
 
 # Import agent controllers that need event bus wiring

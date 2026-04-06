@@ -29,14 +29,48 @@ A public-facing dashboard displays city-wide averages, zone-level summaries, and
 ---
 
 ## Architecture
+ 
+SCEMAS follows a **PAC (Presentation-Abstraction-Control)** architecture organized as a hierarchy of cooperating agents. At the top of the hierarchy, a **coordinator** serves as the top-level PAC agent, responsible for mounting all sub-agents and wiring inter-agent communication through an **event bus**. The coordinator ensures that agents never import or reference each other directly.
+ 
+Below the coordinator, the system is divided into three subsystem agents, each encapsulating its own Presentation (HTTP routes), Abstraction (database access), and Control (business logic) components. Each subsystem agent employs a distinct internal architectural style and may contain further **sub-agents** that handle specialized responsibilities within the subsystem:
+ 
+- **Account Management** uses the **Repository** pattern, centralizing user accounts, authentication, and role-based access control through a shared data store. This agent contains three sub-agents:
+  - **Admin** — alert rule configuration, user management, and audit log access
+  - **Operator** — alert triage, acknowledgement, and resolution
+  - **Public** — unauthenticated access to aggregated environmental data
+ 
+- **Telemetry Data Management** uses a **Pipe-and-Filter** pattern, processing sensor data through sequential stages: ingestion, validation, storage, and event publication. This agent contains three sub-agents, one per sensor type:
+  - **Temperature** — validation and persistence of temperature readings
+  - **Humidity** — validation and persistence of humidity readings
+  - **Oxygen** — validation and persistence of oxygen readings
+ 
+- **Alert Rules Management** uses a **Blackboard** pattern, where incoming telemetry is evaluated against a shared knowledge base of administrator-defined rules to detect threshold violations and generate alerts. This agent operates as an automated evaluation engine with no direct user-facing sub-agents. Human interaction with alert rules and alert triage is handled by the Admin and Operator sub-agents under Account Management.
 
-SCEMAS follows a **PAC (Presentation-Abstraction-Control)** architecture, where each major subsystem is organized into presentation (routes), abstraction (data access), and control (business logic) layers.
-
-The system comprises three subsystems, each employing a distinct architectural style:
-
-- **Account Management** uses the **Repository** pattern, centralizing user accounts, authentication, and role-based access control through a shared data store.
-- **Telemetry Data Management** uses a **Pipe-and-Filter** pattern, processing sensor data through sequential stages: ingestion, validation, storage, and alert rule evaluation.
-- **Alert Rules Management** uses a **Blackboard** pattern, where incoming telemetry is evaluated against a shared knowledge base of administrator-defined rules to detect threshold violations.
+### PAC Hierarchy
+ 
+```
+Coordinator (top-level agent)
+├── Account Management agent (Repository)
+│   ├── Admin sub-agent
+│   ├── Operator sub-agent
+│   └── Public sub-agent
+├── Telemetry Data Management agent (Pipe-and-Filter)
+│   ├── Temperature sub-agent
+│   ├── Humidity sub-agent
+│   └── Oxygen sub-agent
+└── Alert Rules Management agent (Blackboard)
+```
+ 
+### Inter-Agent Communication
+ 
+Agents communicate exclusively through a pub-sub pattern **event bus** managed by the top-level coordinator. This enforces PAC's rule that agents interact only through their Control components, never by direct import:
+ 
+- When a sensor reading is validated and stored, the Telemetry agent publishes a `sensor_data_validated` event.
+- The Alert Rules Management agent subscribes to this event and evaluates the reading against all enabled rules.
+- When a rule violation is detected, the Alerts agent publishes an `alert_triggered` event.
+- The coordinator handles broadcasting triggered alerts to connected WebSocket clients.
+ 
+Neither the Telemetry agent nor the Alerts agent has any direct reference to the other.
 
 ### Tech Stack
 
@@ -252,71 +286,81 @@ For public API details including response schemas and examples, see [`backend/PU
 ---
 
 ## Project Structure
-
+ 
 ```
 backend/
-├── main.py                        # FastAPI app, router registration, CORS
-├── database.py                    # Supabase client initialization
-├── websocket_manager.py           # WebSocket connection manager
+├── main.py                                    # FastAPI app entry point, delegates to coordinator
+├── coordinator.py                             # Top-level PAC agent: mounts sub-agents, wires event bus
+├── database.py                                # Supabase client initialization
+├── websocket_manager.py                       # WebSocket connection manager
 ├── middleware/
-│   └── auth.py                    # JWT verification, role-based dependencies
+│   └── auth.py                                # JWT verification, role-based access dependencies
 ├── models/
-│   ├── account.py                 # Account, login, role models
-│   └── alerts_info.py             # Alert, rule, audit log models
-├── controllers/
-│   ├── accounts_controller.py     # Account business logic
-│   ├── admin_controller.py        # Alert rule management logic
-│   ├── alerts_controller.py       # Alert evaluation and generation
-│   ├── humidity_controller.py     # Humidity data validation and processing
-│   ├── operator_controller.py     # Alert acknowledgement and resolution
-│   ├── oxygen_controller.py       # Oxygen data validation and processing
-│   ├── public_controller.py       # Public data aggregation
-│   ├── sensors_controller.py      # Sensor query logic
-│   └── temperature_controller.py  # Temperature data validation and processing
-├── abstractions/
-│   ├── accounts_abstraction.py    # Account database operations
-│   ├── admin_abstraction.py       # Alert rule database operations
-│   ├── alerts_abstraction.py      # Alert database operations
-│   ├── humidity_abstraction.py    # Humidity reading storage
-│   ├── operator_abstraction.py    # Operator alert database operations
-│   ├── oxygen_abstraction.py      # Oxygen reading storage
-│   ├── public_abstraction.py      # Public data queries
-│   ├── sensors_abstraction.py     # Sensor data queries
-│   └── temperature_abstraction.py # Temperature reading storage
-├── routes/
-│   ├── accounts.py                # Auth and account endpoints
-│   ├── admin.py                   # Admin rule endpoints
-│   ├── operator.py                # Operator alert endpoints
-│   ├── public.py                  # Public data endpoints
-│   └── telemetry.py               # Telemetry webhook, WebSocket, sensor endpoints
-├── PUBLIC_API.md                  # Public API documentation
-└── requirements.txt               # Python dependencies
-
+│   ├── account.py                             # Account, login, role models
+│   └── alerts_info.py                         # Alert, rule, audit log models
+├── events/
+│   └── event_bus.py                           # Inter-agent communication (mediator pattern)
+├── agents/
+│   ├── account/                               # Account Management agent (Repository)
+│   │   ├── presentation.py                    # Auth and account HTTP endpoints
+│   │   ├── control.py                         # AccountsController — registration, login, profile logic
+│   │   ├── abstraction.py                     # AccountsAbstraction — Supabase auth and account queries
+│   │   ├── admin/                             # Admin sub-agent
+│   │   │   ├── presentation.py                # Alert rule CRUD and audit log endpoints
+│   │   │   ├── control.py                     # AdminController — rule management logic
+│   │   │   └── abstraction.py                 # AdminAbstraction — rule and audit log queries
+│   │   ├── operator/                          # Operator sub-agent
+│   │   │   ├── presentation.py                # Alert triage and acknowledgement endpoints
+│   │   │   ├── control.py                     # OperatorController — alert lifecycle logic
+│   │   │   └── abstraction.py                 # OperatorAbstraction — alert status queries
+│   │   └── public/                            # Public sub-agent
+│   │       ├── presentation.py                # Public zone and metrics endpoints
+│   │       ├── control.py                     # PublicController — data aggregation logic
+│   │       └── abstraction.py                 # PublicAbstraction — public data queries
+│   ├── telemetry/                             # Telemetry Data Management agent (Pipe-and-Filter)
+│   │   ├── presentation.py                    # Telemetry webhook, WebSocket, sensor endpoints
+│   │   ├── control.py                         # SensorsController — cross-sensor queries
+│   │   ├── abstraction.py                     # SensorsAbstraction — sensor data queries
+│   │   ├── temperature/                       # Temperature sub-agent
+│   │   │   ├── control.py                     # TemperatureController — validation and processing
+│   │   │   └── abstraction.py                 # TemperatureAbstraction — reading storage
+│   │   ├── humidity/                          # Humidity sub-agent
+│   │   │   ├── control.py                     # HumidityController — validation and processing
+│   │   │   └── abstraction.py                 # HumidityAbstraction — reading storage
+│   │   └── oxygen/                            # Oxygen sub-agent
+│   │       ├── control.py                     # OxygenController — validation and processing
+│   │       └── abstraction.py                 # OxygenAbstraction — reading storage
+│   └── alerts/                                # Alert Rules Management agent (Blackboard)
+│       ├── control.py                         # AlertsController — rule evaluation engine
+│       └── abstraction.py                     # AlertsAbstraction — alert storage and audit logging
+├── PUBLIC_API.md                              # Public API documentation
+└── requirements.txt                           # Python dependencies
+ 
 frontend/
 ├── app/
-│   ├── page.tsx                   # Public dashboard (no auth)
-│   ├── login/page.tsx             # Login page with demo accounts
-│   ├── operator/page.tsx          # Operator dashboard
-│   ├── admin/page.tsx             # Admin dashboard
-│   ├── layout.tsx                 # Root layout
-│   └── globals.css                # Global styles
+│   ├── page.tsx                               # Public dashboard (no auth)
+│   ├── login/page.tsx                         # Login page
+│   ├── operator/page.tsx                      # Operator dashboard
+│   ├── admin/page.tsx                         # Admin dashboard
+│   ├── layout.tsx                             # Root layout
+│   └── globals.css                            # Global styles
 ├── components/
-│   ├── AlertHistoryTable.tsx      # Alert history with filters
-│   ├── AlertRulesTab.tsx          # Rule CRUD interface
-│   ├── AlertsTable.tsx            # Active alert management
-│   ├── Badge.tsx                  # Status/severity badges
-│   ├── Gauge.tsx                  # Circular metric gauges
-│   ├── OverviewTab.tsx            # Dashboard overview metrics
-│   ├── SensorsTab.tsx             # Sensor network display
-│   ├── Sidebar.tsx                # Navigation sidebar
-│   ├── Toast.tsx                  # Notification toasts
-│   └── UsersTab.tsx               # User management interface
+│   ├── AlertHistoryTable.tsx                  # Alert history with filters
+│   ├── AlertRulesTab.tsx                      # Rule CRUD interface
+│   ├── AlertsTable.tsx                        # Active alert management
+│   ├── Badge.tsx                              # Status/severity badges
+│   ├── Gauge.tsx                              # Circular metric gauges
+│   ├── OverviewTab.tsx                        # Dashboard overview metrics
+│   ├── SensorsTab.tsx                         # Sensor network display
+│   ├── Sidebar.tsx                            # Navigation sidebar
+│   ├── Toast.tsx                              # Notification toasts
+│   └── UsersTab.tsx                           # User management interface
 ├── lib/
-│   ├── api.ts                     # REST API client
-│   ├── types.ts                   # TypeScript type definitions
-│   ├── useWebSocket.ts            # WebSocket hook with reconnection
-│   └── data.ts                    # Shared style constants
-└── package.json                   # Dependencies and scripts
+│   ├── api.ts                                 # REST API client
+│   ├── types.ts                               # TypeScript type definitions
+│   ├── useWebSocket.ts                        # WebSocket hook with reconnection
+│   └── data.ts                                # Shared style constants
+└── package.json                               # Dependencies and scripts
 ```
 
 ---

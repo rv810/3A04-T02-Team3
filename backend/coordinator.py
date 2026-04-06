@@ -29,10 +29,7 @@ from agents.alerts.control import AlertsController
 
 def initialize_agents(app: FastAPI) -> None:
     """Mount all agent presentation routers onto the FastAPI app."""
-    app.include_router(account_router)
-    app.include_router(admin_router)
-    app.include_router(operator_router)
-    app.include_router(public_router)
+    app.include_router(account_router) 
     app.include_router(telemetry_router)
 
 

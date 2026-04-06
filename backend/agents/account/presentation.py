@@ -12,6 +12,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from pydantic import ValidationError
 from agents.account.control import AccountsController
+from agents.account.admin.presentation import router as admin_router
+from agents.account.operator.presentation import router as operator_router
+from agents.account.public.presentation import router as public_router
 from models.account import (
     CreateAccountRequest,
     AdminCreateAccountRequest,
@@ -25,6 +28,10 @@ from middleware.auth import get_current_user, require_admin
 from database import supabase
 
 router = APIRouter(tags=["auth & accounts"])
+router.include_router(admin_router)
+router.include_router(operator_router)
+router.include_router(public_router)
+
 controller = AccountsController(supabase)
 
 

@@ -6,15 +6,27 @@ Subsystem: System infrastructure
 Reqs:      SR-AC1 (authentication infrastructure), SR-AC2 (RBAC route grouping)
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
+from limiter import limiter 
 from coordinator import initialize_agents, wire_event_subscriptions
+
+app = FastAPI(title="SCEMAS API")
+
+# Attach rate limiter to the app
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app = FastAPI(
     title="SCEMAS API",
     swagger_ui_parameters={"persistAuthorization": True}
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,5 +41,6 @@ initialize_agents(app)
 wire_event_subscriptions()
 
 @app.get("/")
-async def health_check():
+@limiter.limit("10/minute")
+async def health_check(request: Request):
     return {"status": "SCEMAS Backend is awake and healthy!"}

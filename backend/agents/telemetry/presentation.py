@@ -19,6 +19,7 @@ from agents.telemetry.temperature.control import TemperatureController
 from agents.telemetry.humidity.control import HumidityController
 from agents.telemetry.oxygen.control import OxygenController
 from agents.telemetry.control import SensorsController
+from limiter import limiter
 
 load_dotenv(find_dotenv())
 TELEMETRY_SECRET = os.getenv("TELEMETRY_SECRET_KEY")
@@ -29,7 +30,6 @@ temp_controller = TemperatureController()
 humidity_controller = HumidityController()
 oxygen_controller = OxygenController()
 sensors_controller = SensorsController()
-
 
 @router.post("/api/telemetry")
 async def aws_iot_webhook(
@@ -119,7 +119,9 @@ async def websocket_endpoint(
             ws_manager.active_connections.remove(websocket)
 
 @router.get("/sensors")
+@limiter.limit("60/minute")
 async def get_sensors(
+    request: Request,
     zone: Optional[str] = Query(None, description="Filter by zone name"),
     limit: int = Query(default=50, description="Max results to return"),
     offset: int = Query(default=0, description="Number of results to skip"),
@@ -131,15 +133,25 @@ async def get_sensors(
 # conflict (FastAPI matches routes top-down; "city-averages" would otherwise
 # be captured as an {id} parameter).
 @router.get("/sensors/city-averages")
-async def get_city_averages(current_user: dict = Depends(require_operator)):
+@limiter.limit("30/minute")
+async def get_city_averages(
+    request: Request,
+    current_user: dict = Depends(require_operator)):
     return sensors_controller.getCityAverages()
 
 @router.get("/sensors/readings-today")
-async def get_readings_today(current_user: dict = Depends(require_operator)):
+@limiter.limit("30/minute")
+async def get_readings_today(
+    request: Request,
+    current_user: dict = Depends(require_operator)):
     return sensors_controller.getReadingsToday()
 
 @router.get("/sensors/{id}")
-async def get_sensor(id: str, current_user: dict = Depends(require_operator)):
+@limiter.limit("30/minute")
+async def get_sensor(
+    request: Request,
+    id: str, 
+    current_user: dict = Depends(require_operator)):
     sensor = sensors_controller.getSensor(id)
     if not sensor:
         raise HTTPException(status_code=404, detail="sensor not found")

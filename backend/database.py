@@ -2,8 +2,7 @@
 Database connectivity — initializes Supabase clients for application use.
 
 Subsystem: System infrastructure — serves all three subsystems
-PAC Layer: Abstraction
-Pattern:   N/A
+PAC Layer: Abstraction 
 Reqs:      SR-AC1 (authenticated data access), SR-P1 (persistent storage)
 """
 

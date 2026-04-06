@@ -712,6 +712,7 @@ Note: Alert updates are not pushed via WebSocket. The frontend re-fetches alerts
 | Audit Log (operator)    | \u2014        | \u2713          | \u2713       |
 | Audit Log (admin)       | \u2014        | \u2014          | \u2713       |
 | Sensors                 | \u2014        | \u2713          | \u2713       |
+| Webhooks                | \u2014        | \u2014          | \u2713       |
 | Public Data             | \u2713 *     | \u2713 *        | \u2713 *     |
 | WebSocket               | \u2014        | \u2713          | \u2713       |
 | Telemetry Ingestion     | n/a      | n/a        | n/a     |
@@ -720,7 +721,95 @@ Note: Alert updates are not pushed via WebSocket. The frontend re-fetches alerts
 
 ---
 
-## 12. Error Response Format
+## 12. Webhook Subscribers (admin only)
+
+### GET `/admin/webhooks`
+
+Return all registered webhook subscribers.
+
+**Auth**: admin only
+
+**Response 200**
+```json
+[
+  {
+    "id": 1,
+    "url": "https://emergency.hamilton.ca/api/alerts",
+    "description": "City Emergency Management System",
+    "created_at": "2026-04-05T12:00:00Z",
+    "active": true,
+    "created_by": "d4e5f6a7-..."
+  }
+]
+```
+
+---
+
+### POST `/admin/webhooks`
+
+Register a new external system webhook URL.
+
+**Auth**: admin only
+
+**Request body**
+```json
+{
+  "url": "https://emergency.hamilton.ca/api/alerts",
+  "description": "City Emergency Management System"
+}
+```
+`description` is optional (defaults to empty string).
+
+**Response 201** — the created subscriber object
+
+---
+
+### DELETE `/admin/webhooks/{webhook_id}`
+
+Remove a webhook subscriber.
+
+**Auth**: admin only
+
+**Path parameter**: `webhook_id` (int)
+
+**Response 204** — no body
+
+---
+
+### PATCH `/admin/webhooks/{webhook_id}/toggle`
+
+Toggle a subscriber's active/inactive status.
+
+**Auth**: admin only
+
+**Path parameter**: `webhook_id` (int)
+
+**Response 200** — updated subscriber object with `active` flipped
+
+**Response 404** — `"Subscriber not found"`
+
+---
+
+### Webhook Delivery Behavior
+
+When an alert is triggered, the system automatically POSTs the alert payload to all active webhook subscribers. The payload sent to each subscriber:
+
+```json
+{
+  "alerttype": "temp",
+  "zone": "downtown",
+  "message": "TEMP value 38.5 °C violated rule 5 (acceptable range: 15.0–35.0)",
+  "severity": "high",
+  "triggered_at": null,
+  "ruleviolated": 5
+}
+```
+
+Delivery failures are logged but never block alert processing — a single unreachable subscriber does not prevent other subscribers from receiving the notification.
+
+---
+
+## 13. Error Response Format
 
 All errors follow:
 

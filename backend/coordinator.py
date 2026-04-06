@@ -19,6 +19,7 @@ from websocket_manager import ws_manager
 # Import agent routers (Presentation layer of each agent)
 from agents.account.presentation import router as account_router 
 from agents.telemetry.presentation import router as telemetry_router
+from agents.alerts.presentation import router as alerts_router
 
 # Import agent controllers that need event bus wiring
 from agents.alerts.control import AlertsController
@@ -26,8 +27,9 @@ from agents.alerts.control import AlertsController
 
 def initialize_agents(app: FastAPI) -> None:
     """Mount all agent presentation routers onto the FastAPI app."""
-    app.include_router(account_router) 
+    app.include_router(account_router)
     app.include_router(telemetry_router)
+    app.include_router(alerts_router)
 
 
 def wire_event_subscriptions() -> None:

@@ -25,6 +25,7 @@ import type {
   ZoneSummary,
   MetricsHistoryPoint,
   Session,
+  WebhookSubscriber,
 } from './types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -221,6 +222,29 @@ export async function toggleAlertRule(ruleId: number): Promise<AlertRule> {
 
 export async function getAdminAuditLog(): Promise<AuditLog[]> {
   return request<AuditLog[]>('/admin/audit-log')
+}
+
+// ── Admin: Webhooks ─────────────────────────────────────────────────────
+
+export async function getWebhooks(): Promise<WebhookSubscriber[]> {
+  return request<WebhookSubscriber[]>('/admin/webhooks')
+}
+
+export async function addWebhook(data: { url: string; description: string }): Promise<WebhookSubscriber> {
+  return request<WebhookSubscriber>('/admin/webhooks', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteWebhook(id: number): Promise<void> {
+  await request<void>(`/admin/webhooks/${id}`, { method: 'DELETE' })
+}
+
+export async function toggleWebhook(id: number): Promise<WebhookSubscriber> {
+  return request<WebhookSubscriber>(`/admin/webhooks/${id}/toggle`, {
+    method: 'PATCH',
+  })
 }
 
 // ── Sensors ─────────────────────────────────────────────────────────────────

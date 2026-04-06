@@ -125,6 +125,17 @@ export interface AuditLog {
   temp_sensor_id: number | null
 }
 
+// ── Webhooks ────────────────────────────────────────────────────────────
+
+export interface WebhookSubscriber {
+  id: number
+  url: string
+  description: string
+  active: boolean
+  created_at: string
+  created_by: string | null
+}
+
 // ── Resolve Alert ───────────────────────────────────────────────────────────
 
 export interface ResolveAlertRequest {

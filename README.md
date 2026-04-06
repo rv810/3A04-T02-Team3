@@ -20,9 +20,9 @@ SCEMAS is a cloud-native IoT platform that ingests real-time environmental telem
 
 ## System Overview
 
-SCEMAS monitors three environmental metrics — temperature, humidity, and oxygen — reported by IoT sensors deployed across named city zones. The system serves three user roles: **public users** who can view aggregated environmental data without authentication, **city operators** who monitor live sensor feeds and manage alerts, and **system administrators** who configure alert rules and manage user accounts.
+SCEMAS monitors three environmental metrics — temperature, humidity, and oxygen — reported by IoT sensors deployed across five named city zones (downtown, industrial, residential, park, waterfront). The system serves three user roles: **public users** who can view aggregated environmental data without authentication, **city operators** who monitor live sensor feeds and manage alerts, and **system administrators** who configure alert rules and manage user accounts.
 
-The platform provides real-time telemetry ingestion through an HTTP webhook that receives sensor data from AWS IoT Core, validates and stores readings, and evaluates them against administrator-defined alert rules. When a reading violates a rule's thresholds, the system generates an alert and broadcasts it to connected operator dashboards via WebSocket. Operators can acknowledge and resolve alerts with optional notes, while administrators have full control over alert rule configuration (create, update, delete, toggle) and user management.
+Simulated IoT sensors publish telemetry via MQTT over TLS to AWS IoT Core, which authenticates each device using x.509 certificates. AWS IoT Core forwards validated messages to the SCEMAS backend through an HTTP webhook. The backend validates and stores readings, evaluates them against administrator-defined alert rules, and broadcasts updates to connected operator dashboards via WebSocket. Operators can acknowledge and resolve alerts with optional notes, while administrators have full control over alert rule configuration (create, update, delete, toggle) and user management.
 
 A public-facing dashboard displays city-wide averages, zone-level summaries, and 24-hour trend charts without requiring authentication. The public REST API exposes the same data for third-party integration, optionally secured by an API key. A chatbot on the public dashboard provides conversational answers to common environmental queries.
 
@@ -78,20 +78,27 @@ Neither the Telemetry agent nor the Alerts agent has any direct reference to the
 |-------|-----------|
 | Backend | FastAPI (Python) |
 | Database & Auth | Supabase (PostgreSQL + Auth) |
+| IoT Transport | MQTT over TLS → AWS IoT Core |
 | Frontend | Next.js 14, TypeScript, Tailwind CSS |
 | Charts | Recharts |
 | Real-time | WebSocket (native) |
+| Sensor Simulation | Python (paho-mqtt) |
 
 ### Data Flow
 
 ```
-IoT Sensors (AWS IoT Core)
-    → POST /api/telemetry (HTTP webhook)
-        → Validate sensor data (type, range, schema)
-            → Store reading in Supabase (tempsensor / humiditysensor / oxygensensor)
-                → Evaluate enabled alert rules against new reading
-                    → If threshold violated: create alert + log to audit trail
-                        → Broadcast update to connected WebSocket clients
+Simulated IoT Sensors (paho-mqtt)
+    → MQTT over TLS (port 8883, x.509 cert auth)
+        → AWS IoT Core (message broker)
+            → IoT Rule forwards to SCEMAS backend
+                → POST /api/telemetry (HTTP webhook)
+                    → Validate sensor data (type, range, schema)
+                        → Store reading in Supabase (tempsensor / humiditysensor / oxygensensor)
+                            → Event bus: publish sensor_data_validated
+                                → Alerts agent evaluates enabled rules
+                                    → If threshold violated: create alert + audit log
+                                        → Event bus: publish alert_triggered
+                                            → Broadcast to connected WebSocket clients
 ```
 
 ---
@@ -103,6 +110,7 @@ IoT Sensors (AWS IoT Core)
 - Python 3.11+
 - Node.js 18+
 - A Supabase project
+- An AWS IoT Core endpoint with device certificates (for sensor simulation)
 
 ### Backend Setup
 
@@ -154,6 +162,35 @@ npm run dev
 
 The frontend runs at `http://localhost:3000`.
 
+### Sensor Simulator Setup
+
+The `sensors/` directory contains simulated IoT sensors that publish telemetry to AWS IoT Core via MQTT over TLS. Each sensor type runs as an independent Python script, generating realistic readings across five city zones with diurnal cycles, seasonal variation, and configurable high-reading burst events for testing alert logic.
+
+```bash
+cd sensors
+pip install -r requirements.txt
+```
+
+Create a `.env` file in `sensors/` and place the three AWS IoT Core certificate files in the same directory:
+
+```env
+AWS_ENDPOINT=your-iot-endpoint.iot.region.amazonaws.com
+AWS_PORT=8883
+AWS_CA_CERT=AmazonRootCA1.pem
+AWS_CLIENT_CERT=your-device.cert.pem
+AWS_PRIVATE_KEY=your-device.private.key
+```
+
+Run each sensor type in a separate terminal:
+
+```bash
+python temperature_sensor.py
+python humidity_sensor.py
+python oxygen_sensor.py
+```
+
+Each simulator creates one sensor per zone (5 sensors) and publishes readings every second to MQTT topics in the format `scemas/telemetry/{zone}/{sensor_type}`. AWS IoT Core authenticates devices via x.509 certificates over TLS 1.2 — no unauthenticated device can publish telemetry.
+
 ### Database Setup
 
 The following tables must exist in your Supabase project:
@@ -201,6 +238,16 @@ Or use `POST /accounts/create-user` from an existing admin account to create ope
 | `NEXT_PUBLIC_API_URL` | Yes | Backend REST API base URL (e.g., `http://localhost:8000`) |
 | `NEXT_PUBLIC_WS_URL` | Yes | Backend WebSocket base URL (e.g., `ws://localhost:8000`) |
 | `NEXT_PUBLIC_API_KEY` | No | If set, attached as x-api-key header on public API calls |
+
+### Sensor Simulators (`sensors/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `AWS_ENDPOINT` | Yes | AWS IoT Core device data endpoint |
+| `AWS_PORT` | No | MQTT broker port (default: `8883` for TLS) |
+| `AWS_CA_CERT` | Yes | Path to Amazon Root CA certificate file |
+| `AWS_CLIENT_CERT` | Yes | Path to device certificate file |
+| `AWS_PRIVATE_KEY` | Yes | Path to device private key file |
 
 ---
 
@@ -275,7 +322,9 @@ For public API details including response schemas and examples, see [`backend/PU
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/api/telemetry` | None | Webhook for AWS IoT sensor data |
+| POST | `/api/telemetry` | None* | Webhook for AWS IoT Core sensor data |
+
+*In production, this endpoint is only reachable by AWS IoT Core's rule action. Device authentication is handled at the MQTT broker level via x.509 certificates before data reaches this endpoint.
 
 **WebSocket** — real-time updates
 
@@ -299,7 +348,7 @@ backend/
 │   ├── account.py                             # Account, login, role models
 │   └── alerts_info.py                         # Alert, rule, audit log models
 ├── events/
-│   └── event_bus.py                           # Inter-agent communication (mediator pattern)
+│   └── event_bus.py                           # Inter-agent communication (pub-sub pattern)
 ├── agents/
 │   ├── account/                               # Account Management agent (Repository)
 │   │   ├── presentation.py                    # Auth and account HTTP endpoints
@@ -335,6 +384,12 @@ backend/
 │       └── abstraction.py                     # AlertsAbstraction — alert storage and audit logging
 ├── PUBLIC_API.md                              # Public API documentation
 └── requirements.txt                           # Python dependencies
+
+sensors/
+├── sensor_base.py                             # Shared MQTT client, zone config, reading generation
+├── temperature_sensor.py                      # Temperature simulator (5 zones, 1s interval)
+├── humidity_sensor.py                         # Humidity simulator (5 zones, 1s interval)
+└── oxygen_sensor.py                           # Oxygen simulator (5 zones, 1s interval)
  
 frontend/
 ├── app/
@@ -372,7 +427,7 @@ frontend/
 | D1 | Software Requirements Specification | Stakeholder analysis, business events, functional and non-functional requirements, use cases |
 | D2 | High-Level Architectural Design | PAC architecture, subsystem decomposition, analysis class diagrams, CRC cards |
 | D3 | Detailed Design | State charts, sequence diagrams, detailed class diagrams |
-| D4 | Final Implementation | This codebase — working backend, frontend, and database integration |
+| D4 | Final Implementation | This codebase — working backend, frontend, sensor simulators, and database integration |
 
 ---
 
@@ -380,9 +435,11 @@ frontend/
 
 **Scoped sensor types.** The original requirements specified air quality, noise, temperature, and humidity. The implementation focuses on temperature, humidity, and oxygen — three concrete metrics that demonstrate the full pipeline while keeping the scope achievable.
 
-**HTTP webhook over direct MQTT.** Rather than connecting directly to an MQTT broker, the backend receives sensor data via an HTTP POST webhook from AWS IoT Core. This simplified integration and deployment within the project timeline.
+**MQTT via AWS IoT Core.** Sensors publish telemetry over MQTT with TLS 1.2 and x.509 certificate authentication to AWS IoT Core. An IoT Rule forwards messages to the SCEMAS backend via an HTTP webhook. This approach satisfies the MQTT ingestion requirement while leveraging AWS-managed device authentication and encryption rather than self-hosting a broker.
 
-**PAC with simplifications.** The architecture follows PAC's presentation-abstraction-control separation accurately (routes, abstractions, controllers), but makes practical adjustments where the pattern's full formality would add complexity without benefit.
+**Zone-based simulation.** Each sensor type is simulated across five city zones with realistic environmental modeling including diurnal temperature cycles, seasonal variation, zone-specific offsets (e.g., urban heat island for downtown, higher humidity at waterfront), and configurable high-reading burst events that trigger alert rules during demonstrations.
+
+**PAC agent hierarchy.** The backend is organized as a hierarchy of PAC agents with a top-level coordinator, three subsystem agents, and sub-agents within each. Agents communicate exclusively through a pub-sub event bus; no agent directly imports another. This makes the architectural pattern visible in the directory structure itself.
 
 ---
 
@@ -412,13 +469,14 @@ The WebSocket endpoint requires a valid operator or admin JWT token. Ensure the 
 **401 Unauthorized on API calls**  
 The JWT token may have expired. Log out and log back in to obtain a fresh token. The frontend automatically redirects to `/login?expired=true` on 401 responses.
 
+**Sensor simulator won't connect**  
+Verify that all three certificate files exist in `sensors/` and the paths in `sensors/.env` match. Ensure the AWS IoT Core endpoint is correct and the device certificate is registered and activated in the AWS console.
+
 ---
 
 ## Deployment
 
-| Component | Target | Status |
+| Component | Platform | URL |
 |-----------|--------|--------|
-| Backend | TBD | Pending |
-| Frontend | Vercel (root directory: `frontend/`) | Pending |
-| Production URL | TBD | Pending |
-
+| Backend | Render | Pending |
+| Frontend | Vercel | Pending | 

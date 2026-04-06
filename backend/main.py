@@ -14,12 +14,6 @@ from slowapi.errors import RateLimitExceeded
 from limiter import limiter 
 from coordinator import initialize_agents, wire_event_subscriptions
 
-app = FastAPI(title="SCEMAS API")
-
-# Attach rate limiter to the app
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
 app = FastAPI(
     title="SCEMAS API",
     swagger_ui_parameters={"persistAuthorization": True}

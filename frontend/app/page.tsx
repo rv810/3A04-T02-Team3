@@ -19,6 +19,14 @@ import EnvironmentalChatbot from '@/components/EnvironmentalChatbot'
 
 type Metric = 'temperature' | 'humidity' | 'oxygen'
 
+/** Convert a UTC "HH:00" hour string to the user's local timezone equivalent. */
+function utcHourToLocal(utcHour: string): string {
+  const hour = parseInt(utcHour.split(':')[0], 10)
+  const now = new Date()
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hour))
+  return `${String(d.getHours()).padStart(2, '0')}:00`
+}
+
 const METRIC_META = [
   { key: 'temperature' as Metric, label: 'Temperature', unit: '°C', icon: Thermometer, color: 'text-orange-400', bg: 'bg-orange-400/10', stroke: '#F97316', yUnit: '°C' },
   { key: 'humidity'    as Metric, label: 'Humidity',    unit: '%',  icon: Droplets,    color: 'text-cyan-400',   bg: 'bg-cyan-400/10',  stroke: '#06B6D4', yUnit: '%'  },
@@ -52,7 +60,10 @@ export default function PublicDashboard() {
     async function fetchData() {
       try {
         const [z, h] = await Promise.all([getAllZones(), getMetricsHistory()])
-        if (!cancelled) { setZones(z); setHistory(h) }
+        if (!cancelled) {
+          setZones(z)
+          setHistory(h.map(p => ({ ...p, time: utcHourToLocal(p.time) })))
+        }
       } catch (err) {
         console.error('Failed to fetch public data:', err)
       } finally {

@@ -71,7 +71,7 @@ class PublicAbstraction:
                 supabase.table(table)
                 .select("zone, value, unit, timestamp")
                 .order("timestamp", desc=True)
-                .limit(100) 
+                .limit(10) 
                 .execute()
             )
             

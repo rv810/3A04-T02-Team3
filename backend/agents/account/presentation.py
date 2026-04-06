@@ -22,7 +22,9 @@ from models.account import (
     LoginRequest,
     EditAccountRequest,
     AccountInformation,
-    LoginResponse
+    LoginResponse,
+    RefreshRequest,
+    RefreshResponse
 )
 from middleware.auth import get_current_user, require_admin
 from database import supabase
@@ -53,6 +55,11 @@ def login(request: LoginRequest):
 
 
 # --- Authenticated routes ---
+
+@router.post("/auth/refresh", response_model=RefreshResponse)
+def refresh(request: RefreshRequest):
+    return controller.refresh(request.refresh_token)
+
 
 @router.post("/auth/logout")
 def logout(current_user: dict = Depends(get_current_user)):

@@ -68,5 +68,15 @@ class AdminEditAccountRequest(BaseModel):
 # Returned to the client after a successful login
 class LoginResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     user: AccountInformation
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class RefreshResponse(BaseModel):
+    access_token: str
+    refresh_token: str

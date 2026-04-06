@@ -62,6 +62,28 @@ function authHeaders(): Record<string, string> {
   return { Authorization: `Bearer ${session.access_token}` }
 }
 
+async function tryRefresh(): Promise<boolean> {
+  const session = getSession()
+  if (!session?.refresh_token) return false
+  try {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: session.refresh_token }),
+    })
+    if (!res.ok) return false
+    const data = await res.json()
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      ...session,
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    }))
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -73,12 +95,24 @@ async function request<T>(
     ...(options.headers as Record<string, string> ?? {}),
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers })
+  let res = await fetch(`${API_URL}${path}`, { ...options, headers })
 
   if (res.status === 401 && requiresAuth) {
-    localStorage.removeItem(SESSION_KEY)
-    window.location.href = '/login?expired=true'
-    throw new Error('Session expired')
+    // Attempt silent token refresh before giving up
+    const refreshed = await tryRefresh()
+    if (refreshed) {
+      const retryHeaders = {
+        ...headers,
+        ...authHeaders(), // picks up the new access_token
+      }
+      res = await fetch(`${API_URL}${path}`, { ...options, headers: retryHeaders })
+    }
+
+    if (res.status === 401) {
+      localStorage.removeItem(SESSION_KEY)
+      window.location.href = '/login?expired=true'
+      throw new Error('Session expired')
+    }
   }
 
   if (!res.ok) {
@@ -289,4 +323,12 @@ export async function getAllZones(): Promise<ZoneSummary[]> {
 
 export async function getMetricsHistory(): Promise<MetricsHistoryPoint[]> {
   return request<MetricsHistoryPoint[]>('/public/metrics/history', { headers: publicHeaders() }, false)
+}
+
+export async function getChatResponse(message: string): Promise<{ reply: string }> {
+  return request<{ reply: string }>('/public/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message }),
+    headers: publicHeaders(),
+  }, false)
 }

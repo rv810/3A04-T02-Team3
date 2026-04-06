@@ -1,14 +1,15 @@
 """
-Public environmental data API endpoints (zone summaries, metrics history).
+Public environmental data API endpoints (zone summaries, metrics history, chatbot).
 
 Subsystem: Consumes Telemetry Data Management subsystem
 PAC Layer: Presentation
 PAC Agent: Account Management
-Sub-agent: Public 
+Sub-agent: Public
 Reqs:      BE5
 """
 import os
 from fastapi import APIRouter, Depends, Header, HTTPException
+from pydantic import BaseModel
 from typing import Optional
 from agents.account.public.control import PublicController
 
@@ -16,6 +17,10 @@ router = APIRouter(prefix="/public", tags=["public"])
 controller = PublicController()
 
 PUBLIC_API_KEY = os.environ.get("PUBLIC_API_KEY")
+
+
+class ChatRequest(BaseModel):
+    message: str
 
 
 def verify_api_key(x_api_key: Optional[str] = Header(None)):
@@ -43,3 +48,8 @@ def get_all_zones(_: None = Depends(verify_api_key)):
 @router.get("/metrics/history")
 def get_metrics_history(_: None = Depends(verify_api_key)):
     return controller.getPublicMetricsHistory()
+
+
+@router.post("/chat")
+def chat(body: ChatRequest, _: None = Depends(verify_api_key)):
+    return controller.chat(body.message)

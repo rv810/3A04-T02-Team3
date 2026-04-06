@@ -142,9 +142,18 @@ class AccountsAbstraction:
 
         return {
             "access_token": response.session.access_token,
+            "refresh_token": response.session.refresh_token,
             "user": AccountInformation(**account.data),
             # Pass raw user_id string to avoid UUID serialization issues
             "user_id": str(response.user.id)
+        }
+
+    def refreshSession(self, refresh_token: str) -> dict:
+        """Exchanges a refresh token for a new session. Implements LR-STD2."""
+        response = self.db.auth.refresh_session(refresh_token)
+        return {
+            "access_token": response.session.access_token,
+            "refresh_token": response.session.refresh_token,
         }
 
     def logout(self, jwt: str) -> None:

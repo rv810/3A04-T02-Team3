@@ -403,7 +403,7 @@ env/
 # Environment variables
 .env
 .env.*
-
+**/*.env
 # pytest
 .pytest_cache/
 

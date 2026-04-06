@@ -74,6 +74,7 @@ class AccountsController:
 
             return LoginResponse(
                 access_token=result["access_token"],
+                refresh_token=result["refresh_token"],
                 user=result["user"]
             )
         except HTTPException:
@@ -92,6 +93,13 @@ class AccountsController:
                 description=f"Failed login attempt for {request.email}"
             )
             raise HTTPException(status_code=500, detail="An unexpected error occurred")
+
+    def refresh(self, refresh_token: str) -> dict:
+        """Exchanges a refresh token for a new access token. Implements LR-STD2 (session management)."""
+        try:
+            return self.accountDB.refreshSession(refresh_token)
+        except Exception:
+            raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
     def logout(self, jwt: str, user_id: str) -> None:
         """Ends user session. Implements LR-STD2 (session management)."""

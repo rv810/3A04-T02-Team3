@@ -61,7 +61,7 @@ function LoginContent() {
     setSubmitting(true)
     try {
       const res = await apiLogin({ email, password })
-      const session: Session = { access_token: res.access_token, user: res.user }
+      const session: Session = { access_token: res.access_token, refresh_token: res.refresh_token, user: res.user }
       localStorage.setItem('scemas_session', JSON.stringify(session))
       const dest = res.user.userrole === 'admin' ? '/admin'
                  : res.user.userrole === 'operator' ? '/operator'
@@ -82,7 +82,7 @@ function LoginContent() {
     setSubmitting(true)
     try {
       const res = await apiLogin({ email: account.email, password: account.password })
-      const session: Session = { access_token: res.access_token, user: res.user }
+      const session: Session = { access_token: res.access_token, refresh_token: res.refresh_token, user: res.user }
       localStorage.setItem('scemas_session', JSON.stringify(session))
       const dest = res.user.userrole === 'admin' ? '/admin'
                  : res.user.userrole === 'operator' ? '/operator'

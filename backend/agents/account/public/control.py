@@ -22,3 +22,7 @@ class PublicController:
 
     def getPublicMetricsHistory(self) -> list:
         return self.publicAbstraction.getPublicMetricsHistory()
+
+    def chat(self, message: str) -> dict:
+        reply = self.publicAbstraction.chatQuery(message)
+        return {"reply": reply}

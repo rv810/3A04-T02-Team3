@@ -13,7 +13,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
 import { Wind, Thermometer, Droplets, MapPin, MessageSquare, X, Send } from 'lucide-react'
-import { getAllZones, getMetricsHistory } from '@/lib/api'
+import { getAllZones, getMetricsHistory, getChatResponse } from '@/lib/api'
 import type { ZoneSummary, MetricsHistoryPoint } from '@/lib/types'
 
 type Metric = 'temperature' | 'humidity' | 'oxygen'
@@ -35,6 +35,7 @@ export default function PublicDashboard() {
   const [metric, setMetric] = useState<Metric>('temperature')
   const [chatOpen, setChatOpen] = useState(false)
   const [chatInput, setChatInput] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
   const [messages, setMessages] = useState([
     { from: 'bot', text: "Hi! I'm the SCEMAS AI assistant. Ask me about current environmental conditions in the city." },
   ])
@@ -93,14 +94,20 @@ export default function PublicDashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  function sendMessage() {
+  async function sendMessage() {
     const text = chatInput.trim()
-    if (!text) return
+    if (!text || isTyping) return
     setMessages(prev => [...prev, { from: 'user', text }])
     setChatInput('')
-    setTimeout(() => {
-      setMessages(prev => [...prev, { from: 'bot', text: getBotResponse(text) }])
-    }, 350)
+    setIsTyping(true)
+    try {
+      const { reply } = await getChatResponse(text)
+      setMessages(prev => [...prev, { from: 'bot', text: reply }])
+    } catch {
+      setMessages(prev => [...prev, { from: 'bot', text: 'Sorry, I could not reach the server. Please try again.' }])
+    } finally {
+      setIsTyping(false)
+    }
   }
 
   // Compute city-wide averages from zone data
@@ -123,35 +130,6 @@ export default function PublicDashboard() {
   }
 
   const statusGood = (m: Metric) => ['Normal'].includes(metricStatus[m])
-
-  function getBotResponse(input: string): string {
-    if (loading) return 'Data is still loading, please try again in a moment.'
-    const msg = input.toLowerCase()
-    if (/^(hi|hello|hey)/.test(msg))
-      return "Hi! I'm the SCEMAS environmental assistant. Ask me about temperature, humidity, oxygen levels, city zones, or active alerts."
-    if (msg.includes('temp'))
-      return cityAvg.temperature != null
-        ? `The current city-wide average temperature is ${cityAvg.temperature}°C across ${zones.length} zones.`
-        : 'Temperature data is not available right now.'
-    if (msg.includes('humid'))
-      return cityAvg.humidity != null
-        ? `The current city-wide average humidity is ${cityAvg.humidity}% across ${zones.length} zones.`
-        : 'Humidity data is not available right now.'
-    if (msg.includes('oxygen') || msg.includes('o2'))
-      return cityAvg.oxygen != null
-        ? `The current city-wide average oxygen level is ${cityAvg.oxygen}% across ${zones.length} zones.`
-        : 'Oxygen data is not available right now.'
-    if (msg.includes('alert') || msg.includes('warn'))
-      return 'Check the operator dashboard for active alerts.'
-    if (msg.includes('zone') || msg.includes('area') || msg.includes('district')) {
-      if (zones.length === 0) return 'No zone data is available right now.'
-      const list = zones.map(z => `${z.zone} (${z.status})`).join(', ')
-      return `Monitoring ${zones.length} zones: ${list}.`
-    }
-    if (msg.includes('sensor'))
-      return `Currently monitoring ${zones.length} zones with real-time sensor data.`
-    return 'I can help with: temperature, humidity, oxygen levels, zone status, and alerts. What would you like to know?'
-  }
 
   const selected = METRIC_META.find(m => m.key === metric)!
 
@@ -323,7 +301,7 @@ export default function PublicDashboard() {
 
       {/* AI Chatbot */}
       {chatOpen ? (
-        <div className="fixed bottom-5 right-5 w-80 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl flex flex-col z-50" style={{ height: '420px' }}>
+        <div className="fixed bottom-5 right-5 w-80 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl flex flex-col z-50" style={{ height: '500px' }}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
@@ -351,20 +329,62 @@ export default function PublicDashboard() {
                 </div>
               </div>
             ))}
+            {isTyping && (
+              <div className="flex justify-start">
+                <div className="bg-gray-800 text-gray-400 text-xs px-3 py-2 rounded-xl flex gap-1 items-center">
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                </div>
+              </div>
+            )}
             <div ref={chatEndRef} />
           </div>
 
+          {/* Quick-reply suggestion chips */}
+          {!isTyping && (
+            <div className="px-3 pb-2 flex flex-wrap gap-1.5">
+              {[
+                'How is the air quality today?',
+                'What is the temperature?',
+                'Current humidity levels',
+                'Are there any alerts?',
+                'Zone status overview',
+                'Oxygen levels',
+              ].map(suggestion => (
+                <button
+                  key={suggestion}
+                  onClick={() => {
+                    setChatInput(suggestion)
+                    // fire immediately
+                    setMessages(prev => [...prev, { from: 'user', text: suggestion }])
+                    setIsTyping(true)
+                    getChatResponse(suggestion)
+                      .then(({ reply }) => setMessages(prev => [...prev, { from: 'bot', text: reply }]))
+                      .catch(() => setMessages(prev => [...prev, { from: 'bot', text: 'Sorry, I could not reach the server. Please try again.' }]))
+                      .finally(() => { setIsTyping(false); setChatInput('') })
+                  }}
+                  className="text-[10px] px-2 py-1 rounded-full border border-gray-700 bg-gray-800 text-gray-300 hover:border-blue-500 hover:text-blue-300 transition-colors"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="p-3 border-t border-gray-800 flex gap-2">
             <input
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
+              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
               placeholder="Ask about temperature, humidity..."
               value={chatInput}
+              disabled={isTyping}
               onChange={e => setChatInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
             />
             <button
               onClick={sendMessage}
-              className="w-8 h-8 bg-blue-600 hover:bg-blue-500 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
+              disabled={isTyping}
+              className="w-8 h-8 bg-blue-600 hover:bg-blue-500 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Send message"
             >
               <Send className="w-3 h-3 text-white" />

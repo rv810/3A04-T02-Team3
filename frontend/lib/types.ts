@@ -22,6 +22,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   access_token: string
+  refresh_token: string
   token_type: string
   user: AccountInformation
 }
@@ -200,6 +201,7 @@ export interface ReadingsToday {
 
 export interface Session {
   access_token: string
+  refresh_token: string
   user: AccountInformation
 }
 

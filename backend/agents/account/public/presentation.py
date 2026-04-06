@@ -43,3 +43,8 @@ def get_all_zones(_: None = Depends(verify_api_key)):
 @router.get("/metrics/history")
 def get_metrics_history(_: None = Depends(verify_api_key)):
     return controller.getPublicMetricsHistory()
+
+
+@router.get("/zones/hourly-max")
+def get_zones_hourly_maximum(_: None = Depends(verify_api_key)):
+    return controller.getHourlyMaximum()

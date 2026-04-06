@@ -22,3 +22,6 @@ class PublicController:
 
     def getPublicMetricsHistory(self) -> list:
         return self.publicAbstraction.getPublicMetricsHistory()
+    
+    def getHourlyMaximum(self) -> list:
+        return self.publicAbstraction.getHourlyMaximum()

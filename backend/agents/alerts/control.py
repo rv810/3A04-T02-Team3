@@ -14,6 +14,7 @@ from typing import List
 from events.event_bus import event_bus
 import asyncio
 import httpx
+from database import supabase
 
 class AlertsController:
     def __init__(self):
@@ -81,5 +82,12 @@ class AlertsController:
             for sub in subscribers:
                 try:
                     await client.post(sub["url"], json=payload)
+                    supabase.table("auditlog").insert({
+                        "eventtype": "webhook_delivered",
+                        "description": f"Webhook delivered to {sub['url']} for alert rule {alert.ruleviolated}",
+                    }).execute()
                 except Exception as e:
-                    print(f"Webhook delivery failed for {sub['url']}: {e}")
+                    supabase.table("auditlog").insert({
+                        "eventtype": "webhook_failed",
+                        "description": f"Webhook delivery failed for {sub['url']}: {e}",
+                    }).execute()

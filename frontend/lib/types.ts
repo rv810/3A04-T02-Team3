@@ -197,6 +197,7 @@ export interface ZoneMetrics {
   temperature: number | null
   humidity: number | null
   oxygen: number | null
+  [key: string]: string | number | null
 }
 
 export interface FiveMinAvgResponse {
@@ -204,6 +205,7 @@ export interface FiveMinAvgResponse {
     temperature: number | null
     humidity: number | null
     oxygen: number | null
+    [key: string]: number | null
   }
   zones: ZoneMetrics[]
 }

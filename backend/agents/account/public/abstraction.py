@@ -193,9 +193,57 @@ class PublicAbstraction:
                     .execute()
                 )
                 if response.data:
-                    zone_max[metric] = response.data[0]["value"]
+                    zone_max[metric] = round(response.data[0]["value"], 1)
                 else:
                     zone_max[metric] = None
             result.append(zone_max)
 
         return result
+
+    def getFiveMinAvgByZone(self) -> dict:
+        """
+        Computes 5-minute rolling averages per zone and city-wide.
+        Returns { "city": { metric: avg }, "zones": [{ zone, metric: avg }] }.
+        """
+        now = datetime.now(timezone.utc)
+        cutoff_iso = (now - timedelta(minutes=5)).isoformat()
+
+        sensor_tables = {
+            "temperature": "tempsensor",
+            "humidity": "humiditysensor",
+            "oxygen": "oxygensensor",
+        }
+
+        zone_data = {}  # zone -> metric -> [values]
+        city_values = {"temperature": [], "humidity": [], "oxygen": []}
+
+        for metric, table in sensor_tables.items():
+            response = (
+                supabase.table(table)
+                .select("zone, value")
+                .gte("timestamp", cutoff_iso)
+                .execute()
+            )
+            for row in response.data:
+                zone = row["zone"]
+                if zone not in zone_data:
+                    zone_data[zone] = {"temperature": [], "humidity": [], "oxygen": []}
+                zone_data[zone][metric].append(row["value"])
+                city_values[metric].append(row["value"])
+
+        # Build city averages
+        city = {}
+        for metric in ("temperature", "humidity", "oxygen"):
+            vals = city_values[metric]
+            city[metric] = round(sum(vals) / len(vals), 1) if vals else None
+
+        # Build per-zone averages
+        zones = []
+        for zone in sorted(zone_data.keys()):
+            entry = {"zone": zone}
+            for metric in ("temperature", "humidity", "oxygen"):
+                vals = zone_data[zone][metric]
+                entry[metric] = round(sum(vals) / len(vals), 1) if vals else None
+            zones.append(entry)
+
+        return {"city": city, "zones": zones}

@@ -13,8 +13,8 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
 import { Wind, Thermometer, Droplets, MapPin } from 'lucide-react'
-import { getAllZones, getMetricsHistory } from '@/lib/api'
-import type { ZoneSummary, MetricsHistoryPoint } from '@/lib/types'
+import { getAllZones, getMetricsHistory, getFiveMinAvg, getHourlyMax } from '@/lib/api'
+import type { ZoneSummary, MetricsHistoryPoint, FiveMinAvgResponse, ZoneMetrics } from '@/lib/types'
 import EnvironmentalChatbot from '@/components/EnvironmentalChatbot'
 
 type Metric = 'temperature' | 'humidity' | 'oxygen'
@@ -44,6 +44,8 @@ export default function PublicDashboard() {
   const [clock, setClock] = useState('')
   const [zones, setZones] = useState<ZoneSummary[]>([])
   const [history, setHistory] = useState<MetricsHistoryPoint[]>([])
+  const [fiveMinAvg, setFiveMinAvg] = useState<FiveMinAvgResponse | null>(null)
+  const [hourlyMax, setHourlyMax] = useState<ZoneMetrics[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -59,10 +61,14 @@ export default function PublicDashboard() {
 
     async function fetchData() {
       try {
-        const [z, h] = await Promise.all([getAllZones(), getMetricsHistory()])
+        const [z, h, avg, hmax] = await Promise.all([
+          getAllZones(), getMetricsHistory(), getFiveMinAvg(), getHourlyMax(),
+        ])
         if (!cancelled) {
           setZones(z)
           setHistory(h.map(p => ({ ...p, time: utcHourToLocal(p.time) })))
+          setFiveMinAvg(avg)
+          setHourlyMax(hmax)
         }
       } catch (err) {
         console.error('Failed to fetch public data:', err)
@@ -73,14 +79,19 @@ export default function PublicDashboard() {
 
     fetchData().then(() => {
       if (!cancelled) {
-        // Public users don't have auth tokens for WebSocket — polling at 5 s
-        // is sufficient because metrics data is hourly-bucketed.
+        // 5-min averages don't change fast — 30 s polling is sufficient.
         intervalId = setInterval(async () => {
           try {
-            const z = await getAllZones()
-            if (!cancelled) setZones(z)
+            const [z, avg, hmax] = await Promise.all([
+              getAllZones(), getFiveMinAvg(), getHourlyMax(),
+            ])
+            if (!cancelled) {
+              setZones(z)
+              setFiveMinAvg(avg)
+              setHourlyMax(hmax)
+            }
           } catch { /* silent re-fetch failure */ }
-        }, 5_000)
+        }, 30_000)
       }
     })
 
@@ -90,16 +101,10 @@ export default function PublicDashboard() {
     }
   }, [])
 
-  function computeAverage(key: Metric): number | null {
-    const values = zones.map(z => z[key]?.value).filter((v): v is number => v != null)
-    if (values.length === 0) return null
-    return Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10
-  }
-
   const cityAvg: Record<Metric, number | null> = {
-    temperature: computeAverage('temperature'),
-    humidity:    computeAverage('humidity'),
-    oxygen:      computeAverage('oxygen'),
+    temperature: fiveMinAvg?.city.temperature ?? null,
+    humidity:    fiveMinAvg?.city.humidity ?? null,
+    oxygen:      fiveMinAvg?.city.oxygen ?? null,
   }
 
   const metricStatus: Record<Metric, string> = {
@@ -144,10 +149,10 @@ export default function PublicDashboard() {
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Hero */}
         <div>
-          <p className="text-xs text-gray-500 mb-1">Public · Real-time environmental data</p>
+          <p className="text-xs text-gray-500 mb-1">Public · 5-minute average environmental data</p>
           <h1 className="text-2xl font-bold">City Environmental Status</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Live readings from {zones.length} monitored zone{zones.length !== 1 ? 's' : ''} · Updated every 5 s
+            5-minute averages from {zones.length} monitored zone{zones.length !== 1 ? 's' : ''} · Updated every 30 s
           </p>
         </div>
 
@@ -174,7 +179,7 @@ export default function PublicDashboard() {
                   {v != null ? v : '—'}
                   <span className="text-xs font-normal text-gray-500 ml-1">{m.unit}</span>
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5">{m.label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{m.label} (5-min avg)</div>
                 <div className={`text-xs mt-2 font-medium ${good ? 'text-green-400' : 'text-yellow-400'}`}>
                   {metricStatus[m.key]}
                 </div>
@@ -220,27 +225,34 @@ export default function PublicDashboard() {
             ) : zones.length === 0 ? (
               <div className="col-span-3 text-center text-sm text-gray-500 py-8">No zone data available</div>
             ) : (
-              zones.map(z => (
-                <div key={z.zone} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-                    <span className="text-xs font-medium truncate capitalize">{z.zone}</span>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <div className="text-xl font-bold">{z[metric]?.value != null ? z[metric].value : 'N/A'}</div>
-                      <div className="text-[10px] text-gray-500">{selected.unit} {selected.label.toLowerCase()}</div>
+              zones.map(z => {
+                const zoneAvg = fiveMinAvg?.zones.find(za => za.zone === z.zone)
+                const zoneMax = hourlyMax.find(hm => hm.zone === z.zone)
+                return (
+                  <div key={z.zone} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                      <span className="text-xs font-medium truncate capitalize">{z.zone}</span>
                     </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
-                      z.status === 'online'
-                        ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                        : 'bg-red-500/20 text-red-400 border-red-500/30'
-                    }`}>
-                      {z.status}
-                    </span>
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <div className="text-xl font-bold">{zoneAvg?.[metric] != null ? zoneAvg[metric] : 'N/A'}</div>
+                        <div className="text-[10px] text-gray-500">{selected.unit} {selected.label.toLowerCase()} (5-min avg)</div>
+                        {zoneMax?.[metric] != null && (
+                          <div className="text-[10px] text-gray-400 mt-0.5">↑ Hourly max: {zoneMax[metric]} {selected.unit}</div>
+                        )}
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
+                        z.status === 'online'
+                          ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                          : 'bg-red-500/20 text-red-400 border-red-500/30'
+                      }`}>
+                        {z.status}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              }))
             )}
           </div>
         </div>
@@ -250,7 +262,7 @@ export default function PublicDashboard() {
       <footer className="border-t border-gray-800 mt-12">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between text-[11px] text-gray-600">
           <span>© 2026 SCEMAS · Public Data Portal</span>
-          <span>PIPEDA Compliant · Data refreshes every 5 s</span>
+          <span>PIPEDA Compliant · Data refreshes every 30 s</span>
         </div>
       </footer>
 

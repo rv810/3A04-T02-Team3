@@ -48,3 +48,8 @@ def get_metrics_history(_: None = Depends(verify_api_key)):
 @router.get("/zones/hourly-max")
 def get_zones_hourly_maximum(_: None = Depends(verify_api_key)):
     return controller.getHourlyMaximum()
+
+
+@router.get("/five-min-avg")
+def get_five_min_avg(_: None = Depends(verify_api_key)):
+    return controller.getFiveMinAvgByZone()

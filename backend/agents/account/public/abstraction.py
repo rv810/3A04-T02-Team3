@@ -110,7 +110,6 @@ class PublicAbstraction:
         """
         now = datetime.now(timezone.utc)
         cutoff = now - timedelta(hours=24)
-        cutoff_iso = cutoff.isoformat()
 
         sensor_tables = {
             "temperature": "tempsensor",
@@ -118,7 +117,7 @@ class PublicAbstraction:
             "oxygen": "oxygensensor",
         }
 
-        # Pre-fill all 24 hourly buckets so the chart has a continuous timeline
+        # Pre-fill all 25 hourly buckets (24 past hours + current hour)
         buckets = {}
         for i in range(25):
             hour_dt = cutoff + timedelta(hours=i)
@@ -126,19 +125,22 @@ class PublicAbstraction:
             buckets[hour_key] = {"temperature": [], "humidity": [], "oxygen": []}
 
         for metric, table in sensor_tables.items():
-            response = (
-                supabase.table(table)
-                .select("value, timestamp")
-                .gte("timestamp", cutoff_iso)
-                .execute()
-            )
-            for row in response.data:
-                ts_str = row["timestamp"]
-                ts_str = ts_str.replace("Z", "+00:00")
-                ts = datetime.fromisoformat(ts_str)
-                hour_key = f"{ts.year}-{ts.month:02d}-{ts.day:02d} {ts.hour:02d}:00"
-
-                if hour_key in buckets:
+            # Query each hourly bucket individually with a sample of 50 readings.
+            # 25 hours × 3 tables = 75 small queries, far cheaper than paginating
+            # through hundreds of thousands of rows.
+            for hour_key in buckets:
+                # Parse hour_key back to datetime range
+                hour_start = datetime.strptime(hour_key, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
+                hour_end = hour_start + timedelta(hours=1)
+                response = (
+                    supabase.table(table)
+                    .select("value")
+                    .gte("timestamp", hour_start.isoformat())
+                    .lt("timestamp", hour_end.isoformat())
+                    .limit(50)
+                    .execute()
+                )
+                for row in response.data:
                     buckets[hour_key][metric].append(row["value"])
 
         # Build sorted result with rounded values

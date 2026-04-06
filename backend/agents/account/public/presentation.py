@@ -8,9 +8,10 @@ Sub-agent: Public
 Reqs:      BE5
 """
 import os
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from typing import Optional
 from agents.account.public.control import PublicController
+from limiter import limiter
 
 router = APIRouter(prefix="/public", tags=["public"])
 controller = PublicController()
@@ -31,25 +32,30 @@ def verify_api_key(x_api_key: Optional[str] = Header(None)):
 
 
 @router.get("/summary/{zone}")
-def get_zone_summary(zone: str, _: None = Depends(verify_api_key)):
+@limiter.limit("30/minute")
+def get_zone_summary(request: Request, zone: str, _: None = Depends(verify_api_key)):
     return controller.getZoneSummary(zone)
 
 
 @router.get("/zones")
-def get_all_zones(_: None = Depends(verify_api_key)):
+@limiter.limit("30/minute")
+def get_all_zones(request: Request, _: None = Depends(verify_api_key)):
     return controller.getAllZonesSummary()
 
 
 @router.get("/metrics/history")
-def get_metrics_history(_: None = Depends(verify_api_key)):
+@limiter.limit("30/minute")
+def get_metrics_history(request: Request, _: None = Depends(verify_api_key)):
     return controller.getPublicMetricsHistory()
 
 
 @router.get("/zones/hourly-max")
-def get_zones_hourly_maximum(_: None = Depends(verify_api_key)):
+@limiter.limit("30/minute")
+def get_zones_hourly_maximum(request: Request, _: None = Depends(verify_api_key)):
     return controller.getHourlyMaximum()
 
 
 @router.get("/five-min-avg")
-def get_five_min_avg(_: None = Depends(verify_api_key)):
+@limiter.limit("30/minute")
+def get_five_min_avg(request: Request, _: None = Depends(verify_api_key)):
     return controller.getFiveMinAvgByZone()

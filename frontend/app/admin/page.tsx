@@ -59,6 +59,9 @@ export default function AdminDashboard() {
   const [tab,      setTab]      = useState<Tab>('overview')
   const [alerts,   setAlerts]   = useState<AlertsInfo[]>([])
   const [sensors,  setSensors]  = useState<SensorReading[]>([])
+  const [sensorTotal, setSensorTotal] = useState(0)
+  const [sensorOffset, setSensorOffset] = useState(0)
+  const SENSOR_LIMIT = 50
   const [cityAverages, setCityAverages] = useState<CityAverages>({ oxygen: null, temperature: null, humidity: null })
   const [chartData, setChartData] = useState<MetricsHistoryPoint[]>([])
   const [rules,    setRules]    = useState<AlertRule[]>([])
@@ -154,7 +157,10 @@ export default function AdminDashboard() {
         getWebhooks(),
       ]).then(([alertsR, sensorsR, avgR, chartR, rulesR, usersR, readingsTodayR, webhooksR]) => {
         if (alertsR.status === 'fulfilled')  setAlerts(alertsR.value)
-        if (sensorsR.status === 'fulfilled') setSensors(sensorsR.value)
+        if (sensorsR.status === 'fulfilled') {
+          setSensors(sensorsR.value.items)
+          setSensorTotal(sensorsR.value.total)
+        }
         if (avgR.status === 'fulfilled')     setCityAverages(avgR.value)
         if (chartR.status === 'fulfilled')   setChartData(chartR.value)
         if (rulesR.status === 'fulfilled')   setRules(rulesR.value)
@@ -303,6 +309,15 @@ export default function AdminDashboard() {
     } catch { /* toggle failed silently */ }
   }
 
+  async function handleSensorPageChange(newOffset: number) {
+    try {
+      const data = await getSensors(undefined, SENSOR_LIMIT, newOffset)
+      setSensors(data.items)
+      setSensorTotal(data.total)
+      setSensorOffset(newOffset)
+    } catch { /* keep current page on error */ }
+  }
+
   // ── Logout ────────────────────────────────────────────────────────────────
 
   async function logout() {
@@ -362,7 +377,17 @@ export default function AdminDashboard() {
           />
         )}
         {tab === 'history'  && <AlertHistoryTable alerts={alerts} />}
-        {tab === 'sensors'  && <SensorsTab sensors={sensors} cityAverages={cityAverages} loading={loading} />}
+        {tab === 'sensors'  && (
+          <SensorsTab
+            sensors={sensors}
+            cityAverages={cityAverages}
+            loading={loading}
+            total={sensorTotal}
+            limit={SENSOR_LIMIT}
+            offset={sensorOffset}
+            onPageChange={handleSensorPageChange}
+          />
+        )}
         {tab === 'rules'    && (
           <AlertRulesTab
             rules={rules}

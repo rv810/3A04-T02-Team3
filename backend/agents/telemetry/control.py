@@ -15,8 +15,8 @@ class SensorsController:
     def __init__(self):
         self.sensorsDB = SensorsAbstraction()
 
-    def getSensors(self, zone: Optional[str] = None) -> list:
-        return self.sensorsDB.getSensors(zone)
+    def getSensors(self, zone: Optional[str] = None, limit: int = 50, offset: int = 0) -> dict:
+        return self.sensorsDB.getSensors(zone, limit=limit, offset=offset)
 
     def getSensor(self, sensorid: str):
         return self.sensorsDB.getSensor(sensorid)

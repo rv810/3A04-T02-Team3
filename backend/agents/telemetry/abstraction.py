@@ -12,33 +12,38 @@ from typing import Optional
 from datetime import datetime, timezone
 
 class SensorsAbstraction:
-    def getSensors(self, zone: Optional[str] = None) -> list:
+    def getSensors(self, zone: Optional[str] = None, limit: int = 50, offset: int = 0) -> dict:
         '''
-        Return all sensors with their latest readings.
+        Return paginated sensors with their latest readings.
         '''
-        temp_query = supabase.table("tempsensor").select("sensorid, zone, value, timestamp")
-        humidity_query = supabase.table("humiditysensor").select("sensorid, zone, value, timestamp")
-        oxygen_query = supabase.table("oxygensensor").select("sensorid, zone, value, timestamp")
+        temp_query = supabase.table("tempsensor").select("sensorid, zone, value, timestamp", count="exact")
+        humidity_query = supabase.table("humiditysensor").select("sensorid, zone, value, timestamp", count="exact")
+        oxygen_query = supabase.table("oxygensensor").select("sensorid, zone, value, timestamp", count="exact")
 
         if zone:
             temp_query = temp_query.eq("zone", zone)
             humidity_query = humidity_query.eq("zone", zone)
             oxygen_query = oxygen_query.eq("zone", zone)
 
-        temp_data = temp_query.order("timestamp", desc=True).execute().data
-        humidity_data = humidity_query.order("timestamp", desc=True).execute().data
-        oxygen_data = oxygen_query.order("timestamp", desc=True).execute().data
+        temp_resp = temp_query.order("timestamp", desc=True).execute()
+        humidity_resp = humidity_query.order("timestamp", desc=True).execute()
+        oxygen_resp = oxygen_query.order("timestamp", desc=True).execute()
 
-        # label each reading with its sensor type and return them all together
+        total = (temp_resp.count or 0) + (humidity_resp.count or 0) + (oxygen_resp.count or 0)
+
+        # label each reading with its sensor type, merge, and sort
         result = []
-        for row in temp_data:
+        for row in temp_resp.data:
             result.append({**row, "sensor_type": "temperature"})
-        for row in humidity_data:
+        for row in humidity_resp.data:
             result.append({**row, "sensor_type": "humidity"})
-        for row in oxygen_data:
+        for row in oxygen_resp.data:
             result.append({**row, "sensor_type": "oxygen"})
 
-        return result
+        result.sort(key=lambda r: r.get("timestamp", ""), reverse=True)
+        page = result[offset:offset + limit]
+
+        return {"items": page, "total": total, "limit": limit, "offset": offset}
 
     def getSensor(self, sensorid: str):
         '''

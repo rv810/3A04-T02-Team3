@@ -109,9 +109,11 @@ async def websocket_endpoint(
 @router.get("/sensors")
 async def get_sensors(
     zone: Optional[str] = Query(None, description="Filter by zone name"),
+    limit: int = Query(default=50, description="Max results to return"),
+    offset: int = Query(default=0, description="Number of results to skip"),
     current_user: dict = Depends(require_operator)
 ):
-    return sensors_controller.getSensors(zone)
+    return sensors_controller.getSensors(zone, limit=limit, offset=offset)
 
 # Why: city-averages must be defined before the /{id} route to avoid path
 # conflict (FastAPI matches routes top-down; "city-averages" would otherwise

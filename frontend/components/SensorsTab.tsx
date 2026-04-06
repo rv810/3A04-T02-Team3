@@ -13,12 +13,19 @@ interface Props {
   sensors: SensorReading[]
   cityAverages: CityAverages
   loading: boolean
+  total: number
+  limit: number
+  offset: number
+  onPageChange: (newOffset: number) => void
 }
 
-export function SensorsTab({ sensors, cityAverages, loading }: Props) {
+export function SensorsTab({ sensors, cityAverages, loading, total, limit, offset, onPageChange }: Props) {
   const temp  = cityAverages.temperature ?? 0
   const humid = cityAverages.humidity ?? 0
   const oxy   = cityAverages.oxygen ?? 0
+
+  const currentPage = Math.floor(offset / limit) + 1
+  const totalPages = Math.max(1, Math.ceil(total / limit))
 
   if (loading) {
     return (
@@ -69,6 +76,29 @@ export function SensorsTab({ sensors, cityAverages, loading }: Props) {
             ))}
           </tbody>
         </table>
+
+        {total > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800">
+            <span className="text-sm text-gray-500">{total} sensors total</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onPageChange(offset - limit)}
+                disabled={offset === 0}
+                className="px-3 py-1 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-400">Page {currentPage} of {totalPages}</span>
+              <button
+                onClick={() => onPageChange(offset + limit)}
+                disabled={offset + limit >= total}
+                className="px-3 py-1 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -295,8 +295,8 @@ export default function PublicDashboard() {
                   </div>
                   <div className="flex items-end justify-between">
                     <div>
-                      <div className="text-xl font-bold">{z.temperature?.value != null ? z.temperature.value : 'N/A'}</div>
-                      <div className="text-[10px] text-gray-500">°C temperature</div>
+                      <div className="text-xl font-bold">{z[metric]?.value != null ? z[metric].value : 'N/A'}</div>
+                      <div className="text-[10px] text-gray-500">{selected.unit} {selected.label.toLowerCase()}</div>
                     </div>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
                       z.status === 'online'

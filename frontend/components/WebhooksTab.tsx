@@ -43,21 +43,21 @@ export function WebhooksTab({ webhooks, onAdd, onDelete, onToggle, onFireToast, 
 
   if (loading) {
     return (
-      <div className="p-6 text-gray-500 text-sm">Loading webhooks...</div>
+      <div className="p-6 text-gray-500 text-sm">Loading external notifications...</div>
     )
   }
 
   return (
     <div className="p-6 space-y-6">
-      <h2 className="text-xl font-bold">Webhook Subscribers</h2>
+      <h2 className="text-xl font-bold">External Notifications</h2>
 
       {/* Add form */}
       <form onSubmit={handleAdd} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-        <h3 className="text-sm font-medium text-gray-400">Add Subscriber</h3>
+        <h3 className="text-sm font-medium text-gray-400">Add Notification Endpoint</h3>
         <div className="flex flex-col sm:flex-row gap-3">
           <input
             className={`${inputCls} flex-1`}
-            placeholder="https://example.com/webhook"
+            placeholder="https://example.com/notifications"
             value={url}
             onChange={e => setUrl(e.target.value)}
           />
@@ -80,7 +80,7 @@ export function WebhooksTab({ webhooks, onAdd, onDelete, onToggle, onFireToast, 
 
       {/* Table */}
       {webhooks.length === 0 ? (
-        <div className="text-gray-500 text-sm">No webhook subscribers configured.</div>
+        <div className="text-gray-500 text-sm">No external notification endpoints configured.</div>
       ) : (
         <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-x-auto">
           <table className="w-full text-sm">

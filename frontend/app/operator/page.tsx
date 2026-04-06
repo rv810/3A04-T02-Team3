@@ -41,6 +41,9 @@ export default function OperatorDashboard() {
   const [tab,      setTab]      = useState<Tab>('overview')
   const [alerts,   setAlerts]   = useState<AlertsInfo[]>([])
   const [sensors,  setSensors]  = useState<SensorReading[]>([])
+  const [sensorTotal, setSensorTotal] = useState(0)
+  const [sensorOffset, setSensorOffset] = useState(0)
+  const SENSOR_LIMIT = 50
   const [cityAverages, setCityAverages] = useState<CityAverages>({ oxygen: null, temperature: null, humidity: null })
   const [chartData, setChartData] = useState<MetricsHistoryPoint[]>([])
   const [readingsToday, setReadingsToday] = useState<number | null>(null)
@@ -107,7 +110,10 @@ export default function OperatorDashboard() {
         getReadingsToday(),
       ]).then(([alertsResult, sensorsResult, avgResult, chartResult, readingsTodayR]) => {
         if (alertsResult.status === 'fulfilled')  setAlerts(alertsResult.value)
-        if (sensorsResult.status === 'fulfilled') setSensors(sensorsResult.value)
+        if (sensorsResult.status === 'fulfilled') {
+          setSensors(sensorsResult.value.items)
+          setSensorTotal(sensorsResult.value.total)
+        }
         if (avgResult.status === 'fulfilled')     setCityAverages(avgResult.value)
         if (chartResult.status === 'fulfilled')   setChartData(chartResult.value)
         if (readingsTodayR.status === 'fulfilled') setReadingsToday(readingsTodayR.value.count)
@@ -135,6 +141,15 @@ export default function OperatorDashboard() {
     setResolvingId(null)
     setResolveNote('')
   }
+  async function handleSensorPageChange(newOffset: number) {
+    try {
+      const data = await getSensors(undefined, SENSOR_LIMIT, newOffset)
+      setSensors(data.items)
+      setSensorTotal(data.total)
+      setSensorOffset(newOffset)
+    } catch { /* keep current page on error */ }
+  }
+
   async function logout() {
     try { await apiLogout() } catch { /* ignore – clearing session anyway */ }
     localStorage.removeItem('scemas_session')
@@ -192,7 +207,17 @@ export default function OperatorDashboard() {
           />
         )}
         {tab === 'history' && <AlertHistoryTable alerts={alerts} />}
-        {tab === 'sensors' && <SensorsTab sensors={sensors} cityAverages={cityAverages} loading={loading} />}
+        {tab === 'sensors' && (
+          <SensorsTab
+            sensors={sensors}
+            cityAverages={cityAverages}
+            loading={loading}
+            total={sensorTotal}
+            limit={SENSOR_LIMIT}
+            offset={sensorOffset}
+            onPageChange={handleSensorPageChange}
+          />
+        )}
       </div>
     </div>
   )

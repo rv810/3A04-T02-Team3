@@ -6,10 +6,14 @@
  * Reqs:      BE3 (Acknowledge/Resolve Alert)
  */
 
+'use client'
+import { useState } from 'react'
 import type { AlertsInfo } from '@/lib/types'
 import type { AlertSeverity } from '@/lib/data'
 import { SEVERITY_STYLES, STATUS_STYLES } from '@/lib/data'
 import { Badge } from './Badge'
+
+const PAGE_SIZE = 50
 
 interface Props {
   alerts: AlertsInfo[]
@@ -23,6 +27,10 @@ interface Props {
 }
 
 export function AlertsTable({ alerts, resolvingId, resolveNote, onAcknowledge, onStartResolve, onConfirmResolve, onCancelResolve, onResolveNoteChange }: Props) {
+  const [page, setPage] = useState(0)
+  const totalPages = Math.max(1, Math.ceil(alerts.length / PAGE_SIZE))
+  const paged = alerts.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-xl font-bold">Active & Acknowledged Alerts</h1>
@@ -36,17 +44,10 @@ export function AlertsTable({ alerts, resolvingId, resolveNote, onAcknowledge, o
             </tr>
           </thead>
           <tbody>
-            {alerts.length === 0 && (
+            {paged.length === 0 && (
               <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-600">All alerts resolved</td></tr>
             )}
-            {/* Edge case: null guards on alertid are defensive — alertid from the
-                API is never actually null, but the TypeScript type marks it optional
-                to match the backend model.
-
-                Why index fallback on key: alertid is typed as Optional (nullable)
-                because the DB generates it on insert, but it's always present in
-                API responses — index fallback is defensive only. */}
-            {alerts.map((a, i) => (
+            {paged.map((a, i) => (
               <tr key={a.alertid ?? i} className="border-b border-gray-800/60 hover:bg-gray-800/30 transition-colors">
                 <td className="px-4 py-3 font-mono font-medium">{a.temp_sensor_id ?? a.humidity_sensor_id ?? a.oxygen_sensor_id ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-400">{a.zone ?? '—'}</td>
@@ -84,6 +85,29 @@ export function AlertsTable({ alerts, resolvingId, resolveNote, onAcknowledge, o
             ))}
           </tbody>
         </table>
+
+        {alerts.length > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800">
+            <span className="text-sm text-gray-500">{alerts.length} alerts total</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setPage(p => p - 1)}
+                disabled={page === 0}
+                className="px-3 py-1 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-400">Page {page + 1} of {totalPages}</span>
+              <button
+                onClick={() => setPage(p => p + 1)}
+                disabled={page + 1 >= totalPages}
+                className="px-3 py-1 rounded-lg bg-gray-800 text-gray-300 text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

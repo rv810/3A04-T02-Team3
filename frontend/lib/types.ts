@@ -142,6 +142,15 @@ export interface ResolveAlertRequest {
   note?: string | null
 }
 
+// ── Pagination ─────────────────────────────────────────────────────────────
+
+export interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+  limit: number
+  offset: number
+}
+
 // ── Sensors ─────────────────────────────────────────────────────────────────
 
 /** Single reading returned by GET /sensors and GET /sensors/{id} */

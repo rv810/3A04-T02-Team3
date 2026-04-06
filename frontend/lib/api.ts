@@ -26,6 +26,7 @@ import type {
   MetricsHistoryPoint,
   Session,
   WebhookSubscriber,
+  PaginatedResponse,
 } from './types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -249,9 +250,17 @@ export async function toggleWebhook(id: number): Promise<WebhookSubscriber> {
 
 // ── Sensors ─────────────────────────────────────────────────────────────────
 
-export async function getSensors(zone?: string): Promise<SensorReading[]> {
-  const query = zone ? `?zone=${encodeURIComponent(zone)}` : ''
-  return request<SensorReading[]>(`/sensors${query}`)
+export async function getSensors(
+  zone?: string,
+  limit = 50,
+  offset = 0,
+): Promise<PaginatedResponse<SensorReading>> {
+  const params = new URLSearchParams()
+  if (zone) params.set('zone', zone)
+  params.set('limit', String(limit))
+  params.set('offset', String(offset))
+  const query = params.toString() ? `?${params.toString()}` : ''
+  return request<PaginatedResponse<SensorReading>>(`/sensors${query}`)
 }
 
 export async function getSensor(id: string): Promise<SensorReading> {

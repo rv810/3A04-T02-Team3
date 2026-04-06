@@ -25,3 +25,6 @@ class PublicController:
     
     def getHourlyMaximum(self) -> list:
         return self.publicAbstraction.getHourlyMaximum()
+
+    def getFiveMinAvgByZone(self) -> dict:
+        return self.publicAbstraction.getFiveMinAvgByZone()

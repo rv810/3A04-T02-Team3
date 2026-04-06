@@ -110,7 +110,6 @@ class PublicAbstraction:
         """
         now = datetime.now(timezone.utc)
         cutoff = now - timedelta(hours=24)
-        cutoff_iso = cutoff.isoformat()
 
         sensor_tables = {
             "temperature": "tempsensor",
@@ -118,27 +117,30 @@ class PublicAbstraction:
             "oxygen": "oxygensensor",
         }
 
-        # Pre-fill all 24 hourly buckets so the chart has a continuous timeline
+        # Pre-fill all 25 hourly buckets (24 past hours + current hour)
         buckets = {}
-        for i in range(24):
+        for i in range(25):
             hour_dt = cutoff + timedelta(hours=i)
             hour_key = f"{hour_dt.year}-{hour_dt.month:02d}-{hour_dt.day:02d} {hour_dt.hour:02d}:00"
             buckets[hour_key] = {"temperature": [], "humidity": [], "oxygen": []}
 
         for metric, table in sensor_tables.items():
-            response = (
-                supabase.table(table)
-                .select("value, timestamp")
-                .gte("timestamp", cutoff_iso)
-                .execute()
-            )
-            for row in response.data:
-                ts_str = row["timestamp"]
-                ts_str = ts_str.replace("Z", "+00:00")
-                ts = datetime.fromisoformat(ts_str)
-                hour_key = f"{ts.year}-{ts.month:02d}-{ts.day:02d} {ts.hour:02d}:00"
-
-                if hour_key in buckets:
+            # Query each hourly bucket individually with a sample of 50 readings.
+            # 25 hours × 3 tables = 75 small queries, far cheaper than paginating
+            # through hundreds of thousands of rows.
+            for hour_key in buckets:
+                # Parse hour_key back to datetime range
+                hour_start = datetime.strptime(hour_key, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
+                hour_end = hour_start + timedelta(hours=1)
+                response = (
+                    supabase.table(table)
+                    .select("value")
+                    .gte("timestamp", hour_start.isoformat())
+                    .lt("timestamp", hour_end.isoformat())
+                    .limit(50)
+                    .execute()
+                )
+                for row in response.data:
                     buckets[hour_key][metric].append(row["value"])
 
         # Build sorted result with rounded values
@@ -193,9 +195,57 @@ class PublicAbstraction:
                     .execute()
                 )
                 if response.data:
-                    zone_max[metric] = response.data[0]["value"]
+                    zone_max[metric] = round(response.data[0]["value"], 1)
                 else:
                     zone_max[metric] = None
             result.append(zone_max)
 
         return result
+
+    def getFiveMinAvgByZone(self) -> dict:
+        """
+        Computes 5-minute rolling averages per zone and city-wide.
+        Returns { "city": { metric: avg }, "zones": [{ zone, metric: avg }] }.
+        """
+        now = datetime.now(timezone.utc)
+        cutoff_iso = (now - timedelta(minutes=5)).isoformat()
+
+        sensor_tables = {
+            "temperature": "tempsensor",
+            "humidity": "humiditysensor",
+            "oxygen": "oxygensensor",
+        }
+
+        zone_data = {}  # zone -> metric -> [values]
+        city_values = {"temperature": [], "humidity": [], "oxygen": []}
+
+        for metric, table in sensor_tables.items():
+            response = (
+                supabase.table(table)
+                .select("zone, value")
+                .gte("timestamp", cutoff_iso)
+                .execute()
+            )
+            for row in response.data:
+                zone = row["zone"]
+                if zone not in zone_data:
+                    zone_data[zone] = {"temperature": [], "humidity": [], "oxygen": []}
+                zone_data[zone][metric].append(row["value"])
+                city_values[metric].append(row["value"])
+
+        # Build city averages
+        city = {}
+        for metric in ("temperature", "humidity", "oxygen"):
+            vals = city_values[metric]
+            city[metric] = round(sum(vals) / len(vals), 1) if vals else None
+
+        # Build per-zone averages
+        zones = []
+        for zone in sorted(zone_data.keys()):
+            entry = {"zone": zone}
+            for metric in ("temperature", "humidity", "oxygen"):
+                vals = zone_data[zone][metric]
+                entry[metric] = round(sum(vals) / len(vals), 1) if vals else None
+            zones.append(entry)
+
+        return {"city": city, "zones": zones}

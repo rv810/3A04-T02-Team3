@@ -192,6 +192,24 @@ export interface MetricsHistoryPoint {
   oxygen: number | null
 }
 
+export interface ZoneMetrics {
+  zone: string
+  temperature: number | null
+  humidity: number | null
+  oxygen: number | null
+  [key: string]: string | number | null
+}
+
+export interface FiveMinAvgResponse {
+  city: {
+    temperature: number | null
+    humidity: number | null
+    oxygen: number | null
+    [key: string]: number | null
+  }
+  zones: ZoneMetrics[]
+}
+
 export interface ReadingsToday {
   count: number
 }

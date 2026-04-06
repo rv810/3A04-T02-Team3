@@ -24,6 +24,8 @@ import type {
   CityAverages,
   ZoneSummary,
   MetricsHistoryPoint,
+  FiveMinAvgResponse,
+  ZoneMetrics,
   Session,
   WebhookSubscriber,
   PaginatedResponse,
@@ -289,4 +291,12 @@ export async function getAllZones(): Promise<ZoneSummary[]> {
 
 export async function getMetricsHistory(): Promise<MetricsHistoryPoint[]> {
   return request<MetricsHistoryPoint[]>('/public/metrics/history', { headers: publicHeaders() }, false)
+}
+
+export async function getFiveMinAvg(): Promise<FiveMinAvgResponse> {
+  return request<FiveMinAvgResponse>('/public/five-min-avg', { headers: publicHeaders() }, false)
+}
+
+export async function getHourlyMax(): Promise<ZoneMetrics[]> {
+  return request<ZoneMetrics[]>('/public/zones/hourly-max', { headers: publicHeaders() }, false)
 }

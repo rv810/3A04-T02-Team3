@@ -7,40 +7,33 @@
  */
 
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
-import { Wind, Thermometer, Droplets, MapPin, MessageSquare, X, Send } from 'lucide-react'
+import { Wind, Thermometer, Droplets, MapPin } from 'lucide-react'
 import { getAllZones, getMetricsHistory } from '@/lib/api'
 import type { ZoneSummary, MetricsHistoryPoint } from '@/lib/types'
+import EnvironmentalChatbot from '@/components/EnvironmentalChatbot'
 
 type Metric = 'temperature' | 'humidity' | 'oxygen'
 
 const METRIC_META = [
-  { key: 'temperature' as Metric, label: 'Temperature',  unit: '°C', icon: Thermometer, color: 'text-orange-400', bg: 'bg-orange-400/10', stroke: '#F97316', yUnit: '°C' },
-  { key: 'humidity'    as Metric, label: 'Humidity',      unit: '%',  icon: Droplets,    color: 'text-cyan-400',   bg: 'bg-cyan-400/10',  stroke: '#06B6D4', yUnit: '%'  },
-  { key: 'oxygen'      as Metric, label: 'Oxygen',        unit: '%',  icon: Wind,        color: 'text-green-400',  bg: 'bg-green-400/10', stroke: '#22C55E', yUnit: '%'  },
+  { key: 'temperature' as Metric, label: 'Temperature', unit: '°C', icon: Thermometer, color: 'text-orange-400', bg: 'bg-orange-400/10', stroke: '#F97316', yUnit: '°C' },
+  { key: 'humidity'    as Metric, label: 'Humidity',    unit: '%',  icon: Droplets,    color: 'text-cyan-400',   bg: 'bg-cyan-400/10',  stroke: '#06B6D4', yUnit: '%'  },
+  { key: 'oxygen'      as Metric, label: 'Oxygen',      unit: '%',  icon: Wind,        color: 'text-green-400',  bg: 'bg-green-400/10', stroke: '#22C55E', yUnit: '%'  },
 ]
 
 function getStatusLabel(metric: Metric, value: number): string {
   if (metric === 'temperature') return value >= 15 && value <= 30 ? 'Normal' : 'Extreme'
-  if (metric === 'humidity') return value >= 30 && value <= 70 ? 'Normal' : 'Abnormal'
+  if (metric === 'humidity')    return value >= 30 && value <= 70 ? 'Normal' : 'Abnormal'
   return value >= 19 && value <= 22 ? 'Normal' : 'Low'
 }
 
-
 export default function PublicDashboard() {
   const [metric, setMetric] = useState<Metric>('temperature')
-  const [chatOpen, setChatOpen] = useState(false)
-  const [chatInput, setChatInput] = useState('')
-  const [messages, setMessages] = useState([
-    { from: 'bot', text: "Hi! I'm the SCEMAS AI assistant. Ask me about current environmental conditions in the city." },
-  ])
   const [clock, setClock] = useState('')
-  const chatEndRef = useRef<HTMLDivElement>(null)
-
   const [zones, setZones] = useState<ZoneSummary[]>([])
   const [history, setHistory] = useState<MetricsHistoryPoint[]>([])
   const [loading, setLoading] = useState(true)
@@ -59,10 +52,7 @@ export default function PublicDashboard() {
     async function fetchData() {
       try {
         const [z, h] = await Promise.all([getAllZones(), getMetricsHistory()])
-        if (!cancelled) {
-          setZones(z)
-          setHistory(h)
-        }
+        if (!cancelled) { setZones(z); setHistory(h) }
       } catch (err) {
         console.error('Failed to fetch public data:', err)
       } finally {
@@ -72,7 +62,7 @@ export default function PublicDashboard() {
 
     fetchData().then(() => {
       if (!cancelled) {
-        // Public users don't have auth tokens for WebSocket — polling at 30s
+        // Public users don't have auth tokens for WebSocket — polling at 5 s
         // is sufficient because metrics data is hourly-bucketed.
         intervalId = setInterval(async () => {
           try {
@@ -89,21 +79,6 @@ export default function PublicDashboard() {
     }
   }, [])
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  function sendMessage() {
-    const text = chatInput.trim()
-    if (!text) return
-    setMessages(prev => [...prev, { from: 'user', text }])
-    setChatInput('')
-    setTimeout(() => {
-      setMessages(prev => [...prev, { from: 'bot', text: getBotResponse(text) }])
-    }, 350)
-  }
-
-  // Compute city-wide averages from zone data
   function computeAverage(key: Metric): number | null {
     const values = zones.map(z => z[key]?.value).filter((v): v is number => v != null)
     if (values.length === 0) return null
@@ -112,47 +87,17 @@ export default function PublicDashboard() {
 
   const cityAvg: Record<Metric, number | null> = {
     temperature: computeAverage('temperature'),
-    humidity: computeAverage('humidity'),
-    oxygen: computeAverage('oxygen'),
+    humidity:    computeAverage('humidity'),
+    oxygen:      computeAverage('oxygen'),
   }
 
   const metricStatus: Record<Metric, string> = {
     temperature: cityAvg.temperature != null ? getStatusLabel('temperature', cityAvg.temperature) : '—',
-    humidity:    cityAvg.humidity != null ? getStatusLabel('humidity', cityAvg.humidity) : '—',
-    oxygen:      cityAvg.oxygen != null ? getStatusLabel('oxygen', cityAvg.oxygen) : '—',
+    humidity:    cityAvg.humidity    != null ? getStatusLabel('humidity',    cityAvg.humidity)    : '—',
+    oxygen:      cityAvg.oxygen      != null ? getStatusLabel('oxygen',      cityAvg.oxygen)      : '—',
   }
 
-  const statusGood = (m: Metric) => ['Normal'].includes(metricStatus[m])
-
-  function getBotResponse(input: string): string {
-    if (loading) return 'Data is still loading, please try again in a moment.'
-    const msg = input.toLowerCase()
-    if (/^(hi|hello|hey)/.test(msg))
-      return "Hi! I'm the SCEMAS environmental assistant. Ask me about temperature, humidity, oxygen levels, city zones, or active alerts."
-    if (msg.includes('temp'))
-      return cityAvg.temperature != null
-        ? `The current city-wide average temperature is ${cityAvg.temperature}°C across ${zones.length} zones.`
-        : 'Temperature data is not available right now.'
-    if (msg.includes('humid'))
-      return cityAvg.humidity != null
-        ? `The current city-wide average humidity is ${cityAvg.humidity}% across ${zones.length} zones.`
-        : 'Humidity data is not available right now.'
-    if (msg.includes('oxygen') || msg.includes('o2'))
-      return cityAvg.oxygen != null
-        ? `The current city-wide average oxygen level is ${cityAvg.oxygen}% across ${zones.length} zones.`
-        : 'Oxygen data is not available right now.'
-    if (msg.includes('alert') || msg.includes('warn'))
-      return 'Check the operator dashboard for active alerts.'
-    if (msg.includes('zone') || msg.includes('area') || msg.includes('district')) {
-      if (zones.length === 0) return 'No zone data is available right now.'
-      const list = zones.map(z => `${z.zone} (${z.status})`).join(', ')
-      return `Monitoring ${zones.length} zones: ${list}.`
-    }
-    if (msg.includes('sensor'))
-      return `Currently monitoring ${zones.length} zones with real-time sensor data.`
-    return 'I can help with: temperature, humidity, oxygen levels, zone status, and alerts. What would you like to know?'
-  }
-
+  const statusGood = (m: Metric) => metricStatus[m] === 'Normal'
   const selected = METRIC_META.find(m => m.key === metric)!
 
   return (
@@ -242,36 +187,13 @@ export default function PublicDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={history} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
-                  <XAxis
-                    dataKey="time"
-                    stroke="#374151"
-                    tick={{ fontSize: 10, fill: '#6B7280' }}
-                    interval={3}
-                  />
-                  <YAxis
-                    stroke="#374151"
-                    tick={{ fontSize: 10, fill: '#6B7280' }}
-                    unit={` ${selected.yUnit}`}
-                    width={52}
-                  />
+                  <XAxis dataKey="time" stroke="#374151" tick={{ fontSize: 10, fill: '#6B7280' }} interval={3} />
+                  <YAxis stroke="#374151" tick={{ fontSize: 10, fill: '#6B7280' }} unit={` ${selected.yUnit}`} width={52} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#111827',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F9FAFB',
-                      fontSize: 12,
-                    }}
+                    contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px', color: '#F9FAFB', fontSize: 12 }}
                     labelStyle={{ color: '#9CA3AF' }}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey={metric}
-                    stroke={selected.stroke}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, strokeWidth: 0 }}
-                  />
+                  <Line type="monotone" dataKey={metric} stroke={selected.stroke} strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -321,65 +243,7 @@ export default function PublicDashboard() {
         </div>
       </footer>
 
-      {/* AI Chatbot */}
-      {chatOpen ? (
-        <div className="fixed bottom-5 right-5 w-80 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl flex flex-col z-50" style={{ height: '420px' }}>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-3 h-3 text-white" aria-hidden="true" />
-              </div>
-              <div>
-                <div className="text-xs font-semibold">Environmental Assistant</div>
-                <div className="text-[10px] text-green-400">AI · Powered by SCEMAS</div>
-              </div>
-            </div>
-            <button onClick={() => setChatOpen(false)} className="text-gray-600 hover:text-gray-300 transition-colors" aria-label="Close chat">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`max-w-[88%] text-xs px-3 py-2 rounded-xl leading-relaxed ${
-                    msg.from === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-200'
-                  }`}
-                >
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-
-          <div className="p-3 border-t border-gray-800 flex gap-2">
-            <input
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
-              placeholder="Ask about temperature, humidity..."
-              value={chatInput}
-              onChange={e => setChatInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && sendMessage()}
-            />
-            <button
-              onClick={sendMessage}
-              className="w-8 h-8 bg-blue-600 hover:bg-blue-500 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Send message"
-            >
-              <Send className="w-3 h-3 text-white" />
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          onClick={() => setChatOpen(true)}
-          className="fixed bottom-5 right-5 w-13 h-13 bg-blue-600 hover:bg-blue-500 rounded-full shadow-lg flex items-center justify-center transition-colors z-50 p-3.5"
-          title="Ask the environmental assistant" aria-label="Ask the environmental assistant"
-        >
-          <MessageSquare className="w-5 h-5 text-white" />
-        </button>
-      )}
+      <EnvironmentalChatbot zones={zones} loading={loading} />
     </div>
   )
 }

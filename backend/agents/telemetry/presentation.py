@@ -7,9 +7,11 @@ Pattern:   Pipe-and-Filter
 Reqs:      SR-INT1, SR-INT2, PR-SL1, PR-RFT1, BE4
 """
 
+import os
+from dotenv import load_dotenv, find_dotenv
 from typing import Optional
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Query, Request, WebSocket, HTTPException, Depends
+from fastapi import APIRouter, Query, Request, WebSocket, HTTPException, Depends, Header # 👈 Added Header
 from middleware.auth import require_operator
 from database import supabase
 from websocket_manager import ws_manager
@@ -18,6 +20,9 @@ from agents.telemetry.humidity.control import HumidityController
 from agents.telemetry.oxygen.control import OxygenController
 from agents.telemetry.control import SensorsController
 
+load_dotenv(find_dotenv())
+TELEMETRY_SECRET = os.getenv("TELEMETRY_SECRET_KEY")
+
 router = APIRouter()
 
 temp_controller = TemperatureController()
@@ -25,8 +30,16 @@ humidity_controller = HumidityController()
 oxygen_controller = OxygenController()
 sensors_controller = SensorsController()
 
+
 @router.post("/api/telemetry")
-async def aws_iot_webhook(request: Request):
+async def aws_iot_webhook(
+    request: Request,
+    x_telemetry_secret: str = Header(None) 
+):
+    if x_telemetry_secret != TELEMETRY_SECRET:
+        print("SECURITY REJECT: Invalid or missing telemetry secret key!")
+        raise HTTPException(status_code=401, detail="Unauthorized IoT Gateway")
+
     data = await request.json()
 
     # THE AWS CONFIRMATION HANDSHAKE TRAP
@@ -69,7 +82,6 @@ async def aws_iot_webhook(request: Request):
         raise HTTPException(status_code=422, detail="Data validation failed")
 
     return {"status": "success", "message": "Validated, stored, and broadcasted"}
-
 
 @router.websocket("/ws")
 async def websocket_endpoint(

@@ -120,7 +120,7 @@ class PublicAbstraction:
 
         # Pre-fill all 24 hourly buckets so the chart has a continuous timeline
         buckets = {}
-        for i in range(24):
+        for i in range(25):
             hour_dt = cutoff + timedelta(hours=i)
             hour_key = f"{hour_dt.year}-{hour_dt.month:02d}-{hour_dt.day:02d} {hour_dt.hour:02d}:00"
             buckets[hour_key] = {"temperature": [], "humidity": [], "oxygen": []}

@@ -31,7 +31,7 @@ SENSORS = [
     ),
 ]
 
-def run(interval=1.0):
+def run(interval=10.0):
     print(f"temperature sim starting, {len(SENSORS)} sensors, interval= {interval}s")
 
     try:

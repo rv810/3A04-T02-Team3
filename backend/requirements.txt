@@ -4,3 +4,4 @@ supabase
 websockets
 python-dotenv
 pydantic[email]
+httpx

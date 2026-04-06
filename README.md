@@ -22,7 +22,7 @@ SCEMAS is a cloud-native IoT platform that ingests real-time environmental telem
 
 SCEMAS monitors three environmental metrics — temperature, humidity, and oxygen — reported by IoT sensors deployed across five named city zones (downtown, industrial, residential, park, waterfront). The system serves three user roles: **public users** who can view aggregated environmental data without authentication, **city operators** who monitor live sensor feeds and manage alerts, and **system administrators** who configure alert rules and manage user accounts.
 
-Simulated IoT sensors publish telemetry via MQTT over TLS to AWS IoT Core, which authenticates each device using x.509 certificates. AWS IoT Core forwards validated messages to the SCEMAS backend through an HTTP webhook. The backend validates and stores readings, evaluates them against administrator-defined alert rules, and broadcasts updates to connected operator dashboards via WebSocket. Operators can acknowledge and resolve alerts with optional notes, while administrators have full control over alert rule configuration (create, update, delete, toggle) and user management.
+Simulated IoT sensors publish telemetry via MQTT over TLS to AWS IoT Core, which authenticates each device using x.509 certificates. AWS IoT Core forwards validated messages to the SCEMAS backend through an HTTP webhook. The backend validates and stores readings, evaluates them against administrator-defined alert rules, and broadcasts updates to connected operator dashboards via WebSocket. Operators can acknowledge and resolve alerts with optional notes, while administrators have full control over alert rule configuration (create, update, delete, toggle) and user management. When an alert is triggered, the system automatically delivers webhook notifications to all registered external subscriber systems.
 
 A public-facing dashboard displays city-wide averages, zone-level summaries, and 24-hour trend charts without requiring authentication. The public REST API exposes the same data for third-party integration, optionally secured by an API key. A chatbot on the public dashboard provides conversational answers to common environmental queries.
 
@@ -44,7 +44,7 @@ Below the coordinator, the system is divided into three subsystem agents, each e
   - **Humidity** — validation and persistence of humidity readings
   - **Oxygen** — validation and persistence of oxygen readings
  
-- **Alert Rules Management** uses a **Blackboard** pattern, where incoming telemetry is evaluated against a shared knowledge base of administrator-defined rules to detect threshold violations and generate alerts. This agent operates as an automated evaluation engine with no direct user-facing sub-agents. Human interaction with alert rules and alert triage is handled by the Admin and Operator sub-agents under Account Management.
+- **Alert Rules Management** uses a **Blackboard** pattern, where incoming telemetry is evaluated against a shared knowledge base of administrator-defined rules to detect threshold violations and generate alerts. When a violation is detected, this agent also handles webhook notification delivery to subscribed external systems. Human interaction with alert rules and alert triage is handled by the Admin and Operator sub-agents under Account Management.
 
 ### PAC Hierarchy
  
@@ -99,6 +99,7 @@ Simulated IoT Sensors (paho-mqtt)
                                     → If threshold violated: create alert + audit log
                                         → Event bus: publish alert_triggered
                                             → Broadcast to connected WebSocket clients
+                                            → POST webhook notifications to subscribed external systems
 ```
 
 ---
@@ -299,6 +300,15 @@ For public API details including response schemas and examples, see [`backend/PU
 | PATCH | `/admin/rules/{id}/toggle` | Admin | Toggle rule enabled/disabled |
 | GET | `/admin/audit-log` | Admin | View audit log |
 
+**Webhooks** — external system notification management
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/admin/webhooks` | Admin | List all webhook subscribers |
+| POST | `/admin/webhooks` | Admin | Register external system URL |
+| DELETE | `/admin/webhooks/{id}` | Admin | Remove a subscriber |
+| PATCH | `/admin/webhooks/{id}/toggle` | Admin | Toggle subscriber active/inactive |
+
 **Sensors** — sensor data queries
 
 | Method | Endpoint | Auth | Description |
@@ -380,8 +390,10 @@ backend/
 │   │       ├── control.py                     # OxygenController — validation and processing
 │   │       └── abstraction.py                 # OxygenAbstraction — reading storage
 │   └── alerts/                                # Alert Rules Management agent (Blackboard)
-│       ├── control.py                         # AlertsController — rule evaluation engine
-│       └── abstraction.py                     # AlertsAbstraction — alert storage and audit logging
+│       ├── presentation.py                    # Webhook subscriber management endpoints
+│       ├── control.py                         # AlertsController — rule evaluation + webhook delivery
+│       ├── abstraction.py                     # AlertsAbstraction — alert storage and audit logging
+│       └── webhook_abstraction.py             # WebhookAbstraction — subscriber CRUD
 ├── PUBLIC_API.md                              # Public API documentation
 └── requirements.txt                           # Python dependencies
 
@@ -389,7 +401,8 @@ sensors/
 ├── sensor_base.py                             # Shared MQTT client, zone config, reading generation
 ├── temperature_sensor.py                      # Temperature simulator (5 zones, 1s interval)
 ├── humidity_sensor.py                         # Humidity simulator (5 zones, 1s interval)
-└── oxygen_sensor.py                           # Oxygen simulator (5 zones, 1s interval)
+├── oxygen_sensor.py                           # Oxygen simulator (5 zones, 1s interval)
+└── webhook_receiver.py                        # Demo external system receiver (port 9000, for ngrok demo)
  
 frontend/
 ├── app/
@@ -409,7 +422,8 @@ frontend/
 │   ├── SensorsTab.tsx                         # Sensor network display
 │   ├── Sidebar.tsx                            # Navigation sidebar
 │   ├── Toast.tsx                              # Notification toasts
-│   └── UsersTab.tsx                           # User management interface
+│   ├── UsersTab.tsx                           # User management interface
+│   └── WebhooksTab.tsx                        # Webhook subscriber management
 ├── lib/
 │   ├── api.ts                                 # REST API client
 │   ├── types.ts                               # TypeScript type definitions

@@ -8,14 +8,17 @@ Pattern:   Blackboard
 Reqs:      PR-SC1, SR-AU1
 """
 from agents.alerts.abstraction import AlertsAbstraction
+from agents.alerts.webhook_abstraction import WebhookAbstraction
 from models.alerts_info import AlertsInfo, AlertRule
 from typing import List
 from events.event_bus import event_bus
 import asyncio
+import httpx
 
 class AlertsController:
     def __init__(self):
         self.alertsDB = AlertsAbstraction()
+        self.webhookDB = WebhookAbstraction()
 
     async def checkAlertRules(self, data) -> None:
         """Evaluates a sensor reading against all enabled alert rules and triggers alerts for violations. Implements PR-SC1 (alert triggered within 10s)."""
@@ -51,7 +54,7 @@ class AlertsController:
                 )
 
                 # send notification
-                self.makeAlertNotifs(triggered_alert)
+                await self.makeAlertNotifs(triggered_alert)
                 await event_bus.publish("alert_triggered", {
                     "alerttype": str(triggered_alert.alerttype),
                     "zone": triggered_alert.zone,
@@ -59,6 +62,24 @@ class AlertsController:
                     "severity": triggered_alert.severity,
                 })
 
-    def makeAlertNotifs(self, alert: AlertsInfo) -> None:
-        # notification logic here
-        print(f"Alert triggered: {alert.alerttype} violated rule {alert.ruleviolated}")
+    async def makeAlertNotifs(self, alert: AlertsInfo) -> None:
+        """POST alert payload to all active webhook subscribers. Failures are logged but never block alert processing."""
+        subscribers = self.webhookDB.get_active_subscribers()
+        if not subscribers:
+            return
+
+        payload = {
+            "alerttype": str(alert.alerttype.value) if hasattr(alert.alerttype, "value") else str(alert.alerttype),
+            "zone": alert.zone,
+            "message": alert.message,
+            "severity": alert.severity,
+            "triggered_at": alert.triggered_at.isoformat() if alert.triggered_at else None,
+            "ruleviolated": alert.ruleviolated,
+        }
+
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            for sub in subscribers:
+                try:
+                    await client.post(sub["url"], json=payload)
+                except Exception as e:
+                    print(f"Webhook delivery failed for {sub['url']}: {e}")

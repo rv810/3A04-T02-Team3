@@ -9,17 +9,19 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, AlertTriangle, Activity, Radio, Settings, Users } from 'lucide-react'
+import { Bell, AlertTriangle, Activity, Radio, Settings, Users, Webhook } from 'lucide-react'
 import {
   logout as apiLogout,
   getAlerts, acknowledgeAlert, resolveAlert,
   getSensors, getCityAverages, getMetricsHistory, getReadingsToday,
   getAlertRules, createAlertRule, updateAlertRule, deleteAlertRule, toggleAlertRule,
   listUsers, adminCreateUser, adminEditUser, adminDeleteUser,
+  getWebhooks, addWebhook, deleteWebhook, toggleWebhook,
 } from '@/lib/api'
 import type {
   Session, AlertsInfo, SensorReading, CityAverages, MetricsHistoryPoint,
   AlertRule, AccountInformation, CreateAlertRuleRequest, UpdateAlertRuleRequest, AdminCreateAccountRequest, AdminEditAccountRequest,
+  WebhookSubscriber,
 } from '@/lib/types'
 import { useWebSocket } from '@/lib/useWebSocket'
 import { Sidebar }           from '@/components/Sidebar'
@@ -29,6 +31,7 @@ import { AlertHistoryTable } from '@/components/AlertHistoryTable'
 import { SensorsTab }        from '@/components/SensorsTab'
 import { AlertRulesTab }     from '@/components/AlertRulesTab'
 import { UsersTab }          from '@/components/UsersTab'
+import { WebhooksTab }       from '@/components/WebhooksTab'
 import { Toast }             from '@/components/Toast'
 
 /**
@@ -39,7 +42,7 @@ const WS_SENSOR_TYPE_MAP: Record<string, SensorReading['sensor_type']> = {
   temp: 'temperature', humidity: 'humidity', ox: 'oxygen',
 }
 
-type Tab = 'overview' | 'alerts' | 'history' | 'sensors' | 'rules' | 'users'
+type Tab = 'overview' | 'alerts' | 'history' | 'sensors' | 'rules' | 'users' | 'webhooks'
 
 const NAV = [
   { id: 'overview', label: 'Overview',      icon: Activity      },
@@ -48,6 +51,7 @@ const NAV = [
   { id: 'sensors',  label: 'Sensors',       icon: Radio         },
   { id: 'rules',    label: 'Alert Rules',   icon: Settings, section: 'Administration' },
   { id: 'users',    label: 'Users & Roles', icon: Users          },
+  { id: 'webhooks', label: 'Webhooks',      icon: Webhook        },
 ]
 
 export default function AdminDashboard() {
@@ -59,11 +63,13 @@ export default function AdminDashboard() {
   const [chartData, setChartData] = useState<MetricsHistoryPoint[]>([])
   const [rules,    setRules]    = useState<AlertRule[]>([])
   const [users,    setUsers]    = useState<AccountInformation[]>([])
+  const [webhooks, setWebhooks] = useState<WebhookSubscriber[]>([])
   const [readingsToday, setReadingsToday] = useState<number | null>(null)
   const [loading,       setLoading]       = useState(true)
   const [chartLoading,  setChartLoading]  = useState(true)
   const [rulesLoading,  setRulesLoading]  = useState(true)
   const [usersLoading,  setUsersLoading]  = useState(true)
+  const [webhooksLoading, setWebhooksLoading] = useState(true)
   const [userName, setUserName] = useState('')
   const [userRole, setUserRole] = useState('')
   const [resolvingId,  setResolvingId]  = useState<number | null>(null)
@@ -92,6 +98,13 @@ export default function AdminDashboard() {
       const data = await listUsers()
       setUsers(data)
     } catch { setUsers([]) }
+  }
+
+  async function fetchWebhooks() {
+    try {
+      const data = await getWebhooks()
+      setWebhooks(data)
+    } catch { setWebhooks([]) }
   }
 
   const handleWsMessage = useCallback((msg: { event: string; data: Record<string, unknown> }) => {
@@ -138,7 +151,8 @@ export default function AdminDashboard() {
         getAlertRules(),
         listUsers(),
         getReadingsToday(),
-      ]).then(([alertsR, sensorsR, avgR, chartR, rulesR, usersR, readingsTodayR]) => {
+        getWebhooks(),
+      ]).then(([alertsR, sensorsR, avgR, chartR, rulesR, usersR, readingsTodayR, webhooksR]) => {
         if (alertsR.status === 'fulfilled')  setAlerts(alertsR.value)
         if (sensorsR.status === 'fulfilled') setSensors(sensorsR.value)
         if (avgR.status === 'fulfilled')     setCityAverages(avgR.value)
@@ -146,10 +160,12 @@ export default function AdminDashboard() {
         if (rulesR.status === 'fulfilled')   setRules(rulesR.value)
         if (usersR.status === 'fulfilled')   setUsers(usersR.value)
         if (readingsTodayR.status === 'fulfilled') setReadingsToday(readingsTodayR.value.count)
+        if (webhooksR.status === 'fulfilled') setWebhooks(webhooksR.value)
         setLoading(false)
         setChartLoading(false)
         setRulesLoading(false)
         setUsersLoading(false)
+        setWebhooksLoading(false)
       })
     } catch {
       router.push('/login')
@@ -258,6 +274,35 @@ export default function AdminDashboard() {
     }
   }
 
+  // ── Webhook operations ─────────────────────────────────────────────────────
+
+  async function handleAddWebhook(data: { url: string; description: string }) {
+    try {
+      await addWebhook(data)
+      await fetchWebhooks()
+      fireToast('Webhook added')
+    } catch (err) {
+      fireToast(`Failed to add webhook: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
+  async function handleDeleteWebhook(id: number) {
+    try {
+      await deleteWebhook(id)
+      await fetchWebhooks()
+      fireToast('Webhook deleted')
+    } catch (err) {
+      fireToast(`Failed to delete webhook: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
+  async function handleToggleWebhook(id: number) {
+    try {
+      await toggleWebhook(id)
+      await fetchWebhooks()
+    } catch { /* toggle failed silently */ }
+  }
+
   // ── Logout ────────────────────────────────────────────────────────────────
 
   async function logout() {
@@ -327,6 +372,16 @@ export default function AdminDashboard() {
             onUpdate={handleUpdateRule}
             onFireToast={fireToast}
             loading={rulesLoading}
+          />
+        )}
+        {tab === 'webhooks' && (
+          <WebhooksTab
+            webhooks={webhooks}
+            onAdd={handleAddWebhook}
+            onDelete={handleDeleteWebhook}
+            onToggle={handleToggleWebhook}
+            onFireToast={fireToast}
+            loading={webhooksLoading}
           />
         )}
         {tab === 'users' && (

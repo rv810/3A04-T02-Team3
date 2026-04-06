@@ -52,16 +52,53 @@ class PublicAbstraction:
 
     def getAllZonesSummary(self) -> list:
         """
-        Returns a summary for every distinct zone found across all sensor tables.
-        Used by the public dashboard zone status cards.
+        Returns a summary for every distinct active zone.
+        OPTIMIZED: Uses only 3 database queries total and avoids downloading the whole DB.
         """
-        zones = set()
-        for table in ("tempsensor", "humiditysensor", "oxygensensor"):
-            response = supabase.table(table).select("zone").execute()
-            for row in response.data:
-                zones.add(row["zone"])
+        sensor_tables = {
+            "temperature": "tempsensor",
+            "humidity": "humiditysensor",
+            "oxygen": "oxygensensor",
+        }
+        
+        zone_summaries = {}
 
-        return [self.getZoneSummary(zone) for zone in sorted(zones)]
+        # Query each table exactly once, grabbing only the most recent data
+        for metric, table in sensor_tables.items():
+            
+            # .limit(100) ensures we catch all active zones without downloading the whole DB
+            response = (
+                supabase.table(table)
+                .select("zone, value, unit, timestamp")
+                .order("timestamp", desc=True)
+                .limit(100) 
+                .execute()
+            )
+            
+            for row in response.data:
+                zone = row["zone"]
+                
+                # Initialize the zone in our dictionary if we haven't seen it yet
+                if zone not in zone_summaries:
+                    zone_summaries[zone] = {
+                        "zone": zone,
+                        "temperature": None,
+                        "humidity": None,
+                        "oxygen": None,
+                        "status": "online"
+                    }
+                
+                # Because we ordered by descending timestamp, the FIRST row we hit 
+                # for a zone is guaranteed to be its absolute latest reading!
+                if zone_summaries[zone][metric] is None:
+                    zone_summaries[zone][metric] = {
+                        "value": row["value"],
+                        "unit": row["unit"],
+                        "last_updated": row["timestamp"],
+                    }
+
+        # Return a sorted list of the zone dictionaries
+        return sorted(list(zone_summaries.values()), key=lambda x: x["zone"])
 
     def getPublicMetricsHistory(self) -> list:
         """

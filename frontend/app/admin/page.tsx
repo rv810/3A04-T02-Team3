@@ -51,7 +51,7 @@ const NAV = [
   { id: 'sensors',  label: 'Sensors',       icon: Radio         },
   { id: 'rules',    label: 'Alert Rules',   icon: Settings, section: 'Administration' },
   { id: 'users',    label: 'Users & Roles', icon: Users          },
-  { id: 'webhooks', label: 'Webhooks',      icon: Webhook        },
+  { id: 'webhooks', label: 'External Notifications', icon: Webhook },
 ]
 
 export default function AdminDashboard() {
@@ -280,9 +280,9 @@ export default function AdminDashboard() {
     try {
       await addWebhook(data)
       await fetchWebhooks()
-      fireToast('Webhook added')
+      fireToast('External notification added')
     } catch (err) {
-      fireToast(`Failed to add webhook: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      fireToast(`Failed to add notification: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
@@ -290,9 +290,9 @@ export default function AdminDashboard() {
     try {
       await deleteWebhook(id)
       await fetchWebhooks()
-      fireToast('Webhook deleted')
+      fireToast('External notification deleted')
     } catch (err) {
-      fireToast(`Failed to delete webhook: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      fireToast(`Failed to delete notification: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 

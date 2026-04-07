@@ -133,14 +133,14 @@ async def get_sensors(
 # conflict (FastAPI matches routes top-down; "city-averages" would otherwise
 # be captured as an {id} parameter).
 @router.get("/sensors/city-averages")
-@limiter.limit("30/minute")
+@limiter.limit("120/minute")
 async def get_city_averages(
     request: Request,
     current_user: dict = Depends(require_operator)):
     return sensors_controller.getCityAverages()
 
 @router.get("/sensors/readings-today")
-@limiter.limit("30/minute")
+@limiter.limit("120/minute")
 async def get_readings_today(
     request: Request,
     current_user: dict = Depends(require_operator)):

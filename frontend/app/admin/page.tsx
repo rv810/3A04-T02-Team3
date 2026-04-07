@@ -197,7 +197,8 @@ export default function AdminDashboard() {
   async function acknowledge(id: number) {
     try {
       await acknowledgeAlert(id)
-      await fetchAlerts()
+      setAlerts(prev => prev.map(a => a.alertid === id ? { ...a, status: 'acknowledged' as const } : a))
+      fetchAlerts().catch(() => {})
     } catch (err) { fireToast('Failed to acknowledge alert') }
   }
 
@@ -206,7 +207,8 @@ export default function AdminDashboard() {
   async function confirmResolve(id: number) {
     try {
       await resolveAlert(id, { note: resolveNote || undefined })
-      await fetchAlerts()
+      setAlerts(prev => prev.map(a => a.alertid === id ? { ...a, status: 'resolved' as const, resolved_note: resolveNote || null } : a))
+      fetchAlerts().catch(() => {})
     } catch (err) { fireToast('Failed to resolve alert') }
     setResolvingId(null)
     setResolveNote('')

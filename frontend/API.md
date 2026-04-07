@@ -565,7 +565,7 @@ Total number of sensor readings received today (UTC).
 
 ## 8. Public Data
 
-These endpoints serve read-only data for public displays. In production, they require an API key via the `x-api-key` header. In development (when `PUBLIC_API_KEY` env var is not set), no key is required.
+These endpoints serve read-only data for public displays. All public endpoints are rate-limited to **30 requests per minute per IP**. In production, they require an API key via the `x-api-key` header. In development (when `PUBLIC_API_KEY` env var is not set), no key is required.
 
 If the key is missing or invalid in production:
 **Response 401** — `"Invalid or missing API key"`
@@ -636,6 +636,111 @@ Hourly averaged readings for the last 24 hours.
 ```
 
 Metrics with no readings in an hour return `null`.
+
+---
+
+### GET `/public/five-min-avg`
+
+City-wide and per-zone 5-minute rolling averages for all metrics.
+
+**Response 200**
+```json
+{
+  "city": {
+    "temperature": 22.4,
+    "humidity": 57.1,
+    "oxygen": 20.8
+  },
+  "zones": [
+    {
+      "zone": "Downtown Core",
+      "temperature": 23.1,
+      "humidity": 55.0,
+      "oxygen": 20.9
+    },
+    {
+      "zone": "Waterfront",
+      "temperature": 21.7,
+      "humidity": 59.2,
+      "oxygen": 20.7
+    }
+  ]
+}
+```
+
+Averages are computed from readings within the last 5 minutes. Metrics are `null` if no readings exist. Values are rounded to 1 decimal place.
+
+---
+
+### GET `/public/zones/hourly-max`
+
+Maximum sensor readings per zone for the current hour.
+
+**Response 200**
+```json
+[
+  {
+    "zone": "Downtown Core",
+    "temperature": 24.5,
+    "humidity": 62.3,
+    "oxygen": 21.0
+  },
+  {
+    "zone": "Waterfront",
+    "temperature": 20.1,
+    "humidity": 58.0,
+    "oxygen": 20.9
+  }
+]
+```
+
+Returns the maximum value per metric per zone within the current UTC hour. Metrics are `null` if no readings exist. Values are rounded to 1 decimal place.
+
+---
+
+### GET `/public/dashboard`
+
+Combined endpoint returning zones, five-minute averages, and hourly max in a single response. Used by the public frontend to reduce request count.
+
+**Response 200**
+```json
+{
+  "zones": [
+    {
+      "zone": "Downtown Core",
+      "temperature": { "value": 22.5, "unit": "C", "last_updated": "2026-04-05T12:00:00Z" },
+      "humidity": { "value": 55.0, "unit": "%", "last_updated": "2026-04-05T11:58:00Z" },
+      "oxygen": { "value": 20.9, "unit": "%", "last_updated": "2026-04-05T11:55:00Z" },
+      "status": "online"
+    }
+  ],
+  "five_min_avg": {
+    "city": {
+      "temperature": 22.4,
+      "humidity": 57.1,
+      "oxygen": 20.8
+    },
+    "zones": [
+      {
+        "zone": "Downtown Core",
+        "temperature": 23.1,
+        "humidity": 55.0,
+        "oxygen": 20.9
+      }
+    ]
+  },
+  "hourly_max": [
+    {
+      "zone": "Downtown Core",
+      "temperature": 24.5,
+      "humidity": 62.3,
+      "oxygen": 21.0
+    }
+  ]
+}
+```
+
+`zones` uses the same format as `GET /public/zones`. `five_min_avg` uses the same format as `GET /public/five-min-avg`. `hourly_max` uses the same format as `GET /public/zones/hourly-max`.
 
 ---
 

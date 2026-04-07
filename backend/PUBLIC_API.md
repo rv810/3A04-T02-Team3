@@ -137,6 +137,138 @@ Notes:
 
 ---
 
+### 5. Five-Minute Averages
+
+#### GET `/public/five-min-avg`
+
+City-wide and per-zone 5-minute rolling averages for all metrics.
+
+**Example request**: `GET /public/five-min-avg`
+
+**Response 200**
+```json
+{
+  "city": {
+    "temperature": 22.4,
+    "humidity": 57.1,
+    "oxygen": 20.8
+  },
+  "zones": [
+    {
+      "zone": "Downtown Core",
+      "temperature": 23.1,
+      "humidity": 55.0,
+      "oxygen": 20.9
+    },
+    {
+      "zone": "Waterfront",
+      "temperature": 21.7,
+      "humidity": 59.2,
+      "oxygen": 20.7
+    }
+  ]
+}
+```
+
+Notes:
+- Averages are computed from readings within the last 5 minutes
+- Metrics are `null` if no readings exist for that sensor type in the window
+- Values are rounded to 1 decimal place
+
+---
+
+### 6. Hourly Maximum by Zone
+
+#### GET `/public/zones/hourly-max`
+
+Maximum sensor readings per zone for the current hour.
+
+**Example request**: `GET /public/zones/hourly-max`
+
+**Response 200**
+```json
+[
+  {
+    "zone": "Downtown Core",
+    "temperature": 24.5,
+    "humidity": 62.3,
+    "oxygen": 21.0
+  },
+  {
+    "zone": "Waterfront",
+    "temperature": 20.1,
+    "humidity": 58.0,
+    "oxygen": 20.9
+  }
+]
+```
+
+Notes:
+- Returns the maximum value per metric per zone within the current UTC hour
+- Metrics are `null` if no readings exist for that sensor type in the current hour
+- Values are rounded to 1 decimal place
+
+---
+
+### 7. Public Dashboard
+
+#### GET `/public/dashboard`
+
+Combined endpoint returning zones, five-minute averages, and hourly max in a single response. Used by the public frontend to reduce request count.
+
+**Example request**: `GET /public/dashboard`
+
+**Response 200**
+```json
+{
+  "zones": [
+    {
+      "zone": "Downtown Core",
+      "temperature": { "value": 22.5, "unit": "C", "last_updated": "2026-04-05T12:00:00Z" },
+      "humidity": { "value": 55.0, "unit": "%", "last_updated": "2026-04-05T11:58:00Z" },
+      "oxygen": { "value": 20.9, "unit": "%", "last_updated": "2026-04-05T11:55:00Z" },
+      "status": "online"
+    }
+  ],
+  "five_min_avg": {
+    "city": {
+      "temperature": 22.4,
+      "humidity": 57.1,
+      "oxygen": 20.8
+    },
+    "zones": [
+      {
+        "zone": "Downtown Core",
+        "temperature": 23.1,
+        "humidity": 55.0,
+        "oxygen": 20.9
+      }
+    ]
+  },
+  "hourly_max": [
+    {
+      "zone": "Downtown Core",
+      "temperature": 24.5,
+      "humidity": 62.3,
+      "oxygen": 21.0
+    }
+  ]
+}
+```
+
+Notes:
+- `zones` uses the same format as `GET /public/zones`
+- `five_min_avg` uses the same format as `GET /public/five-min-avg`
+- `hourly_max` uses the same format as `GET /public/zones/hourly-max`
+
+---
+
+## Rate Limiting
+
+All public endpoints are rate-limited to **30 requests per minute per IP**. Exceeding the limit returns `429 Too Many Requests`.
+
+---
+
 ## Authentication
 
 In production, all public endpoints require an API key passed via the `x-api-key` HTTP header. If the server is running without `PUBLIC_API_KEY` set (development mode), no key is required.

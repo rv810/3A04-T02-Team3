@@ -9,15 +9,18 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, AlertTriangle, Activity, Radio } from 'lucide-react'
-import { logout as apiLogout, getAlerts, acknowledgeAlert, resolveAlert, getSensors, getCityAverages, getMetricsHistory, getReadingsToday } from '@/lib/api'
-import type { Session, AlertsInfo, SensorReading, CityAverages, MetricsHistoryPoint } from '@/lib/types'
+import dynamic from 'next/dynamic'
+import { Bell, AlertTriangle, Activity, Radio, MapPin } from 'lucide-react'
+import { logout as apiLogout, getAlerts, acknowledgeAlert, resolveAlert, getSensors, getCityAverages, getMetricsHistory, getReadingsToday, getAllZones } from '@/lib/api'
+import type { Session, AlertsInfo, SensorReading, CityAverages, MetricsHistoryPoint, ZoneSummary } from '@/lib/types'
 import { useWebSocket } from '@/lib/useWebSocket'
 import { Sidebar }           from '@/components/Sidebar'
 import { OverviewTab }       from '@/components/OverviewTab'
 import { AlertsTable }       from '@/components/AlertsTable'
 import { AlertHistoryTable } from '@/components/AlertHistoryTable'
 import { SensorsTab }        from '@/components/SensorsTab'
+
+const MapTab = dynamic(() => import('@/components/MapTab'), { ssr: false })
 
 /**
  * Normalizes abbreviated backend sensor types ("temp", "ox") to human-readable
@@ -27,13 +30,14 @@ const WS_SENSOR_TYPE_MAP: Record<string, SensorReading['sensor_type']> = {
   temp: 'temperature', humidity: 'humidity', ox: 'oxygen',
 }
 
-type Tab = 'overview' | 'alerts' | 'history' | 'sensors'
+type Tab = 'overview' | 'alerts' | 'history' | 'sensors' | 'map'
 
 const NAV = [
   { id: 'overview', label: 'Overview',      icon: Activity      },
   { id: 'alerts',   label: 'Active Alerts', icon: Bell          },
   { id: 'history',  label: 'Alert History', icon: AlertTriangle },
   { id: 'sensors',  label: 'Sensors',       icon: Radio         },
+  { id: 'map',      label: 'Zone Map',      icon: MapPin        },
 ]
 
 export default function OperatorDashboard() {
@@ -53,6 +57,7 @@ export default function OperatorDashboard() {
   const [userRole, setUserRole] = useState('')
   const [resolvingId, setResolvingId] = useState<number | null>(null)
   const [resolveNote, setResolveNote] = useState('')
+  const [zones, setZones] = useState<ZoneSummary[]>([])
   const [token, setToken] = useState<string | null>(null)
   const alertDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -108,7 +113,8 @@ export default function OperatorDashboard() {
         getCityAverages(),
         getMetricsHistory(),
         getReadingsToday(),
-      ]).then(([alertsResult, sensorsResult, avgResult, chartResult, readingsTodayR]) => {
+        getAllZones(),
+      ]).then(([alertsResult, sensorsResult, avgResult, chartResult, readingsTodayR, zonesR]) => {
         if (alertsResult.status === 'fulfilled')  setAlerts(alertsResult.value)
         if (sensorsResult.status === 'fulfilled') {
           setSensors(sensorsResult.value.items)
@@ -117,6 +123,7 @@ export default function OperatorDashboard() {
         if (avgResult.status === 'fulfilled')     setCityAverages(avgResult.value)
         if (chartResult.status === 'fulfilled')   setChartData(chartResult.value)
         if (readingsTodayR.status === 'fulfilled') setReadingsToday(readingsTodayR.value.count)
+        if (zonesR.status === 'fulfilled')         setZones(zonesR.value)
         setLoading(false)
         setChartLoading(false)
       })
@@ -218,6 +225,7 @@ export default function OperatorDashboard() {
             onPageChange={handleSensorPageChange}
           />
         )}
+        {tab === 'map' && <MapTab sensors={sensors} zones={zones} />}
       </div>
     </div>
   )

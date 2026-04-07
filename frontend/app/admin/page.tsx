@@ -9,7 +9,8 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, AlertTriangle, Activity, Radio, Settings, Users, Webhook } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { Bell, AlertTriangle, Activity, Radio, Settings, Users, Webhook, MapPin } from 'lucide-react'
 import {
   logout as apiLogout,
   getAlerts, acknowledgeAlert, resolveAlert,
@@ -17,11 +18,12 @@ import {
   getAlertRules, createAlertRule, updateAlertRule, deleteAlertRule, toggleAlertRule,
   listUsers, adminCreateUser, adminEditUser, adminDeleteUser,
   getWebhooks, addWebhook, deleteWebhook, toggleWebhook,
+  getAllZones,
 } from '@/lib/api'
 import type {
   Session, AlertsInfo, SensorReading, CityAverages, MetricsHistoryPoint,
   AlertRule, AccountInformation, CreateAlertRuleRequest, UpdateAlertRuleRequest, AdminCreateAccountRequest, AdminEditAccountRequest,
-  WebhookSubscriber,
+  WebhookSubscriber, ZoneSummary,
 } from '@/lib/types'
 import { useWebSocket } from '@/lib/useWebSocket'
 import { Sidebar }           from '@/components/Sidebar'
@@ -34,6 +36,8 @@ import { UsersTab }          from '@/components/UsersTab'
 import { WebhooksTab }       from '@/components/WebhooksTab'
 import { Toast }             from '@/components/Toast'
 
+const MapTab = dynamic(() => import('@/components/MapTab'), { ssr: false })
+
 /**
  * Normalizes abbreviated backend sensor types ("temp", "ox") to human-readable
  * display names used throughout the UI.
@@ -42,13 +46,14 @@ const WS_SENSOR_TYPE_MAP: Record<string, SensorReading['sensor_type']> = {
   temp: 'temperature', humidity: 'humidity', ox: 'oxygen',
 }
 
-type Tab = 'overview' | 'alerts' | 'history' | 'sensors' | 'rules' | 'users' | 'webhooks'
+type Tab = 'overview' | 'alerts' | 'history' | 'sensors' | 'map' | 'rules' | 'users' | 'webhooks'
 
 const NAV = [
   { id: 'overview', label: 'Overview',      icon: Activity      },
   { id: 'alerts',   label: 'Active Alerts', icon: Bell          },
   { id: 'history',  label: 'Alert History', icon: AlertTriangle },
   { id: 'sensors',  label: 'Sensors',       icon: Radio         },
+  { id: 'map',      label: 'Zone Map',      icon: MapPin        },
   { id: 'rules',    label: 'Alert Rules',   icon: Settings, section: 'Administration' },
   { id: 'users',    label: 'Users & Roles', icon: Users          },
   { id: 'webhooks', label: 'External Notifications', icon: Webhook },
@@ -78,6 +83,7 @@ export default function AdminDashboard() {
   const [resolvingId,  setResolvingId]  = useState<number | null>(null)
   const [resolveNote,  setResolveNote]  = useState('')
   const [toast,        setToast]        = useState<string | null>(null)
+  const [zones, setZones] = useState<ZoneSummary[]>([])
   const [token, setToken] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState('')
   const alertDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -155,7 +161,8 @@ export default function AdminDashboard() {
         listUsers(),
         getReadingsToday(),
         getWebhooks(),
-      ]).then(([alertsR, sensorsR, avgR, chartR, rulesR, usersR, readingsTodayR, webhooksR]) => {
+        getAllZones(),
+      ]).then(([alertsR, sensorsR, avgR, chartR, rulesR, usersR, readingsTodayR, webhooksR, zonesR]) => {
         if (alertsR.status === 'fulfilled')  setAlerts(alertsR.value)
         if (sensorsR.status === 'fulfilled') {
           setSensors(sensorsR.value.items)
@@ -167,6 +174,7 @@ export default function AdminDashboard() {
         if (usersR.status === 'fulfilled')   setUsers(usersR.value)
         if (readingsTodayR.status === 'fulfilled') setReadingsToday(readingsTodayR.value.count)
         if (webhooksR.status === 'fulfilled') setWebhooks(webhooksR.value)
+        if (zonesR.status === 'fulfilled')    setZones(zonesR.value)
         setLoading(false)
         setChartLoading(false)
         setRulesLoading(false)
@@ -388,6 +396,7 @@ export default function AdminDashboard() {
             onPageChange={handleSensorPageChange}
           />
         )}
+        {tab === 'map' && <MapTab sensors={sensors} zones={zones} />}
         {tab === 'rules'    && (
           <AlertRulesTab
             rules={rules}

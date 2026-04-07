@@ -190,7 +190,7 @@ python humidity_sensor.py
 python oxygen_sensor.py
 ```
 
-Each simulator creates one sensor per zone (5 sensors) and publishes readings every second to MQTT topics in the format `scemas/telemetry/{zone}/{sensor_type}`. AWS IoT Core authenticates devices via x.509 certificates over TLS 1.2 — no unauthenticated device can publish telemetry.
+Each simulator creates one sensor per zone (5 sensors) and publishes readings every 10 seconds to MQTT topics in the format `scemas/telemetry/{zone}/{sensor_type}`. AWS IoT Core authenticates devices via x.509 certificates over TLS 1.2 — no unauthenticated device can publish telemetry.
 
 ### Database Setup
 
@@ -205,6 +205,7 @@ The following tables must exist in your Supabase project:
 | `alertrules` | Alert rule definitions (ruletype, lowerbound, upperbound, severity, name, enabled) |
 | `activealerts` | Generated alerts (alerttype, status, ruleviolated, zone, message, severity) |
 | `auditlog` | Event log (eventtype, description, user_id, timestamp) |
+| `webhook_subscribers` | Webhook subscriber registry (id, url, description, active, created_at, created_by) |
 
 Three RPC functions are also required for city-wide averages: `get_avg_latest_temp()`, `get_avg_latest_humidity()`, `get_avg_latest_oxygen()`.
 
@@ -231,6 +232,7 @@ Or use `POST /accounts/create-user` from an existing admin account to create ope
 | `SUPABASE_KEY` | Yes | Supabase anonymous/public API key (used for standard client operations) |
 | `SUPABASE_SERVICE_KEY` | Yes | Supabase service role key (used for admin operations like deleting users) |
 | `PUBLIC_API_KEY` | No | If set, public API endpoints require this value in the `x-api-key` header |
+| `TELEMETRY_SECRET_KEY` | Yes | Secret key used to authenticate incoming AWS IoT Core webhook requests |
 
 ### Frontend (`frontend/.env.local`)
 
@@ -325,8 +327,10 @@ For public API details including response schemas and examples, see [`backend/PU
 | GET | `/public/zones` | API key* | Summaries for all zones |
 | GET | `/public/summary/{zone}` | API key* | Latest readings for a zone |
 | GET | `/public/metrics/history` | API key* | Last 24 hours of hourly averages |
+| GET | `/public/zones/hourly-max` | API key* | Hourly max readings per zone |
+| GET | `/public/five-min-avg` | API key* | Five-minute averages by zone |
 
-*API key required only if `PUBLIC_API_KEY` is set in the backend environment.
+*API key required only if `PUBLIC_API_KEY` is set in the backend environment. All public endpoints are rate-limited to 30 requests per minute per IP.
 
 **Telemetry** — IoT data ingestion
 
@@ -352,6 +356,7 @@ backend/
 ├── coordinator.py                             # Top-level PAC agent: mounts sub-agents, wires event bus
 ├── database.py                                # Supabase client initialization
 ├── websocket_manager.py                       # WebSocket connection manager
+├── limiter.py                                 # Rate limiter configuration (slowapi)
 ├── middleware/
 │   └── auth.py                                # JWT verification, role-based access dependencies
 ├── models/
@@ -399,9 +404,11 @@ backend/
 
 sensors/
 ├── sensor_base.py                             # Shared MQTT client, zone config, reading generation
-├── temperature_sensor.py                      # Temperature simulator (5 zones, 1s interval)
-├── humidity_sensor.py                         # Humidity simulator (5 zones, 1s interval)
-├── oxygen_sensor.py                           # Oxygen simulator (5 zones, 1s interval)
+├── temperature_sensor.py                      # Temperature simulator (5 zones, 10s interval)
+├── humidity_sensor.py                         # Humidity simulator (5 zones, 10s interval)
+└── oxygen_sensor.py                           # Oxygen simulator (5 zones, 10s interval)
+ 
+demo/
 └── webhook_receiver.py                        # Demo external system receiver (port 9000, for ngrok demo)
  
 frontend/
@@ -423,12 +430,17 @@ frontend/
 │   ├── Sidebar.tsx                            # Navigation sidebar
 │   ├── Toast.tsx                              # Notification toasts
 │   ├── UsersTab.tsx                           # User management interface
-│   └── WebhooksTab.tsx                        # Webhook subscriber management
+│   ├── WebhooksTab.tsx                        # Webhook subscriber management
+│   └── EnvironmentalChatbot.tsx               # AI-powered environmental Q&A chatbot
 ├── lib/
 │   ├── api.ts                                 # REST API client
 │   ├── types.ts                               # TypeScript type definitions
 │   ├── useWebSocket.ts                        # WebSocket hook with reconnection
 │   └── data.ts                                # Shared style constants
+├── tailwind.config.ts                         # Tailwind CSS configuration
+├── postcss.config.js                          # PostCSS configuration
+├── tsconfig.json                              # TypeScript configuration
+├── next.config.mjs                            # Next.js configuration
 └── package.json                               # Dependencies and scripts
 ```
 

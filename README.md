@@ -24,7 +24,7 @@ SCEMAS monitors three environmental metrics — temperature, humidity, and oxyge
 
 Simulated IoT sensors publish telemetry via MQTT over TLS to AWS IoT Core, which authenticates each device using x.509 certificates. AWS IoT Core forwards validated messages to the SCEMAS backend through an HTTP webhook. The backend validates and stores readings, evaluates them against administrator-defined alert rules, and broadcasts updates to connected operator dashboards via WebSocket. Operators can acknowledge and resolve alerts with optional notes, while administrators have full control over alert rule configuration (create, update, delete, toggle) and user management. When an alert is triggered, the system automatically delivers webhook notifications to all registered external subscriber systems.
 
-A public-facing dashboard displays city-wide averages, zone-level summaries, and 24-hour trend charts without requiring authentication. The public REST API exposes the same data for third-party integration, optionally secured by an API key. A chatbot on the public dashboard provides conversational answers to common environmental queries.
+A public-facing dashboard displays city-wide averages, zone-level summaries, and 24-hour trend charts without requiring authentication. Operator and admin dashboards include an interactive geographical map showing sensor locations across city zones. The public REST API exposes the same data for third-party integration, optionally secured by an API key. A chatbot on the public dashboard provides conversational answers to common environmental queries.
 
 ---
 
@@ -81,6 +81,7 @@ Neither the Telemetry agent nor the Alerts agent has any direct reference to the
 | IoT Transport | MQTT over TLS → AWS IoT Core |
 | Frontend | Next.js 14, TypeScript, Tailwind CSS |
 | Charts | Recharts |
+| Maps | Leaflet + react-leaflet |
 | Real-time | WebSocket (native) |
 | Sensor Simulation | Python (paho-mqtt) |
 
@@ -329,6 +330,7 @@ For public API details including response schemas and examples, see [`backend/PU
 | GET | `/public/metrics/history` | API key* | Last 24 hours of hourly averages |
 | GET | `/public/zones/hourly-max` | API key* | Hourly max readings per zone |
 | GET | `/public/five-min-avg` | API key* | Five-minute averages by zone |
+| GET | `/public/dashboard` | API key* | Combined zones, 5-min averages, and hourly max |
 
 *API key required only if `PUBLIC_API_KEY` is set in the backend environment. All public endpoints are rate-limited to 30 requests per minute per IP.
 
@@ -431,7 +433,8 @@ frontend/
 │   ├── Toast.tsx                              # Notification toasts
 │   ├── UsersTab.tsx                           # User management interface
 │   ├── WebhooksTab.tsx                        # Webhook subscriber management
-│   └── EnvironmentalChatbot.tsx               # AI-powered environmental Q&A chatbot
+│   ├── EnvironmentalChatbot.tsx               # Environmental Q&A chatbot
+│   └── MapTab.tsx                             # Interactive zone map with Leaflet
 ├── lib/
 │   ├── api.ts                                 # REST API client
 │   ├── types.ts                               # TypeScript type definitions
@@ -441,6 +444,7 @@ frontend/
 ├── postcss.config.js                          # PostCSS configuration
 ├── tsconfig.json                              # TypeScript configuration
 ├── next.config.mjs                            # Next.js configuration
+├── leaflet.d.ts                               # Leaflet CSS type declaration
 └── package.json                               # Dependencies and scripts
 ```
 
@@ -466,6 +470,8 @@ frontend/
 **Zone-based simulation.** Each sensor type is simulated across five city zones with realistic environmental modeling including diurnal temperature cycles, seasonal variation, zone-specific offsets (e.g., urban heat island for downtown, higher humidity at waterfront), and configurable high-reading burst events that trigger alert rules during demonstrations.
 
 **PAC agent hierarchy.** The backend is organized as a hierarchy of PAC agents with a top-level coordinator, three subsystem agents, and sub-agents within each. Agents communicate exclusively through a pub-sub event bus; no agent directly imports another. This makes the architectural pattern visible in the directory structure itself.
+
+**Zone map visualization.** The operator and admin dashboards include an interactive Leaflet map centered on Hamilton, Ontario, displaying colored markers for each of the five city zones. The map uses CartoDB dark_matter tiles to match the dashboard's dark theme and shows current sensor readings in marker popups. Leaflet is loaded via dynamic import to avoid Next.js SSR compatibility issues.
 
 ---
 

@@ -107,9 +107,11 @@ class PublicAbstraction:
 
         Returns the last 24 hours of sensor readings bucketed into hourly averages.
         Used by the public dashboard 24-hour trend chart.
+        Only 3 queries total (one per sensor table).
         """
         now = datetime.now(timezone.utc)
         cutoff = now - timedelta(hours=24)
+        cutoff_iso = cutoff.isoformat()
 
         sensor_tables = {
             "temperature": "tempsensor",
@@ -125,22 +127,18 @@ class PublicAbstraction:
             buckets[hour_key] = {"temperature": [], "humidity": [], "oxygen": []}
 
         for metric, table in sensor_tables.items():
-            # Query each hourly bucket individually with a sample of 50 readings.
-            # 25 hours × 3 tables = 75 small queries, far cheaper than paginating
-            # through hundreds of thousands of rows.
-            for hour_key in buckets:
-                # Parse hour_key back to datetime range
-                hour_start = datetime.strptime(hour_key, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
-                hour_end = hour_start + timedelta(hours=1)
-                response = (
-                    supabase.table(table)
-                    .select("value")
-                    .gte("timestamp", hour_start.isoformat())
-                    .lt("timestamp", hour_end.isoformat())
-                    .limit(50)
-                    .execute()
-                )
-                for row in response.data:
+            response = (
+                supabase.table(table)
+                .select("value, timestamp")
+                .gte("timestamp", cutoff_iso)
+                .order("timestamp", desc=True)
+                .limit(1000)
+                .execute()
+            )
+            for row in response.data:
+                ts = datetime.fromisoformat(row["timestamp"])
+                hour_key = f"{ts.year}-{ts.month:02d}-{ts.day:02d} {ts.hour:02d}:00"
+                if hour_key in buckets:
                     buckets[hour_key][metric].append(row["value"])
 
         # Build sorted result with rounded values
@@ -158,11 +156,12 @@ class PublicAbstraction:
         """
         Retrieves the maximum sensor readings for all zones in the current hour.
         Used for zone status cards to show peak values.
+        Only 3 queries total (one per sensor table).
         """
         now = datetime.now(timezone.utc)
         hour_start = now.replace(minute=0, second=0, microsecond=0)
         hour_end = hour_start + timedelta(hours=1)
-        
+
         hour_start_iso = hour_start.isoformat()
         hour_end_iso = hour_end.isoformat()
 
@@ -172,33 +171,34 @@ class PublicAbstraction:
             "oxygen": "oxygensensor",
         }
 
-        # Get all zones
-        zones = set()
-        for table in ("tempsensor", "humiditysensor", "oxygensensor"):
-            response = supabase.table(table).select("zone").execute()
-            for row in response.data:
-                zones.add(row["zone"])
+        # zone -> metric -> max value
+        zone_maxes = {}
 
-        # Get max values for each zone
+        for metric, table in sensor_tables.items():
+            response = (
+                supabase.table(table)
+                .select("zone, value")
+                .gte("timestamp", hour_start_iso)
+                .lt("timestamp", hour_end_iso)
+                .order("timestamp", desc=True)
+                .limit(500)
+                .execute()
+            )
+            for row in response.data:
+                zone = row["zone"]
+                if zone not in zone_maxes:
+                    zone_maxes[zone] = {"temperature": None, "humidity": None, "oxygen": None}
+                current = zone_maxes[zone][metric]
+                if current is None or row["value"] > current:
+                    zone_maxes[zone][metric] = row["value"]
+
         result = []
-        for zone in sorted(zones):
-            zone_max = {"zone": zone}
-            for metric, table in sensor_tables.items():
-                response = (
-                    supabase.table(table)
-                    .select("value")
-                    .eq("zone", zone)
-                    .gte("timestamp", hour_start_iso)
-                    .lt("timestamp", hour_end_iso)
-                    .order("value", desc=True)
-                    .limit(1)
-                    .execute()
-                )
-                if response.data:
-                    zone_max[metric] = round(response.data[0]["value"], 1)
-                else:
-                    zone_max[metric] = None
-            result.append(zone_max)
+        for zone in sorted(zone_maxes.keys()):
+            entry = {"zone": zone}
+            for metric in ("temperature", "humidity", "oxygen"):
+                val = zone_maxes[zone][metric]
+                entry[metric] = round(val, 1) if val is not None else None
+            result.append(entry)
 
         return result
 

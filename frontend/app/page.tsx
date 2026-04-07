@@ -13,7 +13,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
 import { Wind, Thermometer, Droplets, MapPin } from 'lucide-react'
-import { getAllZones, getMetricsHistory, getFiveMinAvg, getHourlyMax } from '@/lib/api'
+import { getPublicDashboard, getMetricsHistory } from '@/lib/api'
 import type { ZoneSummary, MetricsHistoryPoint, FiveMinAvgResponse, ZoneMetrics } from '@/lib/types'
 import EnvironmentalChatbot from '@/components/EnvironmentalChatbot'
 
@@ -61,14 +61,14 @@ export default function PublicDashboard() {
 
     async function fetchData() {
       try {
-        const [z, h, avg, hmax] = await Promise.all([
-          getAllZones(), getMetricsHistory(), getFiveMinAvg(), getHourlyMax(),
+        const [dashboard, h] = await Promise.all([
+          getPublicDashboard(), getMetricsHistory(),
         ])
         if (!cancelled) {
-          setZones(z)
+          setZones(dashboard.zones)
           setHistory(h.map(p => ({ ...p, time: utcHourToLocal(p.time) })))
-          setFiveMinAvg(avg)
-          setHourlyMax(hmax)
+          setFiveMinAvg(dashboard.five_min_avg)
+          setHourlyMax(dashboard.hourly_max)
         }
       } catch (err) {
         console.error('Failed to fetch public data:', err)
@@ -82,13 +82,11 @@ export default function PublicDashboard() {
         // 5-min averages don't change fast — 30 s polling is sufficient.
         intervalId = setInterval(async () => {
           try {
-            const [z, avg, hmax] = await Promise.all([
-              getAllZones(), getFiveMinAvg(), getHourlyMax(),
-            ])
+            const dashboard = await getPublicDashboard()
             if (!cancelled) {
-              setZones(z)
-              setFiveMinAvg(avg)
-              setHourlyMax(hmax)
+              setZones(dashboard.zones)
+              setFiveMinAvg(dashboard.five_min_avg)
+              setHourlyMax(dashboard.hourly_max)
             }
           } catch { /* silent re-fetch failure */ }
         }, 30_000)

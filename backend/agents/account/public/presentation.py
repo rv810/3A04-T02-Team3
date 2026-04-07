@@ -59,3 +59,13 @@ def get_zones_hourly_maximum(request: Request, _: None = Depends(verify_api_key)
 @limiter.limit("30/minute")
 def get_five_min_avg(request: Request, _: None = Depends(verify_api_key)):
     return controller.getFiveMinAvgByZone()
+
+
+@router.get("/dashboard")
+@limiter.limit("30/minute")
+def get_public_dashboard(request: Request, _: None = Depends(verify_api_key)):
+    return {
+        "zones": controller.getAllZonesSummary(),
+        "five_min_avg": controller.getFiveMinAvgByZone(),
+        "hourly_max": controller.getHourlyMaximum(),
+    }

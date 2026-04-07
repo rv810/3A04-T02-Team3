@@ -7,8 +7,20 @@ PAC Agent: Account Management
 Sub-agent: Public 
 Reqs:      BE5
 """
+import time
 from database import supabase
 from datetime import datetime, timezone, timedelta
+
+
+def _query_with_retry(query_fn, retries=2):
+    """Retry transient Supabase connection errors (common on Render free tier)."""
+    for attempt in range(retries + 1):
+        try:
+            return query_fn()
+        except Exception:
+            if attempt == retries:
+                raise
+            time.sleep(0.1)
 
 
 class PublicAbstraction:
@@ -28,14 +40,14 @@ class PublicAbstraction:
 
         has_data = False
         for metric, table in sensor_tables.items():
-            response = (
-                supabase.table(table)
+            response = _query_with_retry(lambda t=table: (
+                supabase.table(t)
                 .select("value, unit, timestamp")
                 .eq("zone", zone)
                 .order("timestamp", desc=True)
                 .limit(1)
                 .execute()
-            )
+            ))
             if response.data:
                 row = response.data[0]
                 result[metric] = {
@@ -67,13 +79,13 @@ class PublicAbstraction:
         for metric, table in sensor_tables.items():
             
             # .limit(10) ensures we catch all active zones without downloading the whole DB
-            response = (
-                supabase.table(table)
+            response = _query_with_retry(lambda t=table: (
+                supabase.table(t)
                 .select("zone, value, unit, timestamp")
                 .order("timestamp", desc=True)
-                .limit(10) 
+                .limit(10)
                 .execute()
-            )
+            ))
             
             for row in response.data:
                 zone = row["zone"]
@@ -127,14 +139,14 @@ class PublicAbstraction:
             buckets[hour_key] = {"temperature": [], "humidity": [], "oxygen": []}
 
         for metric, table in sensor_tables.items():
-            response = (
-                supabase.table(table)
+            response = _query_with_retry(lambda t=table: (
+                supabase.table(t)
                 .select("value, timestamp")
                 .gte("timestamp", cutoff_iso)
                 .order("timestamp", desc=True)
                 .limit(1000)
                 .execute()
-            )
+            ))
             for row in response.data:
                 ts = datetime.fromisoformat(row["timestamp"])
                 hour_key = f"{ts.year}-{ts.month:02d}-{ts.day:02d} {ts.hour:02d}:00"
@@ -175,15 +187,15 @@ class PublicAbstraction:
         zone_maxes = {}
 
         for metric, table in sensor_tables.items():
-            response = (
-                supabase.table(table)
+            response = _query_with_retry(lambda t=table: (
+                supabase.table(t)
                 .select("zone, value")
                 .gte("timestamp", hour_start_iso)
                 .lt("timestamp", hour_end_iso)
                 .order("timestamp", desc=True)
                 .limit(500)
                 .execute()
-            )
+            ))
             for row in response.data:
                 zone = row["zone"]
                 if zone not in zone_maxes:
@@ -220,12 +232,12 @@ class PublicAbstraction:
         city_values = {"temperature": [], "humidity": [], "oxygen": []}
 
         for metric, table in sensor_tables.items():
-            response = (
-                supabase.table(table)
+            response = _query_with_retry(lambda t=table: (
+                supabase.table(t)
                 .select("zone, value")
                 .gte("timestamp", cutoff_iso)
                 .execute()
-            )
+            ))
             for row in response.data:
                 zone = row["zone"]
                 if zone not in zone_data:

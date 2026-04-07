@@ -26,6 +26,7 @@ import type {
   MetricsHistoryPoint,
   FiveMinAvgResponse,
   ZoneMetrics,
+  PublicDashboardResponse,
   Session,
   WebhookSubscriber,
   PaginatedResponse,
@@ -299,4 +300,8 @@ export async function getFiveMinAvg(): Promise<FiveMinAvgResponse> {
 
 export async function getHourlyMax(): Promise<ZoneMetrics[]> {
   return request<ZoneMetrics[]>('/public/zones/hourly-max', { headers: publicHeaders() }, false)
+}
+
+export async function getPublicDashboard(): Promise<PublicDashboardResponse> {
+  return request<PublicDashboardResponse>('/public/dashboard', { headers: publicHeaders() }, false)
 }

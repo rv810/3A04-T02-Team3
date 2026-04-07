@@ -210,6 +210,12 @@ export interface FiveMinAvgResponse {
   zones: ZoneMetrics[]
 }
 
+export interface PublicDashboardResponse {
+  zones: ZoneSummary[]
+  five_min_avg: FiveMinAvgResponse
+  hourly_max: ZoneMetrics[]
+}
+
 export interface ReadingsToday {
   count: number
 }

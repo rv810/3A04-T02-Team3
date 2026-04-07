@@ -24,6 +24,7 @@ class ConnectionManager:
             try:
                 await connection.send_json(message)
             except Exception:
-                self.active_connections.remove(connection)
+                if connection in self.active_connections:
+                    self.active_connections.remove(connection)
 
 ws_manager = ConnectionManager()

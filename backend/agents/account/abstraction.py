@@ -13,6 +13,18 @@ from database import supabase_admin
 from typing import Optional
 from datetime import datetime, timezone
 from supabase_auth.errors import AuthApiError
+import time
+
+
+def _query_with_retry(query_fn, retries=2):
+    """Retry transient Supabase connection errors (common on Render free tier)."""
+    for attempt in range(retries + 1):
+        try:
+            return query_fn()
+        except Exception:
+            if attempt == retries:
+                raise
+            time.sleep(0.1)
 
 
 class AccountsAbstraction:
@@ -23,10 +35,10 @@ class AccountsAbstraction:
         """Creates auth user and account record. Implements BE6."""
         # Register with Supabase Auth — handles password hashing
         try:
-            auth_response = self.db.auth.sign_up({
+            auth_response = _query_with_retry(lambda: self.db.auth.sign_up({
                 "email": request.email,
                 "password": request.password
-            })
+            }))
         except AuthApiError as e:
             # Clean error for duplicate email instead of raw exception
             if "already" in str(e).lower() or "duplicate" in str(e).lower():
@@ -48,30 +60,30 @@ class AccountsAbstraction:
         # already created, delete the orphaned auth user to prevent ghost accounts
         # (auth entry with no matching profile row).
         try:
-            result = self.db.table("accounts").insert(payload).execute()
+            result = _query_with_retry(lambda: self.db.table("accounts").insert(payload).execute())
         except Exception:
-            supabase_admin.auth.admin.delete_user(str(user_id))
+            _query_with_retry(lambda: supabase_admin.auth.admin.delete_user(str(user_id)))
             raise
 
         return AccountInformation(**result.data[0])
 
     def retrieveAccountInfo(self, user_id: str) -> AccountInformation:
-        result = (
+        result = _query_with_retry(lambda: (
             self.db.table("accounts")
             .select("*")
             .eq("id", user_id)
             .single()
             .execute()
-        )
+        ))
         return AccountInformation(**result.data)
 
     def updateAccountInfo(self, user_id: str, data: EditAccountRequest) -> AccountInformation:
         # Service role key required for auth admin operations
         if data.password:
-            supabase_admin.auth.admin.update_user_by_id(
+            _query_with_retry(lambda: supabase_admin.auth.admin.update_user_by_id(
                 user_id,
                 {"password": data.password}
-            )
+            ))
 
         # Update remaining fields in accounts table
         update_payload = {}
@@ -81,12 +93,12 @@ class AccountsAbstraction:
             update_payload["phone_num"] = data.phone_num
 
         if update_payload:
-            result = (
+            result = _query_with_retry(lambda: (
                 self.db.table("accounts")
                 .update(update_payload)
                 .eq("id", user_id)
                 .execute()
-            )
+            ))
             return AccountInformation(**result.data[0])
 
         # Password-only update — password was already changed above,
@@ -105,40 +117,40 @@ class AccountsAbstraction:
         if not update_payload:
             return self.retrieveAccountInfo(user_id)
 
-        result = (
+        result = _query_with_retry(lambda: (
             self.db.table("accounts")
             .update(update_payload)
             .eq("id", user_id)
             .execute()
-        )
+        ))
         return AccountInformation(**result.data[0])
 
     def deleteAccount(self, user_id: str) -> None:
         # Service role key required — cascades to accounts table automatically
-        supabase_admin.auth.admin.delete_user(user_id)
+        _query_with_retry(lambda: supabase_admin.auth.admin.delete_user(user_id))
 
     # Failed login rate limiting and account lockout is handled natively
     # by Supabase GoTrue — satisfies SR-IM1
     def login(self, email: str, password: str) -> dict:
         """Authenticates via Supabase GoTrue and updates last_login timestamp. Implements SR-AC1."""
-        response = self.db.auth.sign_in_with_password({
+        response = _query_with_retry(lambda: self.db.auth.sign_in_with_password({
             "email": email,
             "password": password
-        })
+        }))
 
         # Fetch role and profile from accounts table
-        account = (
+        account = _query_with_retry(lambda: (
             self.db.table("accounts")
             .select("*")
             .eq("id", response.user.id)
             .single()
             .execute()
-        )
+        ))
 
         # Why update last_login: tracks user activity for session management (LR-STD2)
-        self.db.table("accounts").update({
+        _query_with_retry(lambda: self.db.table("accounts").update({
             "last_login": datetime.now(timezone.utc).isoformat()
-        }).eq("id", str(response.user.id)).execute()
+        }).eq("id", str(response.user.id)).execute())
 
         return {
             "access_token": response.session.access_token,
@@ -149,15 +161,15 @@ class AccountsAbstraction:
 
     def logout(self, jwt: str) -> None:
         # Revoke the session server-side using the admin client
-        supabase_admin.auth.admin.sign_out(jwt)
+        _query_with_retry(lambda: supabase_admin.auth.admin.sign_out(jwt))
 
     def retrieveAllAccounts(self) -> list[AccountInformation]:
-        response = (
+        response = _query_with_retry(lambda: (
             self.db.table("accounts")
             .select("*")
             .order("created_at", desc=True)
             .execute()
-        )
+        ))
         return [AccountInformation(**row) for row in response.data]
 
     def logAuthAttempt(
@@ -176,4 +188,4 @@ class AccountsAbstraction:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "user_id": user_id
         }
-        self.db.table("auditlog").insert(payload).execute()
+        _query_with_retry(lambda: self.db.table("auditlog").insert(payload).execute())

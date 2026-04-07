@@ -10,6 +10,18 @@ Reqs:      BE4
 from database import supabase
 from typing import Optional
 from datetime import datetime, timezone
+import time
+
+
+def _query_with_retry(query_fn, retries=2):
+    """Retry transient Supabase connection errors (common on Render free tier)."""
+    for attempt in range(retries + 1):
+        try:
+            return query_fn()
+        except Exception:
+            if attempt == retries:
+                raise
+            time.sleep(0.1)
 
 class SensorsAbstraction:
     def getSensors(self, zone: Optional[str] = None, limit: int = 50, offset: int = 0) -> dict:
@@ -25,9 +37,9 @@ class SensorsAbstraction:
             humidity_query = humidity_query.eq("zone", zone)
             oxygen_query = oxygen_query.eq("zone", zone)
 
-        temp_resp = temp_query.order("timestamp", desc=True).execute()
-        humidity_resp = humidity_query.order("timestamp", desc=True).execute()
-        oxygen_resp = oxygen_query.order("timestamp", desc=True).execute()
+        temp_resp = _query_with_retry(lambda: temp_query.order("timestamp", desc=True).execute())
+        humidity_resp = _query_with_retry(lambda: humidity_query.order("timestamp", desc=True).execute())
+        oxygen_resp = _query_with_retry(lambda: oxygen_query.order("timestamp", desc=True).execute())
 
         total = (temp_resp.count or 0) + (humidity_resp.count or 0) + (oxygen_resp.count or 0)
 
@@ -58,14 +70,14 @@ class SensorsAbstraction:
         # Why: no unified sensor table exists; each type has its own table by
         # design, so we must iterate all three to find a match.
         for table in ["tempsensor", "humiditysensor", "oxygensensor"]:
-            result = (
-                supabase.table(table)
+            result = _query_with_retry(lambda t=table: (
+                supabase.table(t)
                 .select("zone, value, timestamp")
                 .eq("sensorid", sensorid)
                 .order("timestamp", desc=True)
                 .limit(1)
-                .execute().data
-            )
+                .execute()
+            )).data
             if result:
                 return {**result[0], "sensor_type": sensor_types[table]}
         return None
@@ -78,9 +90,9 @@ class SensorsAbstraction:
         Why: uses Supabase RPCs instead of raw queries to push aggregation
         to the database for performance.
         '''
-        temp = supabase.rpc("get_avg_latest_temp").execute().data
-        humidity = supabase.rpc("get_avg_latest_humidity").execute().data
-        oxygen = supabase.rpc("get_avg_latest_oxygen").execute().data
+        temp = _query_with_retry(lambda: supabase.rpc("get_avg_latest_temp").execute()).data
+        humidity = _query_with_retry(lambda: supabase.rpc("get_avg_latest_humidity").execute()).data
+        oxygen = _query_with_retry(lambda: supabase.rpc("get_avg_latest_oxygen").execute()).data
 
         return {
             "oxygen": oxygen,
@@ -93,8 +105,8 @@ class SensorsAbstraction:
         Count all sensor readings from today (UTC).
         '''
         cutoff = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
-        temp = supabase.table("tempsensor").select("id", count="exact").gte("timestamp", cutoff).execute()
-        humidity = supabase.table("humiditysensor").select("id", count="exact").gte("timestamp", cutoff).execute()
-        oxygen = supabase.table("oxygensensor").select("id", count="exact").gte("timestamp", cutoff).execute()
+        temp = _query_with_retry(lambda: supabase.table("tempsensor").select("id", count="exact").gte("timestamp", cutoff).execute())
+        humidity = _query_with_retry(lambda: supabase.table("humiditysensor").select("id", count="exact").gte("timestamp", cutoff).execute())
+        oxygen = _query_with_retry(lambda: supabase.table("oxygensensor").select("id", count="exact").gte("timestamp", cutoff).execute())
         total = (temp.count or 0) + (humidity.count or 0) + (oxygen.count or 0)
         return {"count": total}

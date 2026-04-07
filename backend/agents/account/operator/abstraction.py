@@ -11,17 +11,30 @@ Reqs:      BE1, BE3, SR-AU1
 from models.alerts_info import AlertsInfo, AuditLog
 from database import supabase
 from typing import List
+import time
+
+
+def _query_with_retry(query_fn, retries=2):
+    """Retry transient Supabase connection errors (common on Render free tier)."""
+    for attempt in range(retries + 1):
+        try:
+            return query_fn()
+        except Exception:
+            if attempt == retries:
+                raise
+            time.sleep(0.1)
+
 
 class OperatorAbstraction:
     def updateAlertStatus(self, alertID: int, newStatus: str):
-        supabase.table("activealerts").update({"status": newStatus}).eq("alertid", alertID).execute()
+        _query_with_retry(lambda: supabase.table("activealerts").update({"status": newStatus}).eq("alertid", alertID).execute())
 
     def retrieveAcknowledgedAlerts(self):
-        response = supabase.table("activealerts").select("*").eq("status", "acknowledged").execute()
+        response = _query_with_retry(lambda: supabase.table("activealerts").select("*").eq("status", "acknowledged").execute())
         return [AlertsInfo(**row) for row in response.data]
 
     def retrieveResolvedAlerts(self):
-        response = supabase.table("activealerts").select("*").eq("status", "resolved").execute()
+        response = _query_with_retry(lambda: supabase.table("activealerts").select("*").eq("status", "resolved").execute())
         return [AlertsInfo(**row) for row in response.data]
 
     def retrieveAlertsByStatus(self, statuses: list[str] = None, limit: int = 200, offset: int = 0) -> List[AlertsInfo]:
@@ -32,11 +45,11 @@ class OperatorAbstraction:
             query = query.eq("status", statuses[0])
         else:
             query = query.in_("status", statuses)
-        response = query.order("triggered_at", desc=True).limit(limit).offset(offset).execute()
+        response = _query_with_retry(lambda: query.order("triggered_at", desc=True).limit(limit).offset(offset).execute())
         return [AlertsInfo(**row) for row in response.data]
 
     def retrieveActiveAlerts(self) -> List[AlertsInfo]:
-        response = supabase.table("activealerts").select("*").eq("status", "active").execute()
+        response = _query_with_retry(lambda: supabase.table("activealerts").select("*").eq("status", "active").execute())
         return [AlertsInfo(**row) for row in response.data]
 
     def resolveAlert(self, alertID: int, user_id: str, note: str = None) -> None:
@@ -44,31 +57,31 @@ class OperatorAbstraction:
         # Why status check before update: prevents invalid state transitions —
         # checks current status to detect if another operator already acted
         # (conflict detection, BE3).
-        current = supabase.table("activealerts").select("status").eq("alertid", alertID).single().execute()
+        current = _query_with_retry(lambda: supabase.table("activealerts").select("status").eq("alertid", alertID).single().execute())
         if current.data["status"] == "resolved":
             raise ValueError("Alert is already resolved")
         update_data = {"status": "resolved"}
         if note:
             update_data["resolved_note"] = note
-        supabase.table("activealerts").update(update_data).eq("alertid", alertID).execute()
+        _query_with_retry(lambda: supabase.table("activealerts").update(update_data).eq("alertid", alertID).execute())
         description = f"Alert {alertID} resolved by operator"
         if note:
             description += f" - Note: {note}"
-        supabase.table("auditlog").insert({
+        _query_with_retry(lambda: supabase.table("auditlog").insert({
             "eventtype": "alert_resolved",
             "description": description,
             "user_id": user_id
-        }).execute()
+        }).execute())
 
     def retrieveAuditLog(self, limit: int = 200, offset: int = 0) -> list[AuditLog]:
-        response = (
+        response = _query_with_retry(lambda: (
             supabase.table("auditlog")
             .select("*")
             .order("timestamp", desc=True)
             .limit(limit)
             .offset(offset)
             .execute()
-        )
+        ))
         return [AuditLog(**row) for row in response.data]
 
     def acknowledgeAlert(self, alertID: int, user_id: str) -> None:
@@ -76,15 +89,15 @@ class OperatorAbstraction:
         # Why status check before update: prevents invalid state transitions —
         # checks current status to detect if another operator already acted
         # (conflict detection, BE3).
-        current = supabase.table("activealerts").select("status").eq("alertid", alertID).single().execute()
+        current = _query_with_retry(lambda: supabase.table("activealerts").select("status").eq("alertid", alertID).single().execute())
         status = current.data["status"]
         if status == "acknowledged":
             raise ValueError("Alert is already acknowledged")
         if status == "resolved":
             raise ValueError("Alert is already resolved")
         self.updateAlertStatus(alertID, "acknowledged")
-        supabase.table("auditlog").insert({
+        _query_with_retry(lambda: supabase.table("auditlog").insert({
             "eventtype": "alert_acknowledged",
             "description": f"Alert {alertID} acknowledged by operator",
             "user_id": user_id
-        }).execute()
+        }).execute())

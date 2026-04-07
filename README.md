@@ -131,6 +131,7 @@ SUPABASE_URL=your-supabase-project-url
 SUPABASE_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_KEY=your-supabase-service-role-key
 PUBLIC_API_KEY=optional-api-key-for-public-endpoints
+TELEMETRY_SECRET_KEY=your-telemetry-secret-key
 ```
 
 Start the server:
